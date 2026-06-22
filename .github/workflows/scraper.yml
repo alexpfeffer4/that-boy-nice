@@ -1,0 +1,27 @@
+name: Run BallDontLie Scraper
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sundays
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Run scraper
+        run: node fetch-players.js
+
+      - name: Commit and push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add players.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update player data from BallDontLie API" && git push)
