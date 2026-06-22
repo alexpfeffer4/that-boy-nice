@@ -81,10 +81,10 @@
     }
 
     .reel-display {
-      font-size: 3rem;
-      font-weight: 900;
-      color: #fff;
-      text-shadow: 0 4px 8px rgba(0,0,0,0.7);
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
       transition: transform 0.05s ease-out;
     }
 
@@ -342,7 +342,7 @@
       <div class="wheel-container">
         <div class="slot-machine">
           <div class="reel-window" id="reelWindow">
-            <div class="reel-display" id="reelDisplay">?</div>
+            <img class="reel-display" id="reelDisplay" src="" alt="team logo">
           </div>
         </div>
       </div>
@@ -459,7 +459,10 @@
 
     function buildReel() {
       const display = document.getElementById('reelDisplay');
-      display.textContent = gameState.teams.length > 0 ? getTeamAcronym(gameState.teams[0]) : '?';
+      if (gameState.teams.length > 0) {
+        display.src = getTeamLogo(gameState.teams[0]);
+        display.alt = gameState.teams[0];
+      }
     }
 
     function getRandomTeam() {
@@ -467,37 +470,53 @@
     }
 
     const positions = ['PG', 'SG', 'SF', 'PF', 'C'];
+    function getTeamLogo(teamName) {
+      const logos = {
+        "Atlanta Hawks": "https://cdn.nba.com/teams/rawimages/hawks/logo.svg",
+        "Boston Celtics": "https://cdn.nba.com/teams/rawimages/celtics/logo.svg",
+        "Brooklyn Nets": "https://cdn.nba.com/teams/rawimages/nets/logo.svg",
+        "Charlotte Hornets": "https://cdn.nba.com/teams/rawimages/hornets/logo.svg",
+        "Chicago Bulls": "https://cdn.nba.com/teams/rawimages/bulls/logo.svg",
+        "Cleveland Cavaliers": "https://cdn.nba.com/teams/rawimages/cavaliers/logo.svg",
+        "Dallas Mavericks": "https://cdn.nba.com/teams/rawimages/mavericks/logo.svg",
+        "Denver Nuggets": "https://cdn.nba.com/teams/rawimages/nuggets/logo.svg",
+        "Detroit Pistons": "https://cdn.nba.com/teams/rawimages/pistons/logo.svg",
+        "Golden State Warriors": "https://cdn.nba.com/teams/rawimages/warriors/logo.svg",
+        "Houston Rockets": "https://cdn.nba.com/teams/rawimages/rockets/logo.svg",
+        "Los Angeles Clippers": "https://cdn.nba.com/teams/rawimages/clippers/logo.svg",
+        "Los Angeles Lakers": "https://cdn.nba.com/teams/rawimages/lakers/logo.svg",
+        "Memphis Grizzlies": "https://cdn.nba.com/teams/rawimages/grizzlies/logo.svg",
+        "Miami Heat": "https://cdn.nba.com/teams/rawimages/heat/logo.svg",
+        "Milwaukee Bucks": "https://cdn.nba.com/teams/rawimages/bucks/logo.svg",
+        "Minnesota Timberwolves": "https://cdn.nba.com/teams/rawimages/timberwolves/logo.svg",
+        "New Orleans Pelicans": "https://cdn.nba.com/teams/rawimages/pelicans/logo.svg",
+        "New York Knicks": "https://cdn.nba.com/teams/rawimages/knicks/logo.svg",
+        "Oklahoma City Thunder": "https://cdn.nba.com/teams/rawimages/thunder/logo.svg",
+        "Orlando Magic": "https://cdn.nba.com/teams/rawimages/magic/logo.svg",
+        "Philadelphia 76ers": "https://cdn.nba.com/teams/rawimages/76ers/logo.svg",
+        "Phoenix Suns": "https://cdn.nba.com/teams/rawimages/suns/logo.svg",
+        "Portland Trail Blazers": "https://cdn.nba.com/teams/rawimages/blazers/logo.svg",
+        "Sacramento Kings": "https://cdn.nba.com/teams/rawimages/kings/logo.svg",
+        "San Antonio Spurs": "https://cdn.nba.com/teams/rawimages/spurs/logo.svg",
+        "Toronto Raptors": "https://cdn.nba.com/teams/rawimages/raptors/logo.svg",
+        "Utah Jazz": "https://cdn.nba.com/teams/rawimages/jazz/logo.svg",
+        "Washington Wizards": "https://cdn.nba.com/teams/rawimages/wizards/logo.svg"
+      };
+      return logos[teamName] || "";
+    }
+
     function getTeamAcronym(teamName) {
       const acronyms = {
-        "Atlanta Hawks": "ATL",
-        "Boston Celtics": "BOS",
-        "Brooklyn Nets": "BKN",
-        "Charlotte Hornets": "CHA",
-        "Chicago Bulls": "CHI",
-        "Cleveland Cavaliers": "CLE",
-        "Dallas Mavericks": "DAL",
-        "Denver Nuggets": "DEN",
-        "Detroit Pistons": "DET",
-        "Golden State Warriors": "GSW",
-        "Houston Rockets": "HOU",
-        "Los Angeles Clippers": "LAC",
-        "Los Angeles Lakers": "LAL",
-        "Memphis Grizzlies": "MEM",
-        "Miami Heat": "MIA",
-        "Milwaukee Bucks": "MIL",
-        "Minnesota Timberwolves": "MIN",
-        "New Orleans Pelicans": "NOP",
-        "New York Knicks": "NYK",
-        "Oklahoma City Thunder": "OKC",
-        "Orlando Magic": "ORL",
-        "Philadelphia 76ers": "PHI",
-        "Phoenix Suns": "PHX",
-        "Portland Trail Blazers": "POR",
-        "Sacramento Kings": "SAC",
-        "San Antonio Spurs": "SAS",
-        "Toronto Raptors": "TOR",
-        "Utah Jazz": "UTA",
-        "Washington Wizards": "WAS"
+        "Atlanta Hawks": "ATL", "Boston Celtics": "BOS", "Brooklyn Nets": "BKN",
+        "Charlotte Hornets": "CHA", "Chicago Bulls": "CHI", "Cleveland Cavaliers": "CLE",
+        "Dallas Mavericks": "DAL", "Denver Nuggets": "DEN", "Detroit Pistons": "DET",
+        "Golden State Warriors": "GSW", "Houston Rockets": "HOU", "Los Angeles Clippers": "LAC",
+        "Los Angeles Lakers": "LAL", "Memphis Grizzlies": "MEM", "Miami Heat": "MIA",
+        "Milwaukee Bucks": "MIL", "Minnesota Timberwolves": "MIN", "New Orleans Pelicans": "NOP",
+        "New York Knicks": "NYK", "Oklahoma City Thunder": "OKC", "Orlando Magic": "ORL",
+        "Philadelphia 76ers": "PHI", "Phoenix Suns": "PHX", "Portland Trail Blazers": "POR",
+        "Sacramento Kings": "SAC", "San Antonio Spurs": "SAS", "Toronto Raptors": "TOR",
+        "Utah Jazz": "UTA", "Washington Wizards": "WAS"
       };
       return acronyms[teamName] || teamName.substring(0, 3).toUpperCase();
     }
@@ -518,13 +537,13 @@
       let spinCount = 0;
       const spinInterval = setInterval(() => {
         const randomTeam = gameState.teams[Math.floor(Math.random() * gameState.teams.length)];
-        display.textContent = getTeamAcronym(randomTeam);
+        display.src = getTeamLogo(randomTeam);
         spinCount++;
 
         // Stop after ~30 spins
         if (spinCount >= 30) {
           clearInterval(spinInterval);
-          display.textContent = getTeamAcronym(gameState.currentTeam);
+          display.src = getTeamLogo(gameState.currentTeam);
           display.classList.remove('spinning');
 
           // Re-enable controls
@@ -604,7 +623,7 @@
     function updateDisplay() {
       document.getElementById('currentTeam').textContent = gameState.currentTeam;
       document.getElementById('positionLabel').textContent = `Name any player`;
-      document.getElementById('reelDisplay').textContent = getTeamAcronym(gameState.currentTeam);
+      document.getElementById('reelDisplay').src = getTeamLogo(gameState.currentTeam);
     }
 
     function updateLineup() {
