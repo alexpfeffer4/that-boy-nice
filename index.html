@@ -470,38 +470,41 @@
 
     const positions = ['PG', 'SG', 'SF', 'PF', 'C'];
     function getTeamLogo(teamName) {
-      const logos = {
-        "Atlanta Hawks": "https://cdn.nba.com/teams/uploads/sites/1610612766/2023/01/ATL_logo.svg",
-        "Boston Celtics": "https://cdn.nba.com/teams/uploads/sites/1610612738/2023/01/BOS_logo.svg",
-        "Brooklyn Nets": "https://cdn.nba.com/teams/uploads/sites/1610612751/2023/01/BKN_logo.svg",
-        "Charlotte Hornets": "https://cdn.nba.com/teams/uploads/sites/1610612766/2023/01/CHA_logo.svg",
-        "Chicago Bulls": "https://cdn.nba.com/teams/uploads/sites/1610612741/2023/01/CHI_logo.svg",
-        "Cleveland Cavaliers": "https://cdn.nba.com/teams/uploads/sites/1610612739/2023/01/CLE_logo.svg",
-        "Dallas Mavericks": "https://cdn.nba.com/teams/uploads/sites/1610612742/2023/01/DAL_logo.svg",
-        "Denver Nuggets": "https://cdn.nba.com/teams/uploads/sites/1610612743/2023/01/DEN_logo.svg",
-        "Detroit Pistons": "https://cdn.nba.com/teams/uploads/sites/1610612765/2023/01/DET_logo.svg",
-        "Golden State Warriors": "https://cdn.nba.com/teams/uploads/sites/1610612744/2023/01/GSW_logo.svg",
-        "Houston Rockets": "https://cdn.nba.com/teams/uploads/sites/1610612745/2023/01/HOU_logo.svg",
-        "Los Angeles Clippers": "https://cdn.nba.com/teams/uploads/sites/1610612746/2023/01/LAC_logo.svg",
-        "Los Angeles Lakers": "https://cdn.nba.com/teams/uploads/sites/1610612747/2023/01/LAL_logo.svg",
-        "Memphis Grizzlies": "https://cdn.nba.com/teams/uploads/sites/1610612748/2023/01/MEM_logo.svg",
-        "Miami Heat": "https://cdn.nba.com/teams/uploads/sites/1610612748/2023/01/MIA_logo.svg",
-        "Milwaukee Bucks": "https://cdn.nba.com/teams/uploads/sites/1610612749/2023/01/MIL_logo.svg",
-        "Minnesota Timberwolves": "https://cdn.nba.com/teams/uploads/sites/1610612750/2023/01/MIN_logo.svg",
-        "New Orleans Pelicans": "https://cdn.nba.com/teams/uploads/sites/1610612740/2023/01/NOP_logo.svg",
-        "New York Knicks": "https://cdn.nba.com/teams/uploads/sites/1610612752/2023/01/NYK_logo.svg",
-        "Oklahoma City Thunder": "https://cdn.nba.com/teams/uploads/sites/1610612753/2023/01/OKC_logo.svg",
-        "Orlando Magic": "https://cdn.nba.com/teams/uploads/sites/1610612753/2023/01/ORL_logo.svg",
-        "Philadelphia 76ers": "https://cdn.nba.com/teams/uploads/sites/1610612755/2023/01/PHI_logo.svg",
-        "Phoenix Suns": "https://cdn.nba.com/teams/uploads/sites/1610612756/2023/01/PHX_logo.svg",
-        "Portland Trail Blazers": "https://cdn.nba.com/teams/uploads/sites/1610612757/2023/01/POR_logo.svg",
-        "Sacramento Kings": "https://cdn.nba.com/teams/uploads/sites/1610612758/2023/01/SAC_logo.svg",
-        "San Antonio Spurs": "https://cdn.nba.com/teams/uploads/sites/1610612759/2023/01/SAS_logo.svg",
-        "Toronto Raptors": "https://cdn.nba.com/teams/uploads/sites/1610612761/2023/01/TOR_logo.svg",
-        "Utah Jazz": "https://cdn.nba.com/teams/uploads/sites/1610612762/2023/01/UTA_logo.svg",
-        "Washington Wizards": "https://cdn.nba.com/teams/uploads/sites/1610612764/2023/01/WAS_logo.svg"
+      // Official NBA team IDs from NBA Stats API
+      const teamIds = {
+        "Atlanta Hawks": 1610612737,
+        "Boston Celtics": 1610612738,
+        "Brooklyn Nets": 1610612751,
+        "Charlotte Hornets": 1610612766,
+        "Chicago Bulls": 1610612741,
+        "Cleveland Cavaliers": 1610612739,
+        "Dallas Mavericks": 1610612742,
+        "Denver Nuggets": 1610612743,
+        "Detroit Pistons": 1610612765,
+        "Golden State Warriors": 1610612744,
+        "Houston Rockets": 1610612745,
+        "Indiana Pacers": 1610612754,
+        "Los Angeles Clippers": 1610612746,
+        "Los Angeles Lakers": 1610612747,
+        "Memphis Grizzlies": 1610612763,
+        "Miami Heat": 1610612748,
+        "Milwaukee Bucks": 1610612749,
+        "Minnesota Timberwolves": 1610612750,
+        "New Orleans Pelicans": 1610612740,
+        "New York Knicks": 1610612752,
+        "Oklahoma City Thunder": 1610612760,
+        "Orlando Magic": 1610612753,
+        "Philadelphia 76ers": 1610612755,
+        "Phoenix Suns": 1610612756,
+        "Portland Trail Blazers": 1610612757,
+        "Sacramento Kings": 1610612758,
+        "San Antonio Spurs": 1610612759,
+        "Toronto Raptors": 1610612761,
+        "Utah Jazz": 1610612762,
+        "Washington Wizards": 1610612764
       };
-      return logos[teamName] || "";
+      const id = teamIds[teamName];
+      return id ? `https://cdn.nba.com/logos/nba/${id}/global/L/logo.svg` : "";
     }
 
     function getTeamAcronym(teamName) {
