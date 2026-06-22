@@ -81,10 +81,10 @@
     }
 
     .reel-display {
-      width: 100px;
-      height: 100px;
-      object-fit: contain;
-      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+      font-size: 3rem;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 4px 8px rgba(0,0,0,0.7);
       transition: transform 0.05s ease-out;
     }
 
@@ -342,7 +342,7 @@
       <div class="wheel-container">
         <div class="slot-machine">
           <div class="reel-window" id="reelWindow">
-            <img class="reel-display" id="reelDisplay" src="" alt="team logo">
+            <div class="reel-display" id="reelDisplay">?</div>
           </div>
         </div>
       </div>
@@ -460,8 +460,7 @@
     function buildReel() {
       const display = document.getElementById('reelDisplay');
       if (gameState.teams.length > 0) {
-        display.src = getTeamLogo(gameState.teams[0]);
-        display.alt = gameState.teams[0];
+        display.textContent = getTeamAcronym(gameState.teams[0]);
       }
     }
 
@@ -537,13 +536,13 @@
       let spinCount = 0;
       const spinInterval = setInterval(() => {
         const randomTeam = gameState.teams[Math.floor(Math.random() * gameState.teams.length)];
-        display.src = getTeamLogo(randomTeam);
+        display.textContent = getTeamAcronym(randomTeam);
         spinCount++;
 
         // Stop after ~30 spins
         if (spinCount >= 30) {
           clearInterval(spinInterval);
-          display.src = getTeamLogo(gameState.currentTeam);
+          display.textContent = getTeamAcronym(gameState.currentTeam);
           display.classList.remove('spinning');
 
           // Re-enable controls
@@ -623,7 +622,7 @@
     function updateDisplay() {
       document.getElementById('currentTeam').textContent = gameState.currentTeam;
       document.getElementById('positionLabel').textContent = `Name any player`;
-      document.getElementById('reelDisplay').src = getTeamLogo(gameState.currentTeam);
+      document.getElementById('reelDisplay').textContent = getTeamAcronym(gameState.currentTeam);
     }
 
     function updateLineup() {
