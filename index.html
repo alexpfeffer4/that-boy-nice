@@ -845,6 +845,12 @@
         breakdown.push({ label: `VORP (${s.vorp.toFixed(1)})`, value: p });
       }
 
+      const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
+      if (gsRatio >= 0.40) {
+        const p = gsRatio >= 0.75 ? -10 : gsRatio >= 0.60 ? -6 : -3;
+        breakdown.push({ label: `Starter Ratio (${(gsRatio * 100).toFixed(0)}%)`, value: p });
+      }
+
       if (s.mvp > 0) breakdown.push({ label: `MVP ×${s.mvp}`, value: -25 * s.mvp });
       if (s.fmvp > 0) breakdown.push({ label: `Finals MVP ×${s.fmvp}`, value: -18 * s.fmvp });
       if (s.dpoy > 0) breakdown.push({ label: `DPOY ×${s.dpoy}`, value: -15 * s.dpoy });
@@ -868,12 +874,12 @@
         else if (a.count >= 3) breakdown.push({ label: `${a.label} ×3+ (perennial)`, value: -10 });
       });
 
-      if (s.draftPick === 1) breakdown.push({ label: 'Draft: #1 overall', value: -50 });
-      else if (s.draftPick === 2) breakdown.push({ label: 'Draft: #2 overall', value: -38 });
-      else if (s.draftPick === 3) breakdown.push({ label: 'Draft: #3 overall', value: -28 });
-      else if (s.draftPick <= 5) breakdown.push({ label: `Draft: #${s.draftPick}`, value: -20 });
-      else if (s.draftPick <= 14) breakdown.push({ label: `Draft: #${s.draftPick}`, value: -12 });
-      else if (s.draftPick <= 30) breakdown.push({ label: `Draft: #${s.draftPick}`, value: -6 });
+      if (s.draftPick === 1) breakdown.push({ label: 'Draft: #1 overall', value: -30 });
+      else if (s.draftPick === 2) breakdown.push({ label: 'Draft: #2 overall', value: -22 });
+      else if (s.draftPick === 3) breakdown.push({ label: 'Draft: #3 overall', value: -18 });
+      else if (s.draftPick <= 5) breakdown.push({ label: `Draft: #${s.draftPick}`, value: -15 });
+      else if (s.draftPick <= 14) breakdown.push({ label: `Draft: #${s.draftPick}`, value: -10 });
+      else if (s.draftPick <= 30) breakdown.push({ label: `Draft: #${s.draftPick}`, value: -5 });
       else if (s.draftPick <= 60) breakdown.push({ label: `Draft: #${s.draftPick}`, value: -2 });
       else if (s.undrafted) breakdown.push({ label: 'Undrafted', value: 0 });
 
