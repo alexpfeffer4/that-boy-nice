@@ -61,7 +61,7 @@ ABBR_TO_FRANCHISE = {
 }
 
 SEASONS = list(range(1980, 2027))  # 1980 through 2026
-DRAFT_SEASONS = list(range(2000, 2026))  # 2000 through 2025 (draft pages exist for these)
+DRAFT_SEASONS = list(range(1980, 2026))  # 1980 through 2025 (captures everyone's draft era)
 BASE = 'https://www.basketball-reference.com'
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -272,14 +272,16 @@ def scrape_award(award_name: str, award_id: str, field: str) -> dict:
 def scrape_draft(year: int) -> dict:
     """Scrape a single draft page; return {name: overall_pick}."""
     url = f'{BASE}/draft/NBA_{year}.html'
-    html = fetch(url)
+    html = fetch(url, timeout=30)
     if not html:
+        logger.debug(f'Draft {year}: no HTML')
         return {}
 
     soup = BeautifulSoup(html, 'html.parser')
     # BBRef draft table is 'drafts' (plural) and often hidden in HTML comments
-    table = find_table(soup, 'drafts', 'draft', f'div_drafts')
+    table = find_table(soup, 'drafts', 'draft', 'div_drafts', 'draft_table')
     if not table:
+        logger.debug(f'Draft {year}: no table found')
         return {}
 
     picks = {}
@@ -290,8 +292,10 @@ def scrape_draft(year: int) -> dict:
 
         name = link.get_text(strip=True)
 
-        # Try both 'pick_number' and 'pick_overall' data-stat variants
-        pick_td = row.find('td', {'data-stat': 'pick_number'}) or row.find('td', {'data-stat': 'pick_overall'})
+        # Try multiple data-stat variants for pick number
+        pick_td = (row.find('td', {'data-stat': 'pick_number'}) or
+                   row.find('td', {'data-stat': 'pick_overall'}) or
+                   row.find('td', {'data-stat': 'overall_pick'}))
         try:
             pick = int(pick_td.get_text(strip=True) or 0) if pick_td else 0
         except (ValueError, TypeError):
@@ -300,21 +304,25 @@ def scrape_draft(year: int) -> dict:
         if pick > 0 and name not in picks:
             picks[name] = pick
 
+    if picks:
+        logger.info(f'Draft {year}: {len(picks)} picks')
+    else:
+        logger.debug(f'Draft {year}: 0 picks found')
     return picks
 
 
 def scrape_all_drafts() -> dict:
-    """Scrape all draft pages (2000-2025); return {name: overall_pick} (earliest draft only)."""
+    """Scrape all draft pages (1980-2025); return {name: overall_pick} (earliest draft only)."""
     all_picks = {}
-    failed_count = 0
+    success_count = 0
     for year in DRAFT_SEASONS:
         picks = scrape_draft(year)
-        if not picks:
-            failed_count += 1
+        if picks:
+            success_count += 1
         for name, pick in picks.items():
             if name not in all_picks:
                 all_picks[name] = pick
-    logger.info(f'Drafts (2000-2025): {len(all_picks)} players with pick numbers ({failed_count} years failed)')
+    logger.info(f'Drafts (1980-2025): {len(all_picks)} unique players with pick numbers ({success_count}/{len(DRAFT_SEASONS)} years)')
     return all_picks
 
 
