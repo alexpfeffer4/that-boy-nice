@@ -85,17 +85,28 @@
       height: 100px;
       object-fit: contain;
       filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
-      transition: transform 0.05s ease-out;
+      transition: opacity 0.06s ease-out, filter 0.06s ease-out, transform 0.06s ease-out;
     }
 
     .reel-display.spinning {
-      animation: reel-spin 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)) blur(3px);
     }
 
-    @keyframes reel-spin {
-      0% { transform: scale(1) rotateZ(0deg); }
-      50% { transform: scale(1.1) rotateZ(-5deg); }
-      100% { transform: scale(1) rotateZ(0deg); }
+    .reel-display.landing {
+      animation: reel-land 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes reel-land {
+      0%   { transform: scale(1.25); filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)) blur(2px); }
+      60%  { transform: scale(1.08); filter: drop-shadow(0 6px 12px rgba(102,126,234,0.6)) blur(0); }
+      80%  { transform: scale(0.96); filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
+      100% { transform: scale(1);    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
+    }
+
+    .reel-window.active-spin {
+      border-color: rgba(102,126,234,0.8);
+      box-shadow: inset 0 4px 8px rgba(0,0,0,0.7), 0 0 24px rgba(102,126,234,0.4);
+      transition: border-color 0.1s, box-shadow 0.1s;
     }
 
     .wheel-pointer {
@@ -1069,37 +1080,58 @@
       document.getElementById('autocompleteDropdown').classList.remove('show');
 
       const display = document.getElementById('reelDisplay');
+      const window_ = document.getElementById('reelWindow');
       gameState.currentTeam = getRandomTeam();
+
       display.classList.add('spinning');
+      window_.classList.add('active-spin');
 
-      let spinCount = 0;
-      const spinInterval = setInterval(() => {
-        const randomTeam = gameState.teams[Math.floor(Math.random() * gameState.teams.length)];
-        display.src = getTeamLogo(randomTeam);
-        spinCount++;
+      // Variable speed: start at 60ms, slow to 300ms over ~30 frames, then land
+      const totalFrames = 28;
+      let frame = 0;
 
-        if (spinCount >= 30) {
-          clearInterval(spinInterval);
-          display.src = getTeamLogo(gameState.currentTeam);
-          display.classList.remove('spinning');
+      function scheduleNext() {
+        // Ease-out: fast start, slow finish
+        const t = frame / totalFrames;
+        const eased = t * t * t; // cubic ease-in so delay grows fast at end
+        const delay = 60 + eased * 300;
 
-          gameState.hasSpun = true;
-          gameState.spinning = false;
-          updateDisplay();
-          document.getElementById('playerInput').disabled = false;
-          document.getElementById('playerInput').value = '';
-          document.getElementById('playerInput').focus();
-          document.getElementById('submitBtn').disabled = false;
-          document.getElementById('spinBtn').disabled = false;
-          if (gameState.respinsLeft > 0) {
-            document.getElementById('respinBtn').disabled = false;
+        setTimeout(() => {
+          if (frame < totalFrames) {
+            // Pick a random team that isn't the final answer (avoid spoiling)
+            let randomTeam;
+            do { randomTeam = gameState.teams[Math.floor(Math.random() * gameState.teams.length)]; }
+            while (randomTeam === gameState.currentTeam && frame > totalFrames - 4);
+            display.src = getTeamLogo(randomTeam);
+            frame++;
+            scheduleNext();
+          } else {
+            // Land on the result
+            display.classList.remove('spinning');
+            window_.classList.remove('active-spin');
+            display.src = getTeamLogo(gameState.currentTeam);
+            display.classList.add('landing');
+            display.addEventListener('animationend', () => display.classList.remove('landing'), { once: true });
+
+            gameState.hasSpun = true;
+            gameState.spinning = false;
+            updateDisplay();
+            document.getElementById('playerInput').disabled = false;
+            document.getElementById('playerInput').value = '';
+            document.getElementById('playerInput').focus();
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('spinBtn').disabled = false;
+            if (gameState.respinsLeft > 0) {
+              document.getElementById('respinBtn').disabled = false;
+            }
+            if (Object.keys(gameState.lineup).length === 5) {
+              endGame();
+            }
           }
+        }, delay);
+      }
 
-          if (Object.keys(gameState.lineup).length === 5) {
-            endGame();
-          }
-        }
-      }, 100);
+      scheduleNext();
     }
 
     function respin() {
