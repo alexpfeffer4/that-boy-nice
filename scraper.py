@@ -88,11 +88,11 @@ def find_table(soup, *table_ids):
     return None
 
 
-def fetch(url: str, max_retries: int = 4):
+def fetch(url: str, max_retries: int = 5, timeout: int = 30):
     """Fetch a URL with retries and exponential backoff on rate limits."""
     for attempt in range(max_retries):
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=20)
+            resp = requests.get(url, headers=HEADERS, timeout=timeout)
             if resp.status_code == 429:
                 wait = 30 * (2 ** attempt)
                 logger.warning(f'429 rate limited — waiting {wait}s (attempt {attempt+1}/{max_retries})')
@@ -103,6 +103,10 @@ def fetch(url: str, max_retries: int = 4):
             resp.raise_for_status()
             time.sleep(2)  # Polite delay
             return resp.text
+        except requests.exceptions.Timeout:
+            logger.warning(f'Timeout on attempt {attempt+1} for {url}')
+            if attempt < max_retries - 1:
+                time.sleep(5)
         except Exception as e:
             logger.warning(f'Attempt {attempt+1} failed for {url}: {e}')
             if attempt < max_retries - 1:
@@ -302,12 +306,15 @@ def scrape_draft(year: int) -> dict:
 def scrape_all_drafts() -> dict:
     """Scrape all draft pages (2000-2025); return {pid: overall_pick} (earliest draft only)."""
     all_picks = {}
+    failed_count = 0
     for year in DRAFT_SEASONS:
         picks = scrape_draft(year)
+        if not picks:
+            failed_count += 1
         for pid, pick in picks.items():
             if pid not in all_picks:
                 all_picks[pid] = pick
-    logger.info(f'Drafts (2000-2025): {len(all_picks)} players with pick numbers')
+    logger.info(f'Drafts (2000-2025): {len(all_picks)} players with pick numbers ({failed_count} years failed)')
     return all_picks
 
 
