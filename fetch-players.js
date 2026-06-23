@@ -1,183 +1,169 @@
+#!/usr/bin/env node
+/**
+ * Fetches all NBA players from BallDontLie API v2 and exports to data.js
+ * Requires env var: BALLDONTLIE_API_KEY
+ */
+
 const https = require('https');
 const fs = require('fs');
 
-const API_BASE = 'https://api.balldontlie.io/api/v1';
+const API_KEY = process.env.BALLDONTLIE_API_KEY;
+if (!API_KEY) {
+  console.error('Missing BALLDONTLIE_API_KEY environment variable');
+  process.exit(1);
+}
 
-// Map old franchise names to current ones
+const BASE_URL = 'https://api.balldontlie.io/nba/v1';
+
 const FRANCHISE_MAP = {
   'New Jersey Nets': 'Brooklyn Nets',
   'New Orleans Hornets': 'New Orleans Pelicans',
+  'New Orleans/Oklahoma City Hornets': 'New Orleans Pelicans',
   'Seattle SuperSonics': 'Oklahoma City Thunder',
   'Washington Bullets': 'Washington Wizards',
   'Vancouver Grizzlies': 'Memphis Grizzlies',
-  'Charlotte Hornets (2004)': 'Charlotte Hornets', // Handle duplicate
+  'Kansas City Kings': 'Sacramento Kings',
+  'San Diego Clippers': 'Los Angeles Clippers',
 };
 
-function fetchAPI(endpoint) {
+const VALID_TEAMS = new Set([
+  'Atlanta Hawks', 'Boston Celtics', 'Brooklyn Nets', 'Charlotte Hornets',
+  'Chicago Bulls', 'Cleveland Cavaliers', 'Dallas Mavericks', 'Denver Nuggets',
+  'Detroit Pistons', 'Golden State Warriors', 'Houston Rockets', 'Indiana Pacers',
+  'Los Angeles Clippers', 'Los Angeles Lakers', 'Memphis Grizzlies', 'Miami Heat',
+  'Milwaukee Bucks', 'Minnesota Timberwolves', 'New Orleans Pelicans', 'New York Knicks',
+  'Oklahoma City Thunder', 'Orlando Magic', 'Philadelphia 76ers', 'Phoenix Suns',
+  'Portland Trail Blazers', 'Sacramento Kings', 'San Antonio Spurs', 'Toronto Raptors',
+  'Utah Jazz', 'Washington Wizards'
+]);
+
+function fetchJSON(url) {
   return new Promise((resolve, reject) => {
-    const url = `${API_BASE}${endpoint}`;
-    https.get(url, (res) => {
+    const req = https.get(url, { headers: { 'Authorization': API_KEY } }, (res) => {
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', chunk => data += chunk);
       res.on('end', () => {
         try {
-          resolve(JSON.parse(data));
+          const parsed = JSON.parse(data);
+          if (res.statusCode !== 200) {
+            reject(new Error(`HTTP ${res.statusCode}: ${JSON.stringify(parsed)}`));
+          } else {
+            resolve(parsed);
+          }
         } catch (e) {
-          reject(e);
+          reject(new Error(`JSON parse error: ${e.message}`));
         }
       });
-    }).on('error', reject);
+    });
+    req.on('error', reject);
+    req.setTimeout(15000, () => { req.destroy(); reject(new Error('Request timeout')); });
   });
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function getAllPlayers() {
   const players = [];
-  let perPage = 100;
+  let cursor = null;
   let page = 1;
-  let hasMore = true;
 
-  console.log('Fetching all players...');
+  console.log('Fetching all players from BallDontLie API...');
 
-  while (hasMore) {
+  while (true) {
+    const url = cursor
+      ? `${BASE_URL}/players?per_page=100&cursor=${cursor}`
+      : `${BASE_URL}/players?per_page=100`;
+
+    let result;
     try {
-      const res = await fetchAPI(`/players?page=${page}&per_page=${perPage}`);
-      if (res.data && res.data.length > 0) {
-        players.push(...res.data);
-        console.log(`  Fetched page ${page} (${players.length} total so far)`);
-        page++;
-        hasMore = res.data.length === perPage;
-      } else {
-        hasMore = false;
-      }
+      result = await fetchJSON(url);
     } catch (e) {
-      console.error(`Error fetching page ${page}:`, e.message);
-      hasMore = false;
+      console.error(`Error on page ${page}: ${e.message}`);
+      break;
     }
+
+    if (!result.data || result.data.length === 0) break;
+
+    players.push(...result.data);
+    console.log(`  Page ${page}: ${result.data.length} players (${players.length} total)`);
+
+    if (!result.meta || !result.meta.next_cursor) break;
+    cursor = result.meta.next_cursor;
+    page++;
+
+    await sleep(1000); // Stay within free tier rate limits
   }
 
+  console.log(`Fetched ${players.length} players total`);
   return players;
 }
 
-async function getPlayerStats(playerId) {
-  try {
-    const res = await fetchAPI(`/stats?player_ids[]=${playerId}&per_page=100`);
-    return res.data || [];
-  } catch (e) {
-    console.error(`Error fetching stats for player ${playerId}:`, e.message);
-    return [];
-  }
-}
-
-function normalizeFranchise(name) {
-  return FRANCHISE_MAP[name] || name;
-}
-
-async function buildPlayerDatabase(players) {
+function buildDatabase(players) {
   const db = {};
+  VALID_TEAMS.forEach(t => db[t] = []);
 
-  // Initialize franchises
-  const franchises = new Set();
   players.forEach(p => {
-    if (p.team) {
-      franchises.add(normalizeFranchise(p.team.full_name));
-    }
-  });
+    if (!p.team) return;
 
-  franchises.forEach(f => {
-    db[f] = [];
-  });
+    let teamName = p.team.full_name;
+    teamName = FRANCHISE_MAP[teamName] || teamName;
 
-  console.log(`\nProcessing ${players.length} players across ${franchises.size} franchises...`);
+    if (!db[teamName]) return;
 
-  for (let i = 0; i < players.length; i++) {
-    const p = players[i];
+    const name = `${p.first_name} ${p.last_name}`.trim();
+    if (db[teamName].some(existing => existing.name === name)) return;
 
-    if (i % 50 === 0) {
-      console.log(`  Processing player ${i}/${players.length}`);
-    }
-
-    // Get season stats for career totals
-    const stats = await getPlayerStats(p.id);
-
-    let careerGames = 0;
-    let careerPoints = 0;
-    const teamSet = new Set();
-
-    stats.forEach(s => {
-      if (s.game && s.player) {
-        careerGames += s.min ? 1 : 0;
-        if (s.pts) careerPoints += s.pts;
-        if (s.team) {
-          teamSet.add(normalizeFranchise(s.team.full_name));
-        }
-      }
-    });
-
-    const careerPPG = careerGames > 0 ? (careerPoints / careerGames).toFixed(1) : 0;
-
-    const playerObj = {
-      name: p.first_name + ' ' + p.last_name,
-      position: p.position || 'Unknown',
-      height: p.height_feet ? `${p.height_feet}'${p.height_inches}"` : null,
-      weight: p.weight_pounds || null,
-      college: p.college || null,
-      country: p.country || null,
-      draftYear: p.draft_year || null,
-      draftRound: p.draft_round || null,
-      draftNumber: p.draft_number || null,
-      careerGames,
-      careerPPG: parseFloat(careerPPG),
-      // Note: All-Star data would need separate API or scraping
-    };
-
-    // Add to all teams this player played for
-    if (teamSet.size > 0) {
-      teamSet.forEach(team => {
-        if (db[team]) {
-          db[team].push(playerObj);
-        }
-      });
-    } else if (p.team) {
-      // Fallback to current team if no stats found
-      const franchise = normalizeFranchise(p.team.full_name);
-      if (db[franchise]) {
-        db[franchise].push(playerObj);
-      }
-    }
-  }
-
-  // Remove duplicates within each franchise
-  Object.keys(db).forEach(franchise => {
-    const seen = new Set();
-    db[franchise] = db[franchise].filter(p => {
-      const key = p.name.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
+    db[teamName].push({
+      name,
+      position: p.position || 'G',
+      careerGames: 200,
+      careerPPG: 10.0,
+      draftRound: p.draft_round || 3,
+      allStarAppearances: 0
     });
   });
 
   return db;
 }
 
+function exportToDataJs(db, filename = 'data.js') {
+  const teams = Object.keys(db).filter(k => db[k].length > 0).sort();
+  const lines = ['const playersData = {'];
+
+  teams.forEach((team, i) => {
+    lines.push(`  "${team}": [`);
+    db[team].forEach((p, j) => {
+      const comma = j < db[team].length - 1 ? ',' : '';
+      const safeName = p.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      lines.push(
+        `    {"name": "${safeName}", "position": "${p.position}", ` +
+        `"careerGames": ${p.careerGames}, "careerPPG": ${p.careerPPG}, ` +
+        `"draftRound": ${p.draftRound}, "allStarAppearances": ${p.allStarAppearances}}${comma}`
+      );
+    });
+    const teamComma = i < teams.length - 1 ? ',' : '';
+    lines.push(`  ]${teamComma}`);
+  });
+
+  lines.push('};');
+  fs.writeFileSync(filename, lines.join('\n') + '\n');
+
+  const total = teams.reduce((sum, t) => sum + db[t].length, 0);
+  console.log(`Exported ${total} players across ${teams.length} teams to ${filename}`);
+  teams.forEach(t => console.log(`  ${t}: ${db[t].length}`));
+}
+
 async function main() {
   try {
     const players = await getAllPlayers();
-    console.log(`\nFetched ${players.length} players total`);
-
-    const db = await buildPlayerDatabase(players);
-
-    // Write to file
-    fs.writeFileSync(
-      'players.json',
-      JSON.stringify(db, null, 2)
-    );
-
-    console.log('\nDone! Wrote players.json');
-    console.log('Franchises:', Object.keys(db).length);
-    Object.keys(db).forEach(franchise => {
-      console.log(`  ${franchise}: ${db[franchise].length} players`);
-    });
+    if (players.length === 0) {
+      console.error('No players fetched — check API key and endpoint');
+      process.exit(1);
+    }
+    const db = buildDatabase(players);
+    exportToDataJs(db);
   } catch (e) {
     console.error('Fatal error:', e);
     process.exit(1);

@@ -1,4 +1,4 @@
-name: Scrape Basketball Reference Player Data
+name: Fetch Player Data
 
 on:
   workflow_dispatch:
@@ -6,27 +6,26 @@ on:
     - cron: '0 0 1 * *'  # Monthly on the 1st
 
 jobs:
-  scrape:
+  fetch:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          python-version: '3.11'
+          node-version: '18'
 
-      - name: Install dependencies
-        run: pip install requests beautifulsoup4
-
-      - name: Run Basketball Reference scraper
-        run: python scraper.py
+      - name: Fetch players from BallDontLie API
+        run: node fetch-players.js
+        env:
+          BALLDONTLIE_API_KEY: ${{ secrets.BALLDONTLIE_API_KEY }}
 
       - name: Commit updated data.js
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add data.js
-          git diff --staged --quiet || (git commit -m "Update player data from Basketball Reference" && git push)
+          git diff --staged --quiet || (git commit -m "Update player data from BallDontLie API" && git push)
