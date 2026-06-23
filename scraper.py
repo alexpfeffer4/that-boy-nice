@@ -388,10 +388,13 @@ def merge_draft(players: dict):
     """Merge draft data into players dict (matched by player name)."""
     logger.info('Scraping draft pages...')
     draft_picks = scrape_all_drafts()
+    matched = 0
     for pid, p in players.items():
-        name = p['name']
+        name = normalize_name(p['name'])
         if name in draft_picks:
             p['draftPick'] = draft_picks[name]
+            matched += 1
+    logger.info(f'Draft: matched {matched}/{len(players)} players')
 
 
 def organize_by_team(players: dict) -> dict:
