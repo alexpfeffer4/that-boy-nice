@@ -902,7 +902,6 @@
 
     function showAutocomplete(input) {
       const dropdown = document.getElementById('autocompleteDropdown');
-      const franchisePlayers = players[gameState.currentTeam] || [];
 
       if (!input || input.length < 1) {
         dropdown.classList.remove('show');
@@ -910,7 +909,16 @@
       }
 
       const normalized = input.toLowerCase();
-      const matches = franchisePlayers
+      const allPlayers = {};
+      for (const team in players) {
+        players[team].forEach(p => {
+          if (!allPlayers[p.name]) {
+            allPlayers[p.name] = p;
+          }
+        });
+      }
+
+      const matches = Object.values(allPlayers)
         .filter(p => p.name.toLowerCase().includes(normalized))
         .slice(0, 8);
 
