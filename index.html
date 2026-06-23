@@ -820,7 +820,7 @@
       });
 
       // Arrow key + Enter navigation
-      const input = document.getElementById('playerInput');
+      const inputEl = document.getElementById('playerInput');
       const keyHandler = (e) => {
         const items = dropdown.querySelectorAll('.autocomplete-item');
         if (!items.length) return;
@@ -833,17 +833,17 @@
         } else if (e.key === 'Enter' && selectedIndex >= 0) {
           e.preventDefault();
           e.stopImmediatePropagation();
-          input.value = matches[selectedIndex].name;
+          inputEl.value = matches[selectedIndex].name;
           dropdown.classList.remove('show');
           selectedIndex = -1;
-          input.removeEventListener('keydown', keyHandler);
+          inputEl.removeEventListener('keydown', keyHandler);
           return;
         } else {
           return;
         }
         items.forEach((el, i) => el.classList.toggle('selected', i === selectedIndex));
       };
-      input.addEventListener('keydown', keyHandler);
+      inputEl.addEventListener('keydown', keyHandler);
     }
 
     function updateLivesDisplay() {
