@@ -127,6 +127,107 @@
       opacity: 0.9;
     }
 
+    .htp-box {
+      max-width: 420px;
+      text-align: left;
+    }
+
+    .htp-header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .htp-icon {
+      font-size: 2rem;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .htp-sub {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.5);
+      margin: 0;
+    }
+
+    .htp-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .htp-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(245, 87, 108, 0.08);
+      border: 1px solid rgba(245, 87, 108, 0.18);
+    }
+
+    .htp-icon-sm {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .htp-item div {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .htp-item strong {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.9);
+      font-weight: 700;
+    }
+
+    .htp-item span {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.45);
+    }
+
+    .htp-tip {
+      font-size: 0.8rem;
+      color: #4ECDC4;
+      background: rgba(78,205,196,0.08);
+      border: 1px solid rgba(78,205,196,0.2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+
+    .htp-footer {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .htp-skip-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.4);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .htp-skip-label input {
+      cursor: pointer;
+      accent-color: #4ECDC4;
+    }
+
+    .htp-confirm {
+      flex: 1;
+      padding: 12px;
+      font-size: 0.95rem;
+    }
+
     .era-note {
       font-size: 0.72rem;
       color: rgba(255,255,255,0.4);
@@ -1167,6 +1268,32 @@
 
   <div class="share-card-wrap" id="shareCardWrap"></div>
 
+  <div class="modal-overlay" id="howToPlayModal" style="display:none;" onclick="closeHowToPlay(event)">
+    <div class="modal-box htp-box">
+      <div class="htp-header">
+        <span class="htp-icon">📖</span>
+        <h2 class="modal-title" style="margin-bottom:4px">How to Score High</h2>
+        <p class="htp-sub">Name the most obscure player from each team</p>
+      </div>
+      <div class="htp-list">
+        <div class="htp-item bad"><span class="htp-icon-sm">📅</span><div><strong>Draft position</strong><span>Top picks get big deductions — undrafted is ideal</span></div></div>
+        <div class="htp-item bad"><span class="htp-icon-sm">🏀</span><div><strong>Career games played</strong><span>More games = more recognizable = lower score</span></div></div>
+        <div class="htp-item bad"><span class="htp-icon-sm">⭐</span><div><strong>All-Star appearances</strong><span>Each one docks your score</span></div></div>
+        <div class="htp-item bad"><span class="htp-icon-sm">🏆</span><div><strong>Awards</strong><span>MVP, DPOY, Finals MVP, ROY... all cost points</span></div></div>
+        <div class="htp-item bad"><span class="htp-icon-sm">🥇</span><div><strong>All-NBA / All-Defensive teams</strong><span>Perennial selections hit hard</span></div></div>
+        <div class="htp-item bad"><span class="htp-icon-sm">🔄</span><div><strong>High starter ratio</strong><span>Bench players score higher than starters</span></div></div>
+        <div class="htp-item bad recency-row" id="htpRecencyRow"><span class="htp-icon-sm">🕒</span><div><strong>Played recently</strong><span>Last 6 yrs get a multiplier — dig into the vault</span></div></div>
+      </div>
+      <div class="htp-tip">💡 Sweet spot: late-round or undrafted bench guys with no accolades</div>
+      <div class="htp-footer">
+        <label class="htp-skip-label">
+          <input type="checkbox" id="htpSkipCheck"> Don't show again
+        </label>
+        <button class="modal-confirm-btn htp-confirm" onclick="dismissHowToPlay()">Let's Play →</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="oldheadModal" style="display:none;" onclick="closeOldheadModal(event)">
     <div class="modal-box">
       <div class="modal-icon">🧓</div>
@@ -1408,7 +1535,7 @@
       indicator.textContent = '🧓 Oldhead Mode';
       indicator.className = 'mode-indicator mode-oldhead';
 
-      initGame();
+      showHowToPlay('oldhead');
     }
 
     function closeOldheadModal(e) {
@@ -1435,7 +1562,32 @@
       const indicator = document.getElementById('modeIndicator');
       indicator.textContent = mode === 'oldhead' ? '🧓 Oldhead Mode' : '📊 Classic Mode';
       indicator.className = 'mode-indicator ' + (mode === 'oldhead' ? 'mode-oldhead' : 'mode-classic');
+      showHowToPlay(mode);
+    }
+
+    function showHowToPlay(mode) {
+      if (localStorage.getItem('tbn_htp_skip') === '1') {
+        initGame();
+        return;
+      }
+      const recencyRow = document.getElementById('htpRecencyRow');
+      if (recencyRow) recencyRow.style.display = mode === 'oldhead' ? 'flex' : 'none';
+      document.getElementById('htpSkipCheck').checked = false;
+      document.getElementById('howToPlayModal').style.display = 'flex';
+    }
+
+    function dismissHowToPlay() {
+      if (document.getElementById('htpSkipCheck').checked) {
+        localStorage.setItem('tbn_htp_skip', '1');
+      }
+      document.getElementById('howToPlayModal').style.display = 'none';
       initGame();
+    }
+
+    function closeHowToPlay(e) {
+      if (e.target === document.getElementById('howToPlayModal')) {
+        dismissHowToPlay();
+      }
     }
 
     function initGame() {
