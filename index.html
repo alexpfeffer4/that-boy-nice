@@ -305,16 +305,113 @@
       text-align: center;
     }
 
-    .end-screen h2 {
-      font-size: 2rem;
+    .result-card {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      overflow: hidden;
       margin-bottom: 20px;
+    }
+
+    .result-header {
+      padding: 24px 24px 16px;
+      background: linear-gradient(135deg, rgba(102,126,234,0.2) 0%, rgba(118,75,162,0.2) 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .result-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 6px;
+    }
+
+    .result-score {
+      font-size: 4rem;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .result-score.tier-god    { color: #FFD700; text-shadow: 0 0 20px rgba(255,215,0,0.4); }
+    .result-score.tier-great  { color: #4ECDC4; text-shadow: 0 0 20px rgba(78,205,196,0.3); }
+    .result-score.tier-good   { color: #a8edea; }
+    .result-score.tier-mid    { color: #667eea; }
+    .result-score.tier-casual { color: rgba(255,255,255,0.7); }
+
+    .result-tier-label {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.8);
+      font-weight: 600;
+    }
+
+    .result-players {
+      padding: 8px 0;
+    }
+
+    .result-player-row {
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      gap: 12px;
+    }
+
+    .result-player-row:last-child { border-bottom: none; }
+
+    .result-pos {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      width: 28px;
+      flex-shrink: 0;
+    }
+
+    .result-name {
+      flex: 1;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: left;
+      color: #fff;
+    }
+
+    .result-bar-wrap {
+      width: 80px;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .result-bar {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.6s ease-out;
+    }
+
+    .result-bar.tier-god    { background: #FFD700; }
+    .result-bar.tier-great  { background: #4ECDC4; }
+    .result-bar.tier-good   { background: #a8edea; }
+    .result-bar.tier-mid    { background: #667eea; }
+    .result-bar.tier-casual { background: rgba(255,255,255,0.4); }
+
+    .result-pts {
+      font-size: 0.85rem;
+      font-weight: 700;
+      width: 36px;
+      text-align: right;
+      flex-shrink: 0;
+      color: rgba(255,255,255,0.7);
     }
 
     .share-btn {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       border: none;
       width: 100%;
-      margin-top: 20px;
+      margin-top: 0;
     }
 
     .lives-display {
@@ -1244,53 +1341,77 @@
       document.getElementById('totalScore').textContent = gameState.totalScore;
     }
 
+    function getScoreTier(score) {
+      if (score >= 76) return 'tier-casual';
+      if (score >= 51) return 'tier-mid';
+      if (score >= 31) return 'tier-good';
+      if (score >= 11) return 'tier-great';
+      return 'tier-god';
+    }
+
     function endGame() {
       const label = getScoreLabel(gameState.totalScore);
+      const totalTier = getScoreTier(Math.round(gameState.totalScore / 5));
+
       document.getElementById('gameSection').innerHTML = `
         <div class="end-screen">
-          <h2>🏀 Game Complete!</h2>
-          <div class="lineup-card">
-            <div class="lineup-grid" id="finalLineup"></div>
+          <div class="result-card">
+            <div class="result-header">
+              <div class="result-title">that boy nice — final score</div>
+              <div class="result-score ${totalTier}">${gameState.totalScore}</div>
+              <div class="result-tier-label">${label}</div>
+            </div>
+            <div class="result-players" id="resultPlayers"></div>
           </div>
-          <div style="margin-top: 20px; text-align: center;">
-            <div class="score-label">Final Score</div>
-            <div class="total">${gameState.totalScore}</div>
-            <div style="font-size: 1.1rem; margin-top: 8px; color: rgba(255,255,255,0.85);">${label}</div>
-          </div>
-          <button class="share-btn" onclick="shareResult()">SHARE RESULT</button>
+          <button class="share-btn" onclick="shareResult()">📋 COPY RESULT</button>
           <button class="spin-btn" style="margin-top: 10px;" onclick="location.reload()">PLAY AGAIN</button>
         </div>
       `;
 
-      const finalLineup = document.getElementById('finalLineup');
+      const container = document.getElementById('resultPlayers');
       positions.forEach(pos => {
         const player = gameState.lineup[pos];
-        const div = document.createElement('div');
-        div.className = 'lineup-item filled';
-        if (pos === 'C') div.classList.add('center');
-        const playerPositions = player.positions ? player.positions.join('/') : 'G';
-        div.innerHTML = `
-          <div class="position">${pos}</div>
-          <div class="player-name">${player.name}</div>
-          <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">${playerPositions}</div>
-          <div class="player-score">+${player.score}</div>
+        if (!player) return;
+        const tier = getScoreTier(player.score);
+        const barWidth = Math.round((player.score / 99) * 100);
+        const row = document.createElement('div');
+        row.className = 'result-player-row';
+        row.innerHTML = `
+          <span class="result-pos">${pos}</span>
+          <span class="result-name">${player.name}</span>
+          <div class="result-bar-wrap">
+            <div class="result-bar ${tier}" style="width: 0%" data-width="${barWidth}%"></div>
+          </div>
+          <span class="result-pts">${player.score}</span>
         `;
-        finalLineup.appendChild(div);
+        container.appendChild(row);
       });
 
-      const totalDiv = document.createElement('div');
-      totalDiv.className = 'total-score center';
-      totalDiv.innerHTML = `
-        <div class="score-label">Total</div>
-        <div class="total">${gameState.totalScore}</div>
-      `;
-      finalLineup.appendChild(totalDiv);
+      // Animate bars in after paint
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        container.querySelectorAll('.result-bar').forEach(bar => {
+          bar.style.width = bar.dataset.width;
+        });
+      }));
     }
 
     function shareResult() {
-      const text = `I scored ${gameState.totalScore} in that boy nice! 🏀 Can you build a better lineup? https://thatboynice.com`;
+      const tierEmoji = { 'tier-god': '🔥', 'tier-great': '💎', 'tier-good': '🎯', 'tier-mid': '📺', 'tier-casual': '😬' };
+      const lines = positions
+        .filter(pos => gameState.lineup[pos])
+        .map(pos => {
+          const p = gameState.lineup[pos];
+          const tier = getScoreTier(p.score);
+          return `${tierEmoji[tier]} ${pos} ${p.name} (${p.score})`;
+        });
+      const label = getScoreLabel(gameState.totalScore);
+      const text = `that boy nice 🏀\n${label}\nScore: ${gameState.totalScore}/495\n\n${lines.join('\n')}\n\nthatboynice.vercel.app`;
       navigator.clipboard.writeText(text).then(() => {
-        alert('Copied to clipboard!');
+        const btn = document.querySelector('.share-btn');
+        btn.textContent = '✓ COPIED!';
+        setTimeout(() => btn.textContent = '📋 COPY RESULT', 2000);
+      }).catch(() => {
+        prompt('Copy your result:', text);
       });
     }
 
