@@ -419,6 +419,7 @@ def merge_tiered_teams(players: dict):
     all_nba = scrape_tiered_team('All-NBA', 'all_league')
     all_def = scrape_tiered_team('All-Defensive', 'all_defense')
 
+    player_names = {normalize_name(p['name']) for p in players.values()}
     nba_matched = def_matched = 0
     for pid, p in players.items():
         name = normalize_name(p['name'])
@@ -432,6 +433,12 @@ def merge_tiered_teams(players: dict):
             p['allDef2'] = all_def[name]['second']
             def_matched += 1
     logger.info(f'All-NBA: matched {nba_matched}, All-Defensive: matched {def_matched}')
+    unmatched_nba = [n for n in all_nba if n not in player_names]
+    unmatched_def = [n for n in all_def if n not in player_names]
+    if unmatched_nba:
+        logger.info(f'All-NBA unmatched ({len(unmatched_nba)}): {unmatched_nba}')
+    if unmatched_def:
+        logger.info(f'All-Defensive unmatched ({len(unmatched_def)}): {unmatched_def}')
 
 
 def merge_draft(players: dict):
