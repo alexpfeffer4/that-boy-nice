@@ -279,15 +279,21 @@ def scrape_draft(year: int) -> dict:
 
     soup = BeautifulSoup(html, 'html.parser')
 
-    # First, log all table IDs found to debug
+    # Log all table IDs to see what's on the page
     all_tables = soup.find_all('table')
     table_ids = [t.get('id', 'no-id') for t in all_tables]
-    logger.debug(f'Draft {year}: found {len(all_tables)} tables: {table_ids[:5]}')
+    logger.info(f'Draft {year}: found {len(all_tables)} tables with IDs: {table_ids}')
 
-    # Try to find the draft table
-    table = find_table(soup, 'drafts', 'draft', 'div_drafts', 'draft_table')
+    # Try to find the draft table - look for any table with player links
+    table = None
+    for t in all_tables:
+        if t.find('a', href=lambda h: h and '/players/' in h):
+            table = t
+            logger.info(f'Draft {year}: found table with player links (id={t.get("id", "no-id")})')
+            break
+
     if not table:
-        logger.info(f'Draft {year}: no draft table found (checked 4 variants)')
+        logger.info(f'Draft {year}: no table with player links found')
         return {}
 
     picks = {}
