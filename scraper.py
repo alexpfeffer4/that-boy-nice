@@ -188,13 +188,14 @@ def scrape_season(year: int, players: dict) -> int:
                 'mvpAwards': 0, 'fmvpAwards': 0, 'dpoyAwards': 0,
                 'royAward': 0, 'smoyAwards': 0, 'mipAwards': 0, 'draftPick': 0,
                 'allNBA1': 0, 'allNBA2': 0, 'allNBA3': 0,
-                'allDef1': 0, 'allDef2': 0, 'undrafted': False
+                'allDef1': 0, 'allDef2': 0, 'undrafted': False, 'lastSeason': year
             }
 
         p = players[pid]
         p['games'] += season_g
         p['vorp'] += season_vorp
         p['name'] = name
+        p['lastSeason'] = max(p['lastSeason'], year)
         p['positions'][pos] = p['positions'].get(pos, 0) + 1
         for t in teams:
             fr = ABBR_TO_FRANCHISE.get(t)
@@ -494,6 +495,7 @@ def organize_by_team(players: dict) -> dict:
             'allDef1': p.get('allDef1', 0),
             'allDef2': p.get('allDef2', 0),
             'undrafted': p.get('undrafted', False),
+            'lastSeason': p.get('lastSeason', 0),
         }
         for fr in p['franchises']:
             teams[fr].append(entry)
@@ -522,7 +524,8 @@ def export_to_datajs(teams: dict, filename: str = 'data.js'):
                 f'"allStarAppearances": {p["allStarAppearances"]}, '
                 f'"allNBA1": {p["allNBA1"]}, "allNBA2": {p["allNBA2"]}, "allNBA3": {p["allNBA3"]}, '
                 f'"allDef1": {p["allDef1"]}, "allDef2": {p["allDef2"]}, '
-                f'"undrafted": {"true" if p["undrafted"] else "false"}'
+                f'"undrafted": {"true" if p["undrafted"] else "false"}, '
+                f'"lastSeason": {p["lastSeason"]}'
                 f'}}{comma}'
             )
         team_comma = ',' if i < len(names) - 1 else ''

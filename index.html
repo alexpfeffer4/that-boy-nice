@@ -752,8 +752,11 @@
       const allDef2 = player.allDef2 || 0;
       const seasons = Math.max(games / 60, 1);
       const vorpPerSeason = vorp / seasons;
+      const lastSeason = player.lastSeason || 0;
+      const yearsAgo = 2026 - lastSeason;
+      const recencyMultiplier = yearsAgo <= 1 ? 0.60 : yearsAgo <= 3 ? 0.72 : yearsAgo <= 6 ? 0.85 : 1.0;
       return { games, vorp, draftPick, undrafted, mvp, fmvp, dpoy, allStarApps, roy, smoy, mip,
-               allNBA1, allNBA2, allNBA3, allDef1, allDef2, vorpPerSeason };
+               allNBA1, allNBA2, allNBA3, allDef1, allDef2, vorpPerSeason, lastSeason, recencyMultiplier };
     }
 
     function calculateObscurityScore(player) {
@@ -824,7 +827,7 @@
       else if (s.draftPick <= 30) score -= 6;
       else if (s.draftPick <= 60) score -= 2;
 
-      return Math.max(1, Math.min(99, score));
+      return Math.max(1, Math.min(99, Math.round(score * s.recencyMultiplier)));
     }
 
     function getScoreBreakdown(player) {
