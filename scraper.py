@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """
-NBA Players Scraper - Basketball Reference (league-wide advanced pages)
+NBA Players Scraper - Basketball Reference (1980-2026 seasons + awards + draft)
 
-Fetches ONE page per season (2000-2026) from /leagues/NBA_YYYY_advanced.html.
-Each page lists every player in the league that year with VORP, games, team, and a
-unique player id. We aggregate career totals by player id (solves duplicate names)
-and file each player under EVERY current franchise they ever played for.
+Fetches:
+- ONE page per season (1980-2026) from /leagues/NBA_YYYY_advanced.html (~47 pages)
+- 7 award pages (All-Star, MVP, ROY, DPOY, SMOY, MIP, FMVP)
+- 26 draft pages (2000-2025)
 
-Only ~27 requests total — far under any rate limit, no parallelism needed.
+Each season page lists every player with VORP, games, team, and unique player id.
+Award pages track wins/appearances per player. Draft pages capture pick numbers.
+Aggregates career totals by player id and files under every franchise played for.
+
+~60 total requests, runs in ~5-10 minutes.
 Outputs data.js for the "that boy nice" game.
 """
 
@@ -21,12 +25,11 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Basketball Reference team_name_abbr codes -> current franchise.
-# Codes verified empirically across 2000-2026 league pages.
 ABBR_TO_FRANCHISE = {
     'ATL': 'Atlanta Hawks',
     'BOS': 'Boston Celtics',
-    'BRK': 'Brooklyn Nets',          'NJN': 'Brooklyn Nets',            # New Jersey Nets
-    'CHA': 'Charlotte Hornets',      'CHH': 'Charlotte Hornets',        # Bobcats / original Hornets
+    'BRK': 'Brooklyn Nets',          'NJN': 'Brooklyn Nets',
+    'CHA': 'Charlotte Hornets',      'CHH': 'Charlotte Hornets',
     'CHO': 'Charlotte Hornets',
     'CHI': 'Chicago Bulls',
     'CLE': 'Cleveland Cavaliers',
@@ -38,14 +41,14 @@ ABBR_TO_FRANCHISE = {
     'IND': 'Indiana Pacers',
     'LAC': 'Los Angeles Clippers',
     'LAL': 'Los Angeles Lakers',
-    'MEM': 'Memphis Grizzlies',      'VAN': 'Memphis Grizzlies',        # Vancouver Grizzlies
+    'MEM': 'Memphis Grizzlies',      'VAN': 'Memphis Grizzlies',
     'MIA': 'Miami Heat',
     'MIL': 'Milwaukee Bucks',
     'MIN': 'Minnesota Timberwolves',
-    'NOP': 'New Orleans Pelicans',   'NOH': 'New Orleans Pelicans',     # New Orleans Hornets
-    'NOK': 'New Orleans Pelicans',                                      # NO/Oklahoma City Hornets
+    'NOP': 'New Orleans Pelicans',   'NOH': 'New Orleans Pelicans',
+    'NOK': 'New Orleans Pelicans',
     'NYK': 'New York Knicks',
-    'OKC': 'Oklahoma City Thunder',  'SEA': 'Oklahoma City Thunder',    # Seattle SuperSonics
+    'OKC': 'Oklahoma City Thunder',  'SEA': 'Oklahoma City Thunder',
     'ORL': 'Orlando Magic',
     'PHI': 'Philadelphia 76ers',
     'PHO': 'Phoenix Suns',
@@ -57,13 +60,13 @@ ABBR_TO_FRANCHISE = {
     'WAS': 'Washington Wizards',
 }
 
-SEASONS = list(range(2000, 2027))  # 2000 through 2026
+SEASONS = list(range(1980, 2027))  # 1980 through 2026
+DRAFT_SEASONS = list(range(2000, 2026))  # 2000 through 2025 (draft pages exist for these)
 BASE = 'https://www.basketball-reference.com'
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 }
 
-# Multi-team season rows are labeled "2TM", "3TM", etc. (combined season totals)
 NTM_RE = re.compile(r'^\d+TM$')
 
 
@@ -73,14 +76,14 @@ def fetch(url: str, max_retries: int = 4):
         try:
             resp = requests.get(url, headers=HEADERS, timeout=20)
             if resp.status_code == 429:
-                wait = 30 * (2 ** attempt)  # 30s, 60s, 120s, 240s
+                wait = 30 * (2 ** attempt)
                 logger.warning(f'429 rate limited — waiting {wait}s (attempt {attempt+1}/{max_retries})')
                 time.sleep(wait)
                 continue
             if resp.status_code == 404:
                 return None
             resp.raise_for_status()
-            time.sleep(4)  # Polite delay — only 27 requests total
+            time.sleep(2)  # Polite delay
             return resp.text
         except Exception as e:
             logger.warning(f'Attempt {attempt+1} failed for {url}: {e}')
@@ -90,7 +93,7 @@ def fetch(url: str, max_retries: int = 4):
 
 
 def scrape_season(year: int, players: dict) -> int:
-    """Parse one season's advanced page; aggregate into the players dict (keyed by player id)."""
+    """Parse one season's advanced page; aggregate into the players dict."""
     url = f'{BASE}/leagues/NBA_{year}_advanced.html'
     html = fetch(url)
     if not html:
@@ -103,7 +106,6 @@ def scrape_season(year: int, players: dict) -> int:
         logger.warning(f'{year}: no advanced table')
         return 0
 
-    # Group this season's rows by player id (a player traded mid-year has multiple rows)
     season_rows: dict = {}
     for row in table.select('tbody tr'):
         name_td = row.find('td', {'data-stat': 'name_display'})
@@ -113,7 +115,7 @@ def scrape_season(year: int, players: dict) -> int:
         if not link or not link.get('href'):
             continue
 
-        pid = link['href'].split('/')[-1].replace('.html', '')  # e.g. "wallage01"
+        pid = link['href'].split('/')[-1].replace('.html', '')
         name = name_td.get_text(strip=True)
 
         team_td = row.find('td', {'data-stat': 'team_name_abbr'})
@@ -139,7 +141,6 @@ def scrape_season(year: int, players: dict) -> int:
 
     count = 0
     for pid, rows in season_rows.items():
-        # If a combined NTM row exists, it holds the full-season total (avoids double-count).
         combined = next((r for r in rows if NTM_RE.match(r['team'])), None)
         if combined:
             season_g = combined['g']
@@ -155,13 +156,17 @@ def scrape_season(year: int, players: dict) -> int:
         pos = rows[0]['pos']
 
         if pid not in players:
-            players[pid] = {'name': name, 'pos': pos, 'games': 0, 'vorp': 0.0, 'franchises': set()}
+            players[pid] = {
+                'name': name, 'pos': pos, 'games': 0, 'vorp': 0.0, 'franchises': set(),
+                'mvpAwards': 0, 'fmvpAwards': 0, 'dpoyAwards': 0,
+                'royAward': 0, 'smoyAwards': 0, 'mipAwards': 0, 'draftPick': 0
+            }
 
         p = players[pid]
         p['games'] += season_g
         p['vorp'] += season_vorp
         p['name'] = name
-        p['pos'] = pos  # keep most recent position
+        p['pos'] = pos
         for t in teams:
             fr = ABBR_TO_FRANCHISE.get(t)
             if fr:
@@ -172,11 +177,156 @@ def scrape_season(year: int, players: dict) -> int:
     return count
 
 
-def build() -> dict:
+def scrape_all_star() -> dict:
+    """Scrape All-Star by player page; return {pid: count}."""
+    url = f'{BASE}/awards/all_star_by_player.html'
+    html = fetch(url)
+    if not html:
+        logger.warning('All-Star: no data')
+        return {}
+
+    soup = BeautifulSoup(html, 'html.parser')
+    table = soup.find('table', {'id': 'all_star_by_player'})
+    if not table:
+        logger.warning('All-Star: no table')
+        return {}
+
+    stars = {}
+    for row in table.select('tbody tr'):
+        link_td = row.find('td', {'data-stat': 'player'})
+        if not link_td:
+            continue
+        link = link_td.find('a')
+        if not link or not link.get('href'):
+            continue
+
+        pid = link['href'].split('/')[-1].replace('.html', '')
+        apps_td = row.find('td', {'data-stat': 'all_star_count'})
+        try:
+            apps = int(apps_td.get_text(strip=True) or 0)
+        except (ValueError, TypeError):
+            apps = 0
+
+        if apps > 0:
+            stars[pid] = apps
+
+    logger.info(f'All-Star: {len(stars)} players')
+    return stars
+
+
+def scrape_award(award_name: str, award_id: str, field: str) -> dict:
+    """Scrape a single award page; return {pid: count}."""
+    url = f'{BASE}/awards/{award_id}.html'
+    html = fetch(url)
+    if not html:
+        logger.warning(f'{award_name}: no data')
+        return {}
+
+    soup = BeautifulSoup(html, 'html.parser')
+    table = soup.find('table', {'id': award_id})
+    if not table:
+        logger.warning(f'{award_name}: no table')
+        return {}
+
+    awards = {}
+    for row in table.select('tbody tr'):
+        link_td = row.find('td', {'data-stat': 'player'})
+        if not link_td:
+            continue
+        link = link_td.find('a')
+        if not link or not link.get('href'):
+            continue
+
+        pid = link['href'].split('/')[-1].replace('.html', '')
+        awards[pid] = awards.get(pid, 0) + 1
+
+    logger.info(f'{award_name}: {len(awards)} players')
+    return awards
+
+
+def scrape_draft(year: int) -> dict:
+    """Scrape a single draft page; return {pid: overall_pick}."""
+    url = f'{BASE}/draft/NBA_{year}.html'
+    html = fetch(url)
+    if not html:
+        return {}
+
+    soup = BeautifulSoup(html, 'html.parser')
+    table = soup.find('table', {'id': 'draft'})
+    if not table:
+        return {}
+
+    picks = {}
+    for row in table.select('tbody tr'):
+        link_td = row.find('td', {'data-stat': 'player'})
+        if not link_td:
+            continue
+        link = link_td.find('a')
+        if not link or not link.get('href'):
+            continue
+
+        pid = link['href'].split('/')[-1].replace('.html', '')
+        pick_td = row.find('td', {'data-stat': 'pick_number'})
+        try:
+            pick = int(pick_td.get_text(strip=True) or 0)
+        except (ValueError, TypeError):
+            pick = 0
+
+        if pick > 0 and pid not in picks:
+            picks[pid] = pick
+
+    return picks
+
+
+def scrape_all_drafts() -> dict:
+    """Scrape all draft pages (2000-2025); return {pid: overall_pick} (earliest draft only)."""
+    all_picks = {}
+    for year in DRAFT_SEASONS:
+        picks = scrape_draft(year)
+        for pid, pick in picks.items():
+            if pid not in all_picks:
+                all_picks[pid] = pick
+    logger.info(f'Drafts (2000-2025): {len(all_picks)} players with pick numbers')
+    return all_picks
+
+
+def build_seasons() -> dict:
+    """Scrape all seasons and return players dict."""
     players: dict = {}
     for yr in SEASONS:
         scrape_season(yr, players)
     return players
+
+
+def merge_awards(players: dict):
+    """Merge award data into players dict."""
+    logger.info('Scraping awards pages...')
+    all_star_data = scrape_all_star()
+    mvp_data = scrape_award('MVP', 'mvp', 'mvpAwards')
+    dpoy_data = scrape_award('DPOY', 'dpoy', 'dpoyAwards')
+    roy_data = scrape_award('ROY', 'roy', 'royAward')
+    smoy_data = scrape_award('SMOY', 'smoy', 'smoyAwards')
+    mip_data = scrape_award('MIP', 'mip', 'mipAwards')
+    fmvp_data = scrape_award('FMVP', 'finals_mvp', 'fmvpAwards')
+
+    for pid, p in players.items():
+        p['mvpAwards'] = mvp_data.get(pid, 0)
+        p['fmvpAwards'] = fmvp_data.get(pid, 0)
+        p['dpoyAwards'] = dpoy_data.get(pid, 0)
+        p['royAward'] = roy_data.get(pid, 0)
+        p['smoyAwards'] = smoy_data.get(pid, 0)
+        p['mipAwards'] = mip_data.get(pid, 0)
+        if pid in all_star_data:
+            p['allStarAppearances'] = all_star_data[pid]
+
+
+def merge_draft(players: dict):
+    """Merge draft data into players dict."""
+    logger.info('Scraping draft pages...')
+    draft_picks = scrape_all_drafts()
+    for pid, pick in draft_picks.items():
+        if pid in players:
+            players[pid]['draftPick'] = pick
 
 
 def organize_by_team(players: dict) -> dict:
@@ -188,8 +338,14 @@ def organize_by_team(players: dict) -> dict:
             'position': p['pos'] or 'G',
             'careerGames': p['games'],
             'careerVORP': round(p['vorp'], 1),
-            'draftRound': 1,
-            'allStarAppearances': 0,
+            'draftPick': p['draftPick'],
+            'mvpAwards': p['mvpAwards'],
+            'fmvpAwards': p['fmvpAwards'],
+            'dpoyAwards': p['dpoyAwards'],
+            'royAward': p['royAward'],
+            'smoyAwards': p['smoyAwards'],
+            'mipAwards': p['mipAwards'],
+            'allStarAppearances': p.get('allStarAppearances', 0),
         }
         for fr in p['franchises']:
             teams[fr].append(entry)
@@ -207,9 +363,15 @@ def export_to_datajs(teams: dict, filename: str = 'data.js'):
             comma = ',' if j < len(roster) - 1 else ''
             sn = p['name'].replace('\\', '\\\\').replace('"', '\\"')
             lines.append(
-                f'    {{"name": "{sn}", "position": "{p["position"]}", '
+                f'    {{'
+                f'"name": "{sn}", "position": "{p["position"]}", '
                 f'"careerGames": {p["careerGames"]}, "careerVORP": {p["careerVORP"]}, '
-                f'"draftRound": {p["draftRound"]}, "allStarAppearances": {p["allStarAppearances"]}}}{comma}'
+                f'"draftPick": {p["draftPick"]}, '
+                f'"mvpAwards": {p["mvpAwards"]}, "fmvpAwards": {p["fmvpAwards"]}, '
+                f'"dpoyAwards": {p["dpoyAwards"]}, "royAward": {p["royAward"]}, '
+                f'"smoyAwards": {p["smoyAwards"]}, "mipAwards": {p["mipAwards"]}, '
+                f'"allStarAppearances": {p["allStarAppearances"]}'
+                f'}}{comma}'
             )
         team_comma = ',' if i < len(names) - 1 else ''
         lines.append(f'  ]{team_comma}')
@@ -227,11 +389,16 @@ def export_to_datajs(teams: dict, filename: str = 'data.js'):
 
 def main():
     logger.info(f'Scraping {len(SEASONS)} league-advanced pages ({SEASONS[0]}-{SEASONS[-1]})')
-    players = build()
+    players = build_seasons()
     if not players:
         logger.error('No players scraped')
         return 1
-    logger.info(f'\nAggregated {len(players)} unique players')
+    logger.info(f'\nAggregated {len(players)} unique players from seasons')
+
+    merge_awards(players)
+    merge_draft(players)
+
+    logger.info(f'Merged awards and draft data')
     export_to_datajs(organize_by_team(players))
     logger.info('Done!')
     return 0

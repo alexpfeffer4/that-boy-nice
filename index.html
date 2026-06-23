@@ -435,29 +435,73 @@
     }
 
     function calculateObscurityScore(player) {
-      let score = 50;
-      // Games played: fewer = more obscure
-      if (player.careerGames < 100) score += 25;
-      else if (player.careerGames < 300) score += 15;
-      else if (player.careerGames < 600) score += 5;
-      else score -= 5;
-      // VORP: Value Over Replacement Player - lower = more obscure
-      // Negative/near-zero VORP = bench, High VORP = all-time great
+      let score = 100;
+
+      const games = player.careerGames || 0;
       const vorp = player.careerVORP || 0;
-      if (vorp < 0) score += 40;
-      else if (vorp < 5) score += 35;
-      else if (vorp < 10) score += 25;
-      else if (vorp < 20) score += 15;
-      else if (vorp < 30) score += 5;
-      else if (vorp < 50) score -= 10;
-      else if (vorp < 80) score -= 20;
-      else score -= 30;
-      // Draft & All-Star (placeholders)
-      if (player.draftRound === 2) score += 10;
-      else if (player.draftRound > 2) score += 15;
-      if (player.allStarAppearances > 0) {
-        score -= player.allStarAppearances * 3;
+      const draftPick = player.draftPick || 0;
+      const mvp = player.mvpAwards || 0;
+      const fmvp = player.fmvpAwards || 0;
+      const dpoy = player.dpoyAwards || 0;
+      const allStarApps = player.allStarAppearances || 0;
+      const roy = player.royAward || 0;
+      const smoy = player.smoyAwards || 0;
+      const mip = player.mipAwards || 0;
+
+      if (games < 100) {
+        score -= 0;
+      } else if (games < 300) {
+        score -= 2;
+      } else if (games < 500) {
+        score -= 5;
+      } else if (games < 800) {
+        score -= 8;
+      } else if (games < 1200) {
+        score -= 15;
+      } else {
+        score -= 25;
       }
+
+      if (vorp < 0) {
+        score -= 0;
+      } else if (vorp < 5) {
+        score -= 5;
+      } else if (vorp < 10) {
+        score -= 10;
+      } else if (vorp < 15) {
+        score -= 15;
+      } else if (vorp < 20) {
+        score -= 18;
+      } else if (vorp < 30) {
+        score -= 20;
+      } else if (vorp < 50) {
+        score -= 28;
+      } else if (vorp < 80) {
+        score -= 40;
+      } else {
+        score -= 55;
+      }
+
+      score -= mvp * 20;
+      score -= fmvp * 15;
+      score -= dpoy * 12;
+      score -= allStarApps * 4;
+      score -= roy * 8;
+      score -= smoy * 4;
+      score -= mip * 3;
+
+      if (draftPick === 1) {
+        score -= 20;
+      } else if (draftPick <= 3) {
+        score -= 15;
+      } else if (draftPick <= 14) {
+        score -= 10;
+      } else if (draftPick <= 30) {
+        score -= 5;
+      } else if (draftPick <= 60) {
+        score -= 2;
+      }
+
       return Math.max(1, Math.min(99, score));
     }
 
