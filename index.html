@@ -751,13 +751,11 @@
       const allDef1 = player.allDef1 || 0;
       const allDef2 = player.allDef2 || 0;
       const gamesStarted = player.careerGS || 0;
-      const seasons = Math.max(games / 60, 1);
-      const vorpPerSeason = vorp / seasons;
       const lastSeason = player.lastSeason || 0;
       const yearsAgo = 2026 - lastSeason;
       const recencyMultiplier = yearsAgo <= 1 ? 0.60 : yearsAgo <= 3 ? 0.72 : yearsAgo <= 6 ? 0.85 : 1.0;
       return { games, vorp, draftPick, undrafted, mvp, fmvp, dpoy, allStarApps, roy, smoy, mip,
-               allNBA1, allNBA2, allNBA3, allDef1, allDef2, gamesStarted, vorpPerSeason, lastSeason, recencyMultiplier };
+               allNBA1, allNBA2, allNBA3, allDef1, allDef2, gamesStarted, lastSeason, recencyMultiplier };
     }
 
     function calculateObscurityScore(player) {
@@ -780,12 +778,6 @@
       else if (s.vorp >= 10) score -= 15;
       else if (s.vorp >= 5) score -= 10;
       else if (s.vorp > 0) score -= 5;
-
-      // VORP per season — catches elite young players
-      if (s.vorpPerSeason >= 6) score -= 25;
-      else if (s.vorpPerSeason >= 4) score -= 18;
-      else if (s.vorpPerSeason >= 2.5) score -= 10;
-      else if (s.vorpPerSeason >= 1.5) score -= 5;
 
       // Individual awards
       score -= s.mvp * 25;
