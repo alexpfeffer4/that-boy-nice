@@ -235,7 +235,7 @@ def scrape_all_star() -> dict:
             logger.info(f'All-Star row all TDs: {stat_map}')
             logged_stats = True
 
-        # Find the total column — try known names, then fall back to max numeric td
+        # Find the total column — try known names
         apps_td = (row.find('td', {'data-stat': 'all_star_count'}) or
                    row.find('td', {'data-stat': 'tot'}) or
                    row.find('td', {'data-stat': 'count'}) or
@@ -244,21 +244,10 @@ def scrape_all_star() -> dict:
         if apps_td:
             try:
                 apps = int(apps_td.get_text(strip=True) or 0)
+                if apps > 0:
+                    stars[name] = apps
             except (ValueError, TypeError):
-                apps = 0
-        else:
-            # Fall back: find the largest numeric value in any td (the total column)
-            apps = 0
-            for td in row.find_all('td'):
-                try:
-                    val = int(td.get_text(strip=True) or 0)
-                    if val > apps:
-                        apps = val
-                except (ValueError, TypeError):
-                    continue
-
-        if apps > 0:
-            stars[name] = apps
+                pass
 
     logger.info(f'All-Star: {len(stars)} players')
     return stars
