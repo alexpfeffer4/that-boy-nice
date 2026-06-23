@@ -628,6 +628,14 @@
       const roy = player.royAward || 0;
       const smoy = player.smoyAwards || 0;
       const mip = player.mipAwards || 0;
+      const hofProb = player.hofProb || 0;
+
+      // HOF probability — composite signal that includes championships, career value, era
+      if (hofProb >= 90) score -= 45;
+      else if (hofProb >= 75) score -= 32;
+      else if (hofProb >= 50) score -= 20;
+      else if (hofProb >= 25) score -= 10;
+      else if (hofProb >= 10) score -= 4;
 
       // Career games — rewards longevity but capped low since stars can be young
       if (games < 100) score -= 0;
@@ -690,8 +698,17 @@
       const smoy = player.smoyAwards || 0;
       const mip = player.mipAwards || 0;
 
+      const hofProb = player.hofProb || 0;
       const breakdown = [];
       breakdown.push({ label: 'Base', value: '100' });
+
+      let hofPenalty = 0;
+      if (hofProb >= 90) hofPenalty = -45;
+      else if (hofProb >= 75) hofPenalty = -32;
+      else if (hofProb >= 50) hofPenalty = -20;
+      else if (hofProb >= 25) hofPenalty = -10;
+      else if (hofProb >= 10) hofPenalty = -4;
+      if (hofPenalty !== 0) breakdown.push({ label: `HOF prob (${hofProb}%)`, value: hofPenalty });
 
       let gamesPenalty = 0;
       if (games >= 1200) gamesPenalty = -22;

@@ -186,7 +186,7 @@ def scrape_season(year: int, players: dict) -> int:
             players[pid] = {
                 'name': name, 'positions': {}, 'games': 0, 'vorp': 0.0, 'franchises': set(),
                 'mvpAwards': 0, 'fmvpAwards': 0, 'dpoyAwards': 0,
-                'royAward': 0, 'smoyAwards': 0, 'mipAwards': 0, 'draftPick': 0
+                'royAward': 0, 'smoyAwards': 0, 'mipAwards': 0, 'draftPick': 0, 'hofProb': 0
             }
 
         p = players[pid]
@@ -339,6 +339,43 @@ def scrape_all_drafts() -> dict:
     return all_picks
 
 
+def scrape_hof_prob() -> dict:
+    """Scrape HOF probability page; return {name: probability_0_to_100}."""
+    url = f'{BASE}/leaders/hof_prob.html'
+    html = fetch(url)
+    if not html:
+        logger.warning('HOF prob: no data')
+        return {}
+
+    soup = BeautifulSoup(html, 'html.parser')
+    table = find_table(soup, 'hof_prob', 'div_hof_prob')
+    if not table:
+        logger.warning('HOF prob: no table')
+        return {}
+
+    probs = {}
+    for row in table.select('tbody tr'):
+        link = row.find('a', href=lambda h: h and '/players/' in h)
+        if not link:
+            continue
+        name = normalize_name(link.get_text(strip=True))
+        prob_td = row.find('td', {'data-stat': 'hof_prob'})
+        if prob_td:
+            try:
+                # Value is a percentage string like "99.9%" or a decimal like "0.999"
+                raw = prob_td.get_text(strip=True).replace('%', '')
+                val = float(raw)
+                # BBRef stores as 0-100 percentage
+                if val <= 1.0:
+                    val *= 100
+                probs[name] = round(val, 1)
+            except (ValueError, TypeError):
+                pass
+
+    logger.info(f'HOF prob: {len(probs)} players')
+    return probs
+
+
 def build_seasons() -> dict:
     """Scrape all seasons and return players dict."""
     players: dict = {}
@@ -368,6 +405,18 @@ def merge_awards(players: dict):
         p['mipAwards'] = mip_data.get(name, 0)
         if name in all_star_data:
             p['allStarAppearances'] = all_star_data[name]
+
+
+def merge_hof(players: dict):
+    """Merge HOF probability into players dict (matched by player name)."""
+    hof_data = scrape_hof_prob()
+    matched = 0
+    for pid, p in players.items():
+        name = normalize_name(p['name'])
+        if name in hof_data:
+            p['hofProb'] = hof_data[name]
+            matched += 1
+    logger.info(f'HOF prob: matched {matched}/{len(players)} players')
 
 
 def merge_draft(players: dict):
@@ -407,6 +456,7 @@ def organize_by_team(players: dict) -> dict:
             'smoyAwards': p['smoyAwards'],
             'mipAwards': p['mipAwards'],
             'allStarAppearances': p.get('allStarAppearances', 0),
+            'hofProb': p.get('hofProb', 0),
         }
         for fr in p['franchises']:
             teams[fr].append(entry)
@@ -432,7 +482,8 @@ def export_to_datajs(teams: dict, filename: str = 'data.js'):
                 f'"mvpAwards": {p["mvpAwards"]}, "fmvpAwards": {p["fmvpAwards"]}, '
                 f'"dpoyAwards": {p["dpoyAwards"]}, "royAward": {p["royAward"]}, '
                 f'"smoyAwards": {p["smoyAwards"]}, "mipAwards": {p["mipAwards"]}, '
-                f'"allStarAppearances": {p["allStarAppearances"]}'
+                f'"allStarAppearances": {p["allStarAppearances"]}, '
+                f'"hofProb": {p["hofProb"]}'
                 f'}}{comma}'
             )
         team_comma = ',' if i < len(names) - 1 else ''
@@ -459,8 +510,9 @@ def main():
 
     merge_awards(players)
     merge_draft(players)
+    merge_hof(players)
 
-    logger.info(f'Merged awards and draft data')
+    logger.info(f'Merged awards, draft, and HOF data')
     export_to_datajs(organize_by_team(players))
     logger.info('Done!')
     return 0
