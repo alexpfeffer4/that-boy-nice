@@ -19,6 +19,7 @@ import requests
 import time
 import logging
 import re
+import unicodedata
 from bs4 import BeautifulSoup, Comment
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -71,8 +72,10 @@ NTM_RE = re.compile(r'^\d+TM$')
 
 
 def normalize_name(name: str) -> str:
-    """Normalize player name for matching: lowercase, strip extra whitespace."""
-    return ' '.join(name.lower().split())
+    """Normalize player name for matching: lowercase, strip accents, strip whitespace."""
+    name = name.lower().strip()
+    name = unicodedata.normalize('NFKD', name).encode('ASCII', 'ignore').decode('ASCII')
+    return ' '.join(name.split())
 
 
 def find_table(soup, *table_ids):

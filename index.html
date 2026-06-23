@@ -716,6 +716,11 @@
       hasSpun: false
     };
 
+    // Remove accents from string
+    function removeAccents(str) {
+      return str.normalize('NFKD').replace(/[̀-ͯ]/g, '');
+    }
+
     // Levenshtein distance
     function levenshteinDistance(a, b) {
       const aL = a.length, bL = b.length;
@@ -732,11 +737,11 @@
     }
 
     function fuzzyMatchPlayer(input, franchisePlayers) {
-      const normalized = input.toLowerCase().trim();
+      const normalized = removeAccents(input.toLowerCase().trim());
       let bestMatch = null;
       let bestDistance = Infinity;
       franchisePlayers.forEach(p => {
-        const playerName = p.name.toLowerCase();
+        const playerName = removeAccents(p.name.toLowerCase());
         const distance = levenshteinDistance(normalized, playerName);
         if (distance < bestDistance) {
           bestDistance = distance;
@@ -938,7 +943,7 @@
         return;
       }
 
-      const normalized = input.toLowerCase();
+      const normalized = removeAccents(input.toLowerCase());
       const allPlayers = {};
       for (const team in players) {
         players[team].forEach(p => {
@@ -949,7 +954,7 @@
       }
 
       const matches = Object.values(allPlayers)
-        .filter(p => p.name.toLowerCase().includes(normalized))
+        .filter(p => removeAccents(p.name.toLowerCase()).includes(normalized))
         .slice(0, 8);
 
       if (matches.length === 0) {
