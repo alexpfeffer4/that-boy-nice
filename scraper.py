@@ -219,6 +219,7 @@ def scrape_all_star() -> dict:
         return {}
 
     stars = {}
+    logged_stats = False
     for row in table.select('tbody tr'):
         # Find player link in any td
         link = row.find('a', href=lambda h: h and '/players/' in h)
@@ -227,16 +228,37 @@ def scrape_all_star() -> dict:
 
         name = normalize_name(link.get_text(strip=True))
 
-        # Read the "tot" column which has total All-Star appearances
+        # Log all data-stats in first row to find the correct total column
+        if not logged_stats:
+            all_tds = row.find_all('td')
+            stat_map = {td.get('data-stat', ''): td.get_text(strip=True) for td in all_tds}
+            logger.info(f'All-Star row data-stats: {stat_map}')
+            logged_stats = True
+
+        # Find the total column — try known names, then fall back to max numeric td
         apps_td = (row.find('td', {'data-stat': 'all_star_count'}) or
-                   row.find('td', {'data-stat': 'tot'}))
-        try:
-            apps = int(apps_td.get_text(strip=True) or 0) if apps_td else 0
-        except (ValueError, TypeError):
+                   row.find('td', {'data-stat': 'tot'}) or
+                   row.find('td', {'data-stat': 'count'}) or
+                   row.find('td', {'data-stat': 'total'}))
+
+        if apps_td:
+            try:
+                apps = int(apps_td.get_text(strip=True) or 0)
+            except (ValueError, TypeError):
+                apps = 0
+        else:
+            # Fall back: find the largest numeric value in any td (the total column)
             apps = 0
+            for td in row.find_all('td'):
+                try:
+                    val = int(td.get_text(strip=True) or 0)
+                    if val > apps:
+                        apps = val
+                except (ValueError, TypeError):
+                    continue
 
         if apps > 0:
-            stars[name] = apps  # Store the actual count, don't accumulate
+            stars[name] = apps
 
     logger.info(f'All-Star: {len(stars)} players')
     return stars
@@ -303,12 +325,20 @@ def scrape_draft(year: int) -> dict:
         return {}
 
     rows = tbody.find_all('tr')
+    logged_stats = False
     for row in rows:
         link = row.find('a', href=lambda h: h and '/players/' in h)
         if not link:
             continue
 
         name = normalize_name(link.get_text(strip=True))
+
+        # Log first row data-stats to confirm pick column name
+        if not logged_stats and year == 2024:
+            all_tds = row.find_all('td')
+            stat_map = {td.get('data-stat', ''): td.get_text(strip=True) for td in all_tds[:8]}
+            logger.info(f'Draft {year} first row data-stats: {stat_map}')
+            logged_stats = True
 
         # Try multiple data-stat variants for pick number
         pick_td = (row.find('td', {'data-stat': 'pick_number'}) or
