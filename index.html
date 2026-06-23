@@ -427,6 +427,34 @@
       font-weight: 600;
     }
 
+    .mode-selector {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 20px;
+      padding: 12px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .mode-selector label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      color: rgba(255,255,255,0.8);
+      gap: 6px;
+    }
+
+    .mode-selector input[type="radio"] {
+      cursor: pointer;
+    }
+
+    .mode-selector input[type="radio"]:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .life-heart {
       display: inline-block;
       margin: 0 4px;
@@ -638,6 +666,15 @@
     <div class="game-section" id="gameSection">
       <div class="lives-display" id="livesDisplay">❤️ ❤️ ❤️</div>
 
+      <div class="mode-selector" id="modeSelector">
+        <label>
+          <input type="radio" name="gameMode" value="oldhead" checked> Oldhead Mode (recency bias)
+        </label>
+        <label>
+          <input type="radio" name="gameMode" value="classic"> Classic Mode (no bias)
+        </label>
+      </div>
+
       <div class="wheel-container">
         <div class="slot-machine">
           <div class="reel-window" id="reelWindow">
@@ -713,7 +750,8 @@
       spinning: false,
       teams: [],
       lives: 3,
-      hasSpun: false
+      hasSpun: false,
+      gameMode: 'oldhead'
     };
 
     // Remove accents from string
@@ -854,7 +892,8 @@
       else if (s.draftPick <= 30) score -= 5;
       else if (s.draftPick <= 60) score -= 2;
 
-      return Math.max(0, Math.min(100, Math.round(score * s.recencyMultiplier)));
+      const multiplier = gameState.gameMode === 'oldhead' ? s.recencyMultiplier : 1.0;
+      return Math.max(0, Math.min(100, Math.round(score * multiplier)));
     }
 
     function getScoreBreakdown(player) {
@@ -916,7 +955,7 @@
       breakdown.push({ label: `Subtotal`, value: displaySubtotal, isSeparator: true });
 
       let finalScore = subtotal;
-      if (s.recencyMultiplier < 1.0) {
+      if (gameState.gameMode === 'oldhead' && s.recencyMultiplier < 1.0) {
         const multiplierPercent = Math.round(s.recencyMultiplier * 100);
         const yearsAgo = 2026 - s.lastSeason;
         let bucket = '';
@@ -927,6 +966,8 @@
         const recencyAdjust = Math.round(subtotal * s.recencyMultiplier) - subtotal;
         breakdown.push({ label: `Recency ×${multiplierPercent}% (${s.lastSeason}, ${bucket})`, value: recencyAdjust, isMultiplier: true });
         finalScore = Math.round(subtotal * s.recencyMultiplier);
+      } else if (gameState.gameMode === 'classic') {
+        finalScore = subtotal;
       }
 
       const displayFinal = Math.max(0, finalScore);
@@ -1286,6 +1327,9 @@
 
             gameState.hasSpun = true;
             gameState.spinning = false;
+            document.querySelectorAll('input[name="gameMode"]').forEach(input => {
+              input.disabled = true;
+            });
             updateDisplay();
             document.getElementById('playerInput').disabled = false;
             document.getElementById('playerInput').value = '';
@@ -1486,7 +1530,14 @@
       });
     }
 
-    // Event listeners
+    // Event listeners - mode selection
+    document.querySelectorAll('input[name="gameMode"]').forEach(input => {
+      input.addEventListener('change', (e) => {
+        gameState.gameMode = e.target.value;
+      });
+    });
+
+    // Other event listeners
     document.getElementById('spinBtn').addEventListener('click', spinWheel);
     document.getElementById('respinBtn').addEventListener('click', respin);
     document.getElementById('submitBtn').addEventListener('click', submitPlayer);
