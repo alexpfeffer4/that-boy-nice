@@ -19,7 +19,7 @@ import requests
 import time
 import logging
 import re
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -70,6 +70,24 @@ HEADERS = {
 NTM_RE = re.compile(r'^\d+TM$')
 
 
+def find_table(soup, *table_ids):
+    """Find a table by any of the given IDs, including tables hidden in HTML comments (BBRef pattern)."""
+    for tid in table_ids:
+        table = soup.find('table', {'id': tid})
+        if table:
+            return table
+    # BBRef hides some tables inside HTML comments — parse them too
+    for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
+        comment_str = str(comment)
+        for tid in table_ids:
+            if tid in comment_str:
+                comment_soup = BeautifulSoup(comment_str, 'html.parser')
+                table = comment_soup.find('table', {'id': tid})
+                if table:
+                    return table
+    return None
+
+
 def fetch(url: str, max_retries: int = 4):
     """Fetch a URL with retries and exponential backoff on rate limits."""
     for attempt in range(max_retries):
@@ -101,7 +119,7 @@ def scrape_season(year: int, players: dict) -> int:
         return 0
 
     soup = BeautifulSoup(html, 'html.parser')
-    table = soup.find('table', {'id': 'advanced'})
+    table = find_table(soup, 'advanced', 'advanced_stats')
     if not table:
         logger.warning(f'{year}: no advanced table')
         return 0
@@ -186,29 +204,35 @@ def scrape_all_star() -> dict:
         return {}
 
     soup = BeautifulSoup(html, 'html.parser')
-    table = soup.find('table', {'id': 'all_star_by_player'})
+    table = find_table(soup, 'all_star_by_player', 'div_all_star_by_player')
     if not table:
         logger.warning('All-Star: no table')
         return {}
 
     stars = {}
     for row in table.select('tbody tr'):
-        link_td = row.find('td', {'data-stat': 'player'})
-        if not link_td:
-            continue
-        link = link_td.find('a')
-        if not link or not link.get('href'):
+        # Find player link in any td
+        link = row.find('a', href=lambda h: h and '/players/' in h)
+        if not link:
             continue
 
         pid = link['href'].split('/')[-1].replace('.html', '')
+
+        # Try explicit count column first, fall back to counting rows per player
         apps_td = row.find('td', {'data-stat': 'all_star_count'})
-        try:
-            apps = int(apps_td.get_text(strip=True) or 0)
-        except (ValueError, TypeError):
-            apps = 0
+        if apps_td:
+            try:
+                apps = int(apps_td.get_text(strip=True) or 0)
+            except (ValueError, TypeError):
+                apps = 1
+        else:
+            apps = 1
 
         if apps > 0:
-            stars[pid] = apps
+            if pid in stars:
+                stars[pid] += apps
+            else:
+                stars[pid] = apps
 
     logger.info(f'All-Star: {len(stars)} players')
     return stars
@@ -223,20 +247,17 @@ def scrape_award(award_name: str, award_id: str, field: str) -> dict:
         return {}
 
     soup = BeautifulSoup(html, 'html.parser')
-    table = soup.find('table', {'id': award_id})
+    # BBRef uses several table ID patterns; try all likely variants
+    table = find_table(soup, award_id, f'awards_{award_id}', f'{award_id}_NBA', f'div_{award_id}')
     if not table:
         logger.warning(f'{award_name}: no table')
         return {}
 
     awards = {}
     for row in table.select('tbody tr'):
-        link_td = row.find('td', {'data-stat': 'player'})
-        if not link_td:
+        link = row.find('a', href=lambda h: h and '/players/' in h)
+        if not link:
             continue
-        link = link_td.find('a')
-        if not link or not link.get('href'):
-            continue
-
         pid = link['href'].split('/')[-1].replace('.html', '')
         awards[pid] = awards.get(pid, 0) + 1
 
@@ -252,23 +273,23 @@ def scrape_draft(year: int) -> dict:
         return {}
 
     soup = BeautifulSoup(html, 'html.parser')
-    table = soup.find('table', {'id': 'draft'})
+    # BBRef draft table is 'drafts' (plural) and often hidden in HTML comments
+    table = find_table(soup, 'drafts', 'draft', f'div_drafts')
     if not table:
         return {}
 
     picks = {}
     for row in table.select('tbody tr'):
-        link_td = row.find('td', {'data-stat': 'player'})
-        if not link_td:
-            continue
-        link = link_td.find('a')
-        if not link or not link.get('href'):
+        link = row.find('a', href=lambda h: h and '/players/' in h)
+        if not link:
             continue
 
         pid = link['href'].split('/')[-1].replace('.html', '')
-        pick_td = row.find('td', {'data-stat': 'pick_number'})
+
+        # Try both 'pick_number' and 'pick_overall' data-stat variants
+        pick_td = row.find('td', {'data-stat': 'pick_number'}) or row.find('td', {'data-stat': 'pick_overall'})
         try:
-            pick = int(pick_td.get_text(strip=True) or 0)
+            pick = int(pick_td.get_text(strip=True) or 0) if pick_td else 0
         except (ValueError, TypeError):
             pick = 0
 
