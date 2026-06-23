@@ -1,243 +1,217 @@
 #!/usr/bin/env python3
 """
-NBA Players Scraper - Basketball Reference
-Scrapes all teams 2000-2026, aggregates players by career Win Shares.
+NBA Players Scraper - Basketball Reference (league-wide advanced pages)
+
+Fetches ONE page per season (2000-2026) from /leagues/NBA_YYYY_advanced.html.
+Each page lists every player in the league that year with VORP, games, team, and a
+unique player id. We aggregate career totals by player id (solves duplicate names)
+and file each player under EVERY current franchise they ever played for.
+
+Only ~27 requests total — far under any rate limit, no parallelism needed.
 Outputs data.js for the "that boy nice" game.
 """
 
 import requests
 import time
 import logging
+import re
 from bs4 import BeautifulSoup
-from typing import Dict, List, Optional
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-TEAM_ABBRS = [
-    'ATL', 'BOS', 'BRK', 'CHO', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW',
-    'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK',
-    'OKC', 'ORL', 'PHI', 'PHX', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS'
-]
-
-# Map Basketball Reference abbreviations to game's team names
-TEAM_NAMES = {
-    'ATL': 'Atlanta Hawks',      'BOS': 'Boston Celtics',
-    'BRK': 'Brooklyn Nets',      'CHO': 'Charlotte Hornets',
-    'CHI': 'Chicago Bulls',      'CLE': 'Cleveland Cavaliers',
-    'DAL': 'Dallas Mavericks',   'DEN': 'Denver Nuggets',
-    'DET': 'Detroit Pistons',    'GSW': 'Golden State Warriors',
-    'HOU': 'Houston Rockets',    'IND': 'Indiana Pacers',
-    'LAC': 'Los Angeles Clippers','LAL': 'Los Angeles Lakers',
-    'MEM': 'Memphis Grizzlies',  'MIA': 'Miami Heat',
-    'MIL': 'Milwaukee Bucks',    'MIN': 'Minnesota Timberwolves',
-    'NOP': 'New Orleans Pelicans','NYK': 'New York Knicks',
-    'OKC': 'Oklahoma City Thunder','ORL': 'Orlando Magic',
-    'PHI': 'Philadelphia 76ers', 'PHX': 'Phoenix Suns',
-    'POR': 'Portland Trail Blazers','SAC': 'Sacramento Kings',
-    'SAS': 'San Antonio Spurs',  'TOR': 'Toronto Raptors',
-    'UTA': 'Utah Jazz',          'WAS': 'Washington Wizards'
+# Basketball Reference team_name_abbr codes -> current franchise.
+# Codes verified empirically across 2000-2026 league pages.
+ABBR_TO_FRANCHISE = {
+    'ATL': 'Atlanta Hawks',
+    'BOS': 'Boston Celtics',
+    'BRK': 'Brooklyn Nets',          'NJN': 'Brooklyn Nets',            # New Jersey Nets
+    'CHA': 'Charlotte Hornets',      'CHH': 'Charlotte Hornets',        # Bobcats / original Hornets
+    'CHO': 'Charlotte Hornets',
+    'CHI': 'Chicago Bulls',
+    'CLE': 'Cleveland Cavaliers',
+    'DAL': 'Dallas Mavericks',
+    'DEN': 'Denver Nuggets',
+    'DET': 'Detroit Pistons',
+    'GSW': 'Golden State Warriors',
+    'HOU': 'Houston Rockets',
+    'IND': 'Indiana Pacers',
+    'LAC': 'Los Angeles Clippers',
+    'LAL': 'Los Angeles Lakers',
+    'MEM': 'Memphis Grizzlies',      'VAN': 'Memphis Grizzlies',        # Vancouver Grizzlies
+    'MIA': 'Miami Heat',
+    'MIL': 'Milwaukee Bucks',
+    'MIN': 'Minnesota Timberwolves',
+    'NOP': 'New Orleans Pelicans',   'NOH': 'New Orleans Pelicans',     # New Orleans Hornets
+    'NOK': 'New Orleans Pelicans',                                      # NO/Oklahoma City Hornets
+    'NYK': 'New York Knicks',
+    'OKC': 'Oklahoma City Thunder',  'SEA': 'Oklahoma City Thunder',    # Seattle SuperSonics
+    'ORL': 'Orlando Magic',
+    'PHI': 'Philadelphia 76ers',
+    'PHO': 'Phoenix Suns',
+    'POR': 'Portland Trail Blazers',
+    'SAC': 'Sacramento Kings',
+    'SAS': 'San Antonio Spurs',
+    'TOR': 'Toronto Raptors',
+    'UTA': 'Utah Jazz',
+    'WAS': 'Washington Wizards',
 }
 
-# Teams that didn't exist in certain years or had different names
-SKIP_COMBOS = {
-    ('CHO', range(2002, 2014)),  # Charlotte Hornets relocated to NOLA 2002-2013, returned 2014
-    ('NOP', range(2000, 2002)),  # New Orleans didn't exist before 2002
-    ('BRK', range(2000, 2013)),  # New Jersey Nets until 2012, became Brooklyn 2013+
-    ('MEM', range(2000, 2001)),  # Vancouver Grizzlies until 2000, became Memphis 2001+
-}
-
-BASE_URL = 'https://www.basketball-reference.com'
+SEASONS = list(range(2000, 2027))  # 2000 through 2026
+BASE = 'https://www.basketball-reference.com'
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 }
 
-def should_skip(team_abbr: str, season: int) -> bool:
-    """Check if this team/season combo should be skipped."""
-    for skip_team, skip_years in SKIP_COMBOS:
-        if team_abbr == skip_team and season in skip_years:
-            return True
-    return False
+# Multi-team season rows are labeled "2TM", "3TM", etc. (combined season totals)
+NTM_RE = re.compile(r'^\d+TM$')
 
-def fetch(url: str, max_retries: int = 3) -> Optional[str]:
-    """Fetch URL with retries and exponential backoff."""
+
+def fetch(url: str, max_retries: int = 4):
+    """Fetch a URL with retries and exponential backoff on rate limits."""
     for attempt in range(max_retries):
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=15)
+            resp = requests.get(url, headers=HEADERS, timeout=20)
             if resp.status_code == 429:
-                wait_time = 30 * (2 ** attempt)  # 30s, 60s, 120s
-                logger.warning(f'Rate limited — waiting {wait_time}s (attempt {attempt+1}/{max_retries})')
-                time.sleep(wait_time)
+                wait = 30 * (2 ** attempt)  # 30s, 60s, 120s, 240s
+                logger.warning(f'429 rate limited — waiting {wait}s (attempt {attempt+1}/{max_retries})')
+                time.sleep(wait)
                 continue
             if resp.status_code == 404:
                 return None
             resp.raise_for_status()
-            time.sleep(5)  # Polite delay between successful requests
+            time.sleep(4)  # Polite delay — only 27 requests total
             return resp.text
         except Exception as e:
-            logger.debug(f'Attempt {attempt+1} failed: {e}')
+            logger.warning(f'Attempt {attempt+1} failed for {url}: {e}')
             if attempt < max_retries - 1:
                 time.sleep(5)
     return None
 
 
-def scrape_team_season(team_abbr: str, season: int) -> List[Dict]:
-    """Scrape per_game_stats table from a team's season page."""
-    if should_skip(team_abbr, season):
-        return []
-
-    url = f'{BASE_URL}/teams/{team_abbr}/{season}.html'
+def scrape_season(year: int, players: dict) -> int:
+    """Parse one season's advanced page; aggregate into the players dict (keyed by player id)."""
+    url = f'{BASE}/leagues/NBA_{year}_advanced.html'
     html = fetch(url)
     if not html:
-        return []
+        logger.warning(f'{year}: no data')
+        return 0
 
     soup = BeautifulSoup(html, 'html.parser')
-    table = soup.find('table', {'id': 'per_game_stats'})
+    table = soup.find('table', {'id': 'advanced'})
     if not table:
-        return []
+        logger.warning(f'{year}: no advanced table')
+        return 0
 
-    players = []
+    # Group this season's rows by player id (a player traded mid-year has multiple rows)
+    season_rows: dict = {}
     for row in table.select('tbody tr'):
-        # Get player name (data-stat="name_display")
         name_td = row.find('td', {'data-stat': 'name_display'})
         if not name_td:
             continue
-
-        name = name_td.get_text(strip=True)
-        if not name or name == 'Team Totals':
+        link = name_td.find('a')
+        if not link or not link.get('href'):
             continue
 
-        # Get position
-        pos_td = row.find(['td', 'th'], {'data-stat': 'pos'})
+        pid = link['href'].split('/')[-1].replace('.html', '')  # e.g. "wallage01"
+        name = name_td.get_text(strip=True)
+
+        team_td = row.find('td', {'data-stat': 'team_name_abbr'})
+        team = team_td.get_text(strip=True) if team_td else ''
+
+        pos_td = row.find('td', {'data-stat': 'pos'})
         pos = pos_td.get_text(strip=True) if pos_td else 'G'
 
-        # Get games played
         g_td = row.find('td', {'data-stat': 'games'})
-        games = 0
-        if g_td:
-            try:
-                games = int(g_td.get_text(strip=True) or 0)
-            except (ValueError, TypeError):
-                pass
-
-        # Get VORP - Value Over Replacement Player (data-stat="vorp")
         vorp_td = row.find('td', {'data-stat': 'vorp'})
-        vorp = 0.0
-        if vorp_td:
-            try:
-                vorp = float(vorp_td.get_text(strip=True) or 0)
-            except (ValueError, TypeError):
-                pass
+        try:
+            g = int(g_td.get_text(strip=True) or 0)
+        except (ValueError, TypeError):
+            g = 0
+        try:
+            vorp = float(vorp_td.get_text(strip=True) or 0)
+        except (ValueError, TypeError):
+            vorp = 0.0
 
-        players.append({
-            'name': name,
-            'position': pos,
-            'games': games,
-            'vorp': vorp,
+        season_rows.setdefault(pid, []).append({
+            'name': name, 'team': team, 'pos': pos, 'g': g, 'vorp': vorp
         })
 
+    count = 0
+    for pid, rows in season_rows.items():
+        # If a combined NTM row exists, it holds the full-season total (avoids double-count).
+        combined = next((r for r in rows if NTM_RE.match(r['team'])), None)
+        if combined:
+            season_g = combined['g']
+            season_vorp = combined['vorp']
+            teams = [r['team'] for r in rows if not NTM_RE.match(r['team'])]
+        else:
+            r0 = rows[0]
+            season_g = r0['g']
+            season_vorp = r0['vorp']
+            teams = [r0['team']]
+
+        name = rows[0]['name']
+        pos = rows[0]['pos']
+
+        if pid not in players:
+            players[pid] = {'name': name, 'pos': pos, 'games': 0, 'vorp': 0.0, 'franchises': set()}
+
+        p = players[pid]
+        p['games'] += season_g
+        p['vorp'] += season_vorp
+        p['name'] = name
+        p['pos'] = pos  # keep most recent position
+        for t in teams:
+            fr = ABBR_TO_FRANCHISE.get(t)
+            if fr:
+                p['franchises'].add(fr)
+        count += 1
+
+    logger.info(f'{year}: {count} players')
+    return count
+
+
+def build() -> dict:
+    players: dict = {}
+    for yr in SEASONS:
+        scrape_season(yr, players)
     return players
 
 
-def build_database() -> Dict:
-    """Scrape all team/seasons and aggregate by player name."""
-    # Structure: player_name -> {position, total_games, total_ws}
-    players: Dict[str, Dict] = {}
-
-    total_combos = len(TEAM_ABBRS) * 27  # 2000-2026
-    done = 0
-
-    for team_abbr in TEAM_ABBRS:
-        team_name = TEAM_NAMES[team_abbr]
-        logger.info(f'\n=== {team_name} ===')
-
-        for season in range(2000, 2027):
-            done += 1
-            roster = scrape_team_season(team_abbr, season)
-
-            if roster:
-                logger.info(f'  {season}: {len(roster)} players (progress: {done}/{total_combos})')
-
-                for p in roster:
-                    name = p['name']
-                    if name not in players:
-                        players[name] = {
-                            'position': p['position'],
-                            'total_games': 0,
-                            'total_vorp': 0.0,
-                        }
-
-                    players[name]['total_games'] += p['games']
-                    players[name]['total_vorp'] += p['vorp']
-            else:
-                logger.debug(f'  {season}: no data')
-
-    logger.info(f'\nAggregated {len(players)} unique players')
-    return players
-
-
-def organize_by_team(players: Dict) -> Dict:
-    """
-    Organize aggregated players back into teams.
-    For simplicity, assign each player to their most common team from all appearances.
-    For now, just return organized by a generic team structure.
-    Actually, we'll just return all players organized alphabetically and let the game load them.
-    """
-    # For the game, we need players organized by team name
-    # Since players move teams, we'll just use a simple structure
-    # The game expects: team_name -> [players]
-    # We'll put all players in a catch-all structure or distribute them reasonably
-
-    # Actually, let's be smarter: for each player, track which team they appeared for most
-    # But for simplicity in this first pass, we'll just put them in one team
-    # OR better: put them in every team they ever played for
-
-    # For the game's purposes, let's put each player in the first team they'll be found in
-    # alphabetically to have reasonable distribution
-
-    teams_dict = {name: [] for name in TEAM_NAMES.values()}
-
-    for player_name, data in sorted(players.items()):
-        # Put each player in a team (we don't track which team in the aggregation)
-        # For the game, it doesn't matter which team they're listed under
-        # Just distribute evenly
-        team_names_list = list(TEAM_NAMES.values())
-        # Hash player name to a team for distribution
-        team_idx = hash(player_name) % len(team_names_list)
-        team = team_names_list[team_idx]
-
-        teams_dict[team].append({
-            'name': player_name,
-            'position': data['position'],
-            'careerGames': data['total_games'],
-            'careerVORP': round(data['total_vorp'], 1),
+def organize_by_team(players: dict) -> dict:
+    """File each player under every current franchise they played for."""
+    teams = {fr: [] for fr in set(ABBR_TO_FRANCHISE.values())}
+    for pid, p in players.items():
+        entry = {
+            'name': p['name'],
+            'position': p['pos'] or 'G',
+            'careerGames': p['games'],
+            'careerVORP': round(p['vorp'], 1),
             'draftRound': 1,
-            'allStarAppearances': 0
-        })
+            'allStarAppearances': 0,
+        }
+        for fr in p['franchises']:
+            teams[fr].append(entry)
+    return teams
 
-    return teams_dict
 
-
-def export_to_datajs(teams_dict: Dict, filename: str = 'data.js'):
-    """Export to data.js JavaScript format."""
+def export_to_datajs(teams: dict, filename: str = 'data.js'):
+    names = sorted(k for k, v in teams.items() if v)
     lines = ['const playersData = {']
 
-    teams = sorted(k for k, v in teams_dict.items() if v)
-
-    for i, team in enumerate(teams):
-        players = sorted(teams_dict[team], key=lambda p: p['name'])
-        lines.append(f'  "{team}": [')
-
-        for j, p in enumerate(players):
-            comma = ',' if j < len(players) - 1 else ''
-            safe_name = p['name'].replace('\\', '\\\\').replace('"', '\\"')
+    for i, fr in enumerate(names):
+        roster = sorted(teams[fr], key=lambda x: x['name'])
+        lines.append(f'  "{fr}": [')
+        for j, p in enumerate(roster):
+            comma = ',' if j < len(roster) - 1 else ''
+            sn = p['name'].replace('\\', '\\\\').replace('"', '\\"')
             lines.append(
-                f'    {{"name": "{safe_name}", "position": "{p["position"]}", '
+                f'    {{"name": "{sn}", "position": "{p["position"]}", '
                 f'"careerGames": {p["careerGames"]}, "careerVORP": {p["careerVORP"]}, '
                 f'"draftRound": {p["draftRound"]}, "allStarAppearances": {p["allStarAppearances"]}}}{comma}'
             )
-
-        team_comma = ',' if i < len(teams) - 1 else ''
+        team_comma = ',' if i < len(names) - 1 else ''
         lines.append(f'  ]{team_comma}')
 
     lines.append('};')
@@ -245,22 +219,20 @@ def export_to_datajs(teams_dict: Dict, filename: str = 'data.js'):
     with open(filename, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines) + '\n')
 
-    total = sum(len(teams_dict[t]) for t in teams)
-    logger.info(f'\nExported {total} players to {filename}')
-    for t in teams:
-        logger.info(f'  {t}: {len(teams_dict[t])} players')
+    total = sum(len(teams[t]) for t in names)
+    logger.info(f'\nExported {total} player-team entries across {len(names)} teams to {filename}')
+    for t in names:
+        logger.info(f'  {t}: {len(teams[t])}')
 
 
 def main():
-    logger.info('Starting scrape: 30 teams × 27 years = ~750 pages')
-    players = build_database()
-
+    logger.info(f'Scraping {len(SEASONS)} league-advanced pages ({SEASONS[0]}-{SEASONS[-1]})')
+    players = build()
     if not players:
         logger.error('No players scraped')
         return 1
-
-    teams_dict = organize_by_team(players)
-    export_to_datajs(teams_dict)
+    logger.info(f'\nAggregated {len(players)} unique players')
+    export_to_datajs(organize_by_team(players))
     logger.info('Done!')
     return 0
 
