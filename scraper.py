@@ -281,6 +281,19 @@ def scrape_tiered_team(award_name: str, url_path: str) -> dict:
         return {}
 
     soup = BeautifulSoup(html, 'html.parser')
+
+    # Log all table IDs in normal HTML
+    normal_ids = [t.get('id', 'no-id') for t in soup.find_all('table')]
+    logger.info(f'{award_name}: normal table IDs: {normal_ids}')
+    # Log all table IDs inside HTML comments
+    comment_ids = []
+    for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
+        for t in BeautifulSoup(str(comment), 'html.parser').find_all('table'):
+            tid = t.get('id')
+            if tid:
+                comment_ids.append(tid)
+    logger.info(f'{award_name}: comment table IDs: {comment_ids}')
+
     table = find_table(soup, url_path, f'div_{url_path}')
     if not table:
         logger.warning(f'{award_name}: no table')
