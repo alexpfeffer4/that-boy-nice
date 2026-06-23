@@ -1247,11 +1247,17 @@
 
         setTimeout(() => {
           if (frame < totalFrames) {
-            // Pick a random team that isn't the final answer (avoid spoiling)
-            let randomTeam;
-            do { randomTeam = gameState.teams[Math.floor(Math.random() * gameState.teams.length)]; }
-            while (randomTeam === gameState.currentTeam && frame > totalFrames - 4);
-            display.src = getTeamLogo(randomTeam);
+            // Show the correct team in final frames so it looks like landing on it
+            let teamToShow;
+            if (frame >= totalFrames - 4) {
+              teamToShow = gameState.currentTeam;
+            } else {
+              let randomTeam;
+              do { randomTeam = gameState.teams[Math.floor(Math.random() * gameState.teams.length)]; }
+              while (randomTeam === gameState.currentTeam);
+              teamToShow = randomTeam;
+            }
+            display.src = getTeamLogo(teamToShow);
             frame++;
             scheduleNext();
           } else {
