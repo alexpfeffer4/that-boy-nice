@@ -152,18 +152,23 @@ def scrape_season(year: int, players: dict) -> int:
         pos = pos_td.get_text(strip=True) if pos_td else 'G'
 
         g_td = row.find('td', {'data-stat': 'games'})
+        gs_td = row.find('td', {'data-stat': 'games_started'})
         vorp_td = row.find('td', {'data-stat': 'vorp'})
         try:
             g = int(g_td.get_text(strip=True) or 0)
         except (ValueError, TypeError):
             g = 0
         try:
+            gs = int(gs_td.get_text(strip=True) or 0) if gs_td else 0
+        except (ValueError, TypeError):
+            gs = 0
+        try:
             vorp = float(vorp_td.get_text(strip=True) or 0)
         except (ValueError, TypeError):
             vorp = 0.0
 
         season_rows.setdefault(pid, []).append({
-            'name': name, 'team': team, 'pos': pos, 'g': g, 'vorp': vorp
+            'name': name, 'team': team, 'pos': pos, 'g': g, 'gs': gs, 'vorp': vorp
         })
 
     count = 0
@@ -171,11 +176,13 @@ def scrape_season(year: int, players: dict) -> int:
         combined = next((r for r in rows if NTM_RE.match(r['team'])), None)
         if combined:
             season_g = combined['g']
+            season_gs = combined['gs']
             season_vorp = combined['vorp']
             teams = [r['team'] for r in rows if not NTM_RE.match(r['team'])]
         else:
             r0 = rows[0]
             season_g = r0['g']
+            season_gs = r0['gs']
             season_vorp = r0['vorp']
             teams = [r0['team']]
 
@@ -188,11 +195,13 @@ def scrape_season(year: int, players: dict) -> int:
                 'mvpAwards': 0, 'fmvpAwards': 0, 'dpoyAwards': 0,
                 'royAward': 0, 'smoyAwards': 0, 'mipAwards': 0, 'draftPick': 0,
                 'allNBA1': 0, 'allNBA2': 0, 'allNBA3': 0,
-                'allDef1': 0, 'allDef2': 0, 'undrafted': False, 'lastSeason': year
+                'allDef1': 0, 'allDef2': 0, 'undrafted': False, 'lastSeason': year,
+                'gamesStarted': 0
             }
 
         p = players[pid]
         p['games'] += season_g
+        p['gamesStarted'] += season_gs
         p['vorp'] += season_vorp
         p['name'] = name
         p['lastSeason'] = max(p['lastSeason'], year)
@@ -480,6 +489,7 @@ def organize_by_team(players: dict) -> dict:
             'name': p['name'],
             'positions': positions,
             'careerGames': p['games'],
+            'careerGS': p.get('gamesStarted', 0),
             'careerVORP': round(p['vorp'], 1),
             'draftPick': p['draftPick'],
             'mvpAwards': p['mvpAwards'],
@@ -516,7 +526,7 @@ def export_to_datajs(teams: dict, filename: str = 'data.js'):
             lines.append(
                 f'    {{'
                 f'"name": "{sn}", "positions": [{pos_json}], '
-                f'"careerGames": {p["careerGames"]}, "careerVORP": {p["careerVORP"]}, '
+                f'"careerGames": {p["careerGames"]}, "careerGS": {p["careerGS"]}, "careerVORP": {p["careerVORP"]}, '
                 f'"draftPick": {p["draftPick"]}, '
                 f'"mvpAwards": {p["mvpAwards"]}, "fmvpAwards": {p["fmvpAwards"]}, '
                 f'"dpoyAwards": {p["dpoyAwards"]}, "royAward": {p["royAward"]}, '
