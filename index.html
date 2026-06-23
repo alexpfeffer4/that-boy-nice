@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>that boy nice</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -635,6 +636,187 @@
       cursor: not-allowed;
     }
 
+    .start-screen {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .start-options {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 30px;
+    }
+
+    .start-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 20px;
+      border-radius: 12px;
+      border: none;
+      font-size: 1.2rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.1s;
+      color: #fff;
+    }
+
+    .start-btn:hover { transform: translateY(-2px); opacity: 0.92; }
+
+    .daily-btn {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .practice-btn {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .start-desc {
+      font-size: 0.8rem;
+      font-weight: 400;
+      opacity: 0.85;
+    }
+
+    .already-played {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .already-played h3 { margin-bottom: 8px; font-size: 1.1rem; }
+    .already-played .prev-score { font-size: 2rem; font-weight: 900; color: #4ECDC4; }
+
+    .rival-banner {
+      background: linear-gradient(135deg, rgba(240,147,251,0.2) 0%, rgba(245,87,108,0.2) 100%);
+      border: 1px solid rgba(240,147,251,0.4);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .rival-banner strong { display: block; font-size: 1.1rem; margin-bottom: 4px; }
+
+    .rival-comparison {
+      margin-top: 20px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .rival-header {
+      display: grid;
+      grid-template-columns: 60px 1fr 80px 80px;
+      padding: 10px 16px;
+      background: rgba(255,255,255,0.1);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .rival-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 80px 80px;
+      padding: 10px 16px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.85rem;
+      align-items: center;
+    }
+
+    .rival-row .winner { color: #4ECDC4; font-weight: 700; }
+    .rival-row .loser { color: rgba(255,255,255,0.4); }
+
+    .rival-total {
+      display: flex;
+      justify-content: space-around;
+      padding: 16px;
+      border-top: 2px solid rgba(255,255,255,0.15);
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .rival-winner-banner {
+      text-align: center;
+      padding: 12px;
+      font-size: 1.3rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .share-card-wrap {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+    }
+
+    .share-card {
+      width: 480px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+      padding: 30px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #fff;
+    }
+
+    .share-card-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+    .share-card-date { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-bottom: 20px; }
+    .share-card-score { font-size: 3rem; font-weight: 900; margin-bottom: 4px; }
+    .share-card-label { font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 20px; }
+
+    .share-card-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      font-size: 0.85rem;
+    }
+
+    .share-card-pos { width: 30px; font-weight: 700; opacity: 0.6; }
+    .share-card-name { flex: 1; }
+    .share-card-pts { font-weight: 700; }
+
+    .share-card-bar {
+      height: 4px;
+      border-radius: 2px;
+      margin-top: 4px;
+    }
+
+    .share-card-footer {
+      margin-top: 16px;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.4);
+      text-align: center;
+    }
+
+    .end-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .rival-btn {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .rival-btn:hover { opacity: 0.88; }
+
     @media (max-width: 480px) {
       h1 {
         font-size: 2.5rem;
@@ -657,13 +839,30 @@
 <body>
   <div class="wheel-pointer"></div>
 
+  <div class="share-card-wrap" id="shareCardWrap"></div>
+
   <div class="container">
     <header>
       <h1>that boy nice</h1>
-      <p class="tagline">NBA Obscurity Lineup Challenge</p>
+      <p class="tagline" id="tagline">NBA Obscurity Lineup Challenge</p>
     </header>
 
-    <div class="game-section" id="gameSection">
+    <div id="startScreen" class="game-section start-screen">
+      <div id="alreadyPlayedBanner"></div>
+      <div id="rivalBanner"></div>
+      <div class="start-options" id="startOptions">
+        <button class="start-btn daily-btn" onclick="startDailyChallenge()">
+          📅 Daily Challenge
+          <span class="start-desc">Same 5 teams for everyone today</span>
+        </button>
+        <button class="start-btn practice-btn" onclick="startPractice()">
+          🏀 Practice
+          <span class="start-desc">Random teams, no tracking</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="game-section" id="gameSection" style="display:none;">
       <div class="lives-display" id="livesDisplay">❤️ ❤️ ❤️</div>
 
       <div class="mode-selector" id="modeSelector">
@@ -751,8 +950,127 @@
       teams: [],
       lives: 3,
       hasSpun: false,
-      gameMode: 'oldhead'
+      gameMode: 'oldhead',
+      isDailyChallenge: false,
+      dailyTeams: [],
+      dailyTeamIndex: 0,
+      rivalData: null,
     };
+
+    // --- Seeded PRNG (mulberry32) ---
+    function mulberry32(seed) {
+      return function() {
+        seed += 0x6D2B79F5;
+        let t = seed;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    function getTodayString() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function getDailySeed(dateStr) {
+      let hash = 0;
+      for (let i = 0; i < dateStr.length; i++) {
+        hash = Math.imul(31, hash) + dateStr.charCodeAt(i) | 0;
+      }
+      return Math.abs(hash);
+    }
+
+    function getDailyTeams(allTeams, dateStr) {
+      const rng = mulberry32(getDailySeed(dateStr));
+      const shuffled = [...allTeams];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled.slice(0, 5);
+    }
+
+    // --- Rival URL encoding ---
+    function encodeRivalData() {
+      const data = {
+        d: getTodayString(),
+        s: gameState.totalScore,
+        m: gameState.gameMode,
+        p: positions.filter(pos => gameState.lineup[pos]).map(pos => {
+          const p = gameState.lineup[pos];
+          return { pos, name: p.name, score: p.score };
+        })
+      };
+      return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    }
+
+    function decodeRivalData(encoded) {
+      try {
+        return JSON.parse(decodeURIComponent(escape(atob(encoded))));
+      } catch { return null; }
+    }
+
+    function getRivalParam() {
+      return new URLSearchParams(window.location.search).get('rival');
+    }
+
+    function generateRivalURL() {
+      const base = window.location.origin + window.location.pathname;
+      return `${base}?rival=${encodeRivalData()}`;
+    }
+
+    // --- Mode start functions ---
+    function startDailyChallenge() {
+      const dateStr = getTodayString();
+      const alreadyKey = `tbn_daily_${dateStr}`;
+      const saved = localStorage.getItem(alreadyKey);
+
+      gameState.isDailyChallenge = true;
+      gameState.dailyTeams = getDailyTeams(gameState.teams, dateStr);
+      gameState.dailyTeamIndex = 0;
+
+      // Check rival param
+      const rivalParam = getRivalParam();
+      if (rivalParam) {
+        const rd = decodeRivalData(rivalParam);
+        if (rd && rd.d === dateStr) {
+          gameState.rivalData = rd;
+        }
+      }
+
+      document.getElementById('tagline').textContent = `📅 Daily Challenge — ${dateStr}`;
+      document.getElementById('startScreen').style.display = 'none';
+      document.getElementById('gameSection').style.display = 'block';
+
+      // Lock mode to oldhead for daily
+      gameState.gameMode = 'oldhead';
+      document.querySelectorAll('input[name="gameMode"]').forEach(inp => {
+        inp.disabled = true;
+        if (inp.value === 'oldhead') inp.checked = true;
+      });
+
+      initGame();
+    }
+
+    function startPractice() {
+      gameState.isDailyChallenge = false;
+      document.getElementById('startScreen').style.display = 'none';
+      document.getElementById('gameSection').style.display = 'block';
+      initGame();
+    }
+
+    function initGame() {
+      buildReel();
+      gameState.currentTeam = null;
+      document.getElementById('currentTeam').textContent = '';
+      document.getElementById('reelDisplay').src = '';
+      document.getElementById('positionLabel').textContent = 'Spin the wheel to start';
+      document.getElementById('spinBtn').disabled = false;
+      document.getElementById('playerInput').disabled = true;
+      document.getElementById('submitBtn').disabled = true;
+      updateLivesDisplay();
+    }
 
     // Remove accents from string
     function removeAccents(str) {
@@ -1285,7 +1603,9 @@
 
       const display = document.getElementById('reelDisplay');
       const window_ = document.getElementById('reelWindow');
-      gameState.currentTeam = getRandomTeam();
+      gameState.currentTeam = gameState.isDailyChallenge
+        ? gameState.dailyTeams[gameState.dailyTeamIndex++]
+        : getRandomTeam();
 
       display.classList.add('spinning');
       window_.classList.add('active-spin');
@@ -1386,7 +1706,7 @@
                   <div style="font-size: 1.2rem; margin-bottom: 10px;">Final Score: ${gameState.totalScore}</div>
                   <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">You filled ${Object.keys(gameState.lineup).length}/5 positions</div>
                 </div>
-                <button class="spin-btn" onclick="location.reload()">PLAY AGAIN</button>
+                <button class="spin-btn" onclick="location.href=location.pathname">PLAY AGAIN</button>
               </div>
             `;
           }, 1500);
@@ -1411,7 +1731,7 @@
                   <div style="font-size: 1.2rem; margin-bottom: 10px;">Final Score: ${gameState.totalScore}</div>
                   <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">You filled ${Object.keys(gameState.lineup).length}/5 positions</div>
                 </div>
-                <button class="spin-btn" onclick="location.reload()">PLAY AGAIN</button>
+                <button class="spin-btn" onclick="location.href=location.pathname">PLAY AGAIN</button>
               </div>
             `;
           }, 1500);
@@ -1469,6 +1789,16 @@
       const label = getScoreLabel(gameState.totalScore);
       const totalTier = getScoreTier(Math.round(gameState.totalScore / 5));
 
+      if (gameState.isDailyChallenge) {
+        localStorage.setItem(`tbn_daily_${getTodayString()}`, JSON.stringify({ score: gameState.totalScore, label }));
+      }
+
+      const rivalHTML = gameState.rivalData ? buildRivalComparison() : '';
+      const dailyBtns = gameState.isDailyChallenge ? `
+        <button class="rival-btn" onclick="challengeRival()">⚔️ CHALLENGE A RIVAL</button>
+        <button class="share-btn" onclick="downloadShareCard()" style="margin-top:0">🖼️ SAVE SHARE CARD</button>
+      ` : '';
+
       document.getElementById('gameSection').innerHTML = `
         <div class="end-screen">
           <div class="result-card">
@@ -1479,17 +1809,23 @@
             </div>
             <div class="result-players" id="resultPlayers"></div>
           </div>
-          <button class="share-btn" onclick="shareResult()">📋 COPY RESULT</button>
-          <button class="spin-btn" style="margin-top: 10px;" onclick="location.reload()">PLAY AGAIN</button>
+          ${rivalHTML}
+          <div class="end-btns">
+            ${dailyBtns}
+            <button class="share-btn" onclick="shareResult()">📋 COPY RESULT</button>
+            <button class="spin-btn" style="margin-top:0" onclick="location.href=location.pathname">PLAY AGAIN</button>
+          </div>
         </div>
       `;
+
+      buildShareCard();
 
       const container = document.getElementById('resultPlayers');
       positions.forEach(pos => {
         const player = gameState.lineup[pos];
         if (!player) return;
         const tier = getScoreTier(player.score);
-        const barWidth = Math.round((player.score / 99) * 100);
+        const barWidth = Math.round((player.score / 100) * 100);
         const row = document.createElement('div');
         row.className = 'result-player-row';
         row.innerHTML = `
@@ -1503,12 +1839,97 @@
         container.appendChild(row);
       });
 
-      // Animate bars in after paint
       requestAnimationFrame(() => requestAnimationFrame(() => {
         container.querySelectorAll('.result-bar').forEach(bar => {
           bar.style.width = bar.dataset.width;
         });
       }));
+    }
+
+    function buildRivalComparison() {
+      const rd = gameState.rivalData;
+      const rivalPicks = {};
+      rd.p.forEach(p => { rivalPicks[p.pos] = p; });
+      const yourTotal = gameState.totalScore;
+      const theirTotal = rd.s;
+      const youWin = yourTotal > theirTotal;
+      const tie = yourTotal === theirTotal;
+      const winnerText = tie ? "🤝 It's a tie!" : (youWin ? '🏆 You win!' : '😤 Rival wins!');
+      const winnerColor = tie ? '#FFD700' : (youWin ? '#4ECDC4' : '#f5576c');
+      const rows = positions.map(pos => {
+        const mine = gameState.lineup[pos];
+        const theirs = rivalPicks[pos];
+        if (!mine && !theirs) return '';
+        const myScore = mine ? mine.score : 0;
+        const theirScore = theirs ? theirs.score : 0;
+        const iWin = myScore > theirScore;
+        const draw = myScore === theirScore;
+        return `<div class="rival-row">
+          <span>${pos}</span>
+          <span class="${iWin || draw ? 'winner' : 'loser'}">${mine ? mine.name : '—'} (${myScore})</span>
+          <span class="${!iWin || draw ? 'winner' : 'loser'}">${theirs ? theirs.name : '—'} (${theirScore})</span>
+          <span>${iWin ? '✅' : draw ? '➖' : '❌'}</span>
+        </div>`;
+      }).join('');
+      return `
+        <div class="rival-comparison">
+          <div class="rival-header"><span>Pos</span><span>You</span><span>Rival</span><span></span></div>
+          ${rows}
+          <div class="rival-total">
+            <span>You: <strong>${yourTotal}</strong></span>
+            <span>Rival: <strong>${theirTotal}</strong></span>
+          </div>
+        </div>
+        <div class="rival-winner-banner" style="color:${winnerColor}">${winnerText}</div>
+      `;
+    }
+
+    function buildShareCard() {
+      const label = getScoreLabel(gameState.totalScore);
+      const tierColors = { 'tier-god': '#a78bfa', 'tier-great': '#34d399', 'tier-good': '#fbbf24', 'tier-mid': '#fb923c', 'tier-casual': '#f87171' };
+      const rows = positions.filter(pos => gameState.lineup[pos]).map(pos => {
+        const p = gameState.lineup[pos];
+        const tier = getScoreTier(p.score);
+        const color = tierColors[tier];
+        const barW = Math.round((p.score / 100) * 200);
+        return `<div class="share-card-row">
+          <span class="share-card-pos">${pos}</span>
+          <div style="flex:1"><div class="share-card-name">${p.name}</div>
+          <div class="share-card-bar" style="width:${barW}px;background:${color}"></div></div>
+          <span class="share-card-pts" style="color:${color}">${p.score}</span>
+        </div>`;
+      }).join('');
+      const modeTag = gameState.isDailyChallenge ? `📅 Daily · ${getTodayString()}` : '🏀 Practice';
+      document.getElementById('shareCardWrap').innerHTML = `
+        <div class="share-card" id="shareCard">
+          <div class="share-card-title">that boy nice</div>
+          <div class="share-card-date">${modeTag} · ${gameState.gameMode === 'oldhead' ? 'Oldhead Mode' : 'Classic Mode'}</div>
+          <div class="share-card-score">${gameState.totalScore}</div>
+          <div class="share-card-label">${label}</div>
+          ${rows}
+          <div class="share-card-footer">thatboynice.vercel.app</div>
+        </div>
+      `;
+    }
+
+    function challengeRival() {
+      const url = generateRivalURL();
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.querySelector('.rival-btn');
+        btn.textContent = '✓ LINK COPIED — send to your rival!';
+        setTimeout(() => { btn.textContent = '⚔️ CHALLENGE A RIVAL'; }, 3000);
+      }).catch(() => { prompt('Send this link to your rival:', url); });
+    }
+
+    function downloadShareCard() {
+      const card = document.getElementById('shareCard');
+      if (!card || typeof html2canvas === 'undefined') return;
+      html2canvas(card, { backgroundColor: '#1a1a2e', scale: 2 }).then(canvas => {
+        const a = document.createElement('a');
+        a.download = `tbn-${getTodayString()}.png`;
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+      });
     }
 
     function shareResult() {
@@ -1518,10 +1939,12 @@
         .map(pos => {
           const p = gameState.lineup[pos];
           const tier = getScoreTier(p.score);
-          return `${tierEmoji[tier]} ${pos} ${p.name} (${p.score})`;
+          return `${tierEmoji[tier]} ${pos}: ${p.name} (${p.score})`;
         });
       const label = getScoreLabel(gameState.totalScore);
-      const text = `that boy nice 🏀\n${label}\nScore: ${gameState.totalScore}/495\n\n${lines.join('\n')}\n\nthatboynice.vercel.app`;
+      const dateTag = gameState.isDailyChallenge ? ` · ${getTodayString()}` : '';
+      const modeTag = gameState.gameMode === 'oldhead' ? 'Oldhead' : 'Classic';
+      const text = `that boy nice 🏀${dateTag} [${modeTag}]\n${label}\nScore: ${gameState.totalScore}\n\n${lines.join('\n')}\n\nthatboynice.vercel.app`;
       navigator.clipboard.writeText(text).then(() => {
         const btn = document.querySelector('.share-btn');
         btn.textContent = '✓ COPIED!';
@@ -1555,23 +1978,37 @@
     });
 
     // Initialize
-    console.log('Initializing game...');
-    console.log('playersData exists:', typeof playersData !== 'undefined');
-
     loadPlayers();
-    console.log('Teams loaded:', gameState.teams.length);
 
     if (gameState.teams.length > 0) {
-      buildReel();
-      gameState.currentTeam = null;
-      document.getElementById('currentTeam').textContent = '';
-      document.getElementById('reelDisplay').src = '';
-      document.getElementById('positionLabel').textContent = 'Spin the wheel to start';
-      document.getElementById('spinBtn').disabled = false;
-      document.getElementById('playerInput').disabled = true;
-      document.getElementById('submitBtn').disabled = true;
-      updateLivesDisplay();
-      console.log('Game ready for first spin');
+      const dateStr = getTodayString();
+      const alreadyKey = `tbn_daily_${dateStr}`;
+      const saved = JSON.parse(localStorage.getItem(alreadyKey) || 'null');
+      const rivalParam = getRivalParam();
+
+      // Show already-played banner
+      if (saved) {
+        document.getElementById('alreadyPlayedBanner').innerHTML = `
+          <div class="already-played">
+            <h3>📅 Already played today!</h3>
+            <div class="prev-score">${saved.score}</div>
+            <div style="font-size:0.85rem;opacity:0.7;margin-top:4px">${saved.label}</div>
+          </div>
+        `;
+      }
+
+      // Show rival banner if URL has rival param
+      if (rivalParam) {
+        const rd = decodeRivalData(rivalParam);
+        if (rd && rd.d === dateStr) {
+          document.getElementById('rivalBanner').innerHTML = `
+            <div class="rival-banner">
+              <strong>⚔️ You've been challenged!</strong>
+              Their score: ${rd.s} pts · Play Daily Challenge to compare
+            </div>
+          `;
+        }
+      }
     } else {
       console.error('No teams loaded!');
     }
