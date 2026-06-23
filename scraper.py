@@ -110,6 +110,7 @@ def fetch(url: str, max_retries: int = 5, timeout: int = 30):
                 return None
             resp.raise_for_status()
             time.sleep(2)  # Polite delay
+            resp.encoding = 'utf-8'
             return resp.text
         except requests.exceptions.Timeout:
             logger.warning(f'Timeout on attempt {attempt+1} for {url}')

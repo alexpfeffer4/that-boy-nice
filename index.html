@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -1602,9 +1602,12 @@
       updateLivesDisplay();
     }
 
-    // Remove accents from string
+    // Normalize name for matching: decompose accented chars, strip combining marks, strip remaining non-ASCII
     function removeAccents(str) {
-      return str.normalize('NFKD').replace(/[̀-ͯ]/g, '');
+      return str
+        .normalize('NFKD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/[^\x00-\x7F]/g, '');
     }
 
     // Levenshtein distance
