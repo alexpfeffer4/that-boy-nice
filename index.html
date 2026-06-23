@@ -984,6 +984,11 @@
     }
 
     function loadPlayers() {
+      if (typeof playersData === 'undefined') {
+        console.error('data.js failed to load — playersData is undefined');
+        document.getElementById('message').innerHTML = '<div class="error">Failed to load player data. Try refreshing.</div>';
+        return;
+      }
       players = playersData;
       gameState.teams = Object.keys(players).sort();
     }
