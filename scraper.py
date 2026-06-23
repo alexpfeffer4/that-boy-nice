@@ -280,17 +280,11 @@ def scrape_draft(year: int) -> dict:
 
     soup = BeautifulSoup(html, 'html.parser')
 
-    # Log all table IDs to see what's on the page
     all_tables = soup.find_all('table')
-    table_ids = [t.get('id', 'no-id') for t in all_tables]
-    logger.info(f'Draft {year}: found {len(all_tables)} tables with IDs: {table_ids}')
-
-    # Try to find the draft table - look for any table with player links
     table = None
     for t in all_tables:
         if t.find('a', href=lambda h: h and '/players/' in h):
             table = t
-            logger.info(f'Draft {year}: found table with player links (id={t.get("id", "no-id")})')
             break
 
     if not table:
@@ -304,20 +298,12 @@ def scrape_draft(year: int) -> dict:
         return {}
 
     rows = tbody.find_all('tr')
-    logged_stats = False
     for row in rows:
         link = row.find('a', href=lambda h: h and '/players/' in h)
         if not link:
             continue
 
         name = normalize_name(link.get_text(strip=True))
-
-        # Log first row data-stats to confirm pick column name
-        if not logged_stats and year == 2024:
-            all_tds = row.find_all('td')
-            stat_map = {td.get('data-stat', ''): td.get_text(strip=True) for td in all_tds[:8]}
-            logger.info(f'Draft {year} first row data-stats: {stat_map}')
-            logged_stats = True
 
         # Try multiple data-stat variants for pick number
         pick_td = (row.find('td', {'data-stat': 'pick_number'}) or
