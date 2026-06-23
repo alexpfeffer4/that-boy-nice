@@ -492,6 +492,23 @@
       margin: 4px 0;
     }
 
+    .breakdown-separator {
+      border-top: 1px solid rgba(255,255,255,0.3);
+      padding-top: 8px;
+      margin-top: 8px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .breakdown-total {
+      border-top: 2px solid rgba(255,255,255,0.5);
+      padding-top: 8px;
+      margin-top: 8px;
+      font-weight: 700;
+      color: #4ECDC4;
+      font-size: 0.95rem;
+    }
+
     .center {
       grid-column: span 2;
     }
@@ -832,7 +849,7 @@
       else if (s.draftPick <= 30) score -= 5;
       else if (s.draftPick <= 60) score -= 2;
 
-      return Math.max(1, Math.min(99, Math.round(score * s.recencyMultiplier)));
+      return Math.max(0, Math.min(100, Math.round(score * s.recencyMultiplier)));
     }
 
     function getScoreBreakdown(player) {
@@ -892,10 +909,15 @@
       const subtotal = breakdown.reduce((sum, b) => sum + b.value, 0);
       breakdown.push({ label: `Subtotal`, value: subtotal, isSeparator: true });
 
+      let finalScore = subtotal;
       if (s.recencyMultiplier < 1.0) {
         const multiplierPercent = Math.round(s.recencyMultiplier * 100);
-        breakdown.push({ label: `Recency ×${multiplierPercent}%`, value: Math.round(subtotal * s.recencyMultiplier) - subtotal, isMultiplier: true });
+        const recencyAdjust = Math.round(subtotal * s.recencyMultiplier) - subtotal;
+        breakdown.push({ label: `Recency ×${multiplierPercent}%`, value: recencyAdjust, isMultiplier: true });
+        finalScore = Math.round(subtotal * s.recencyMultiplier);
       }
+
+      breakdown.push({ label: `Total`, value: finalScore, isTotal: true });
 
       return breakdown;
     }
@@ -1021,9 +1043,14 @@
       updateLineup();
       updateScore();
 
-      let breakdownHTML = breakdown.map(b =>
-        `<div class="breakdown-item"><span>${b.label}</span><span>${b.value > 0 ? '+' : ''}${b.value}</span></div>`
-      ).join('');
+      let breakdownHTML = breakdown.map(b => {
+        if (b.isSeparator) {
+          return `<div class="breakdown-item breakdown-separator"><span>${b.label}</span><span>${b.value > 0 ? '+' : ''}${b.value}</span></div>`;
+        } else if (b.isTotal) {
+          return `<div class="breakdown-item breakdown-total"><span>${b.label}</span><span>${b.value > 0 ? '+' : ''}${b.value}</span></div>`;
+        }
+        return `<div class="breakdown-item"><span>${b.label}</span><span>${b.value > 0 ? '+' : ''}${b.value}</span></div>`;
+      }).join('');
 
       document.getElementById('message').innerHTML = `
         <div class="success">✓ ${player.name} added to ${position}! (+${score} pts)</div>
