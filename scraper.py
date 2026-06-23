@@ -184,7 +184,7 @@ def scrape_season(year: int, players: dict) -> int:
 
         if pid not in players:
             players[pid] = {
-                'name': name, 'pos': pos, 'games': 0, 'vorp': 0.0, 'franchises': set(),
+                'name': name, 'positions': {}, 'games': 0, 'vorp': 0.0, 'franchises': set(),
                 'mvpAwards': 0, 'fmvpAwards': 0, 'dpoyAwards': 0,
                 'royAward': 0, 'smoyAwards': 0, 'mipAwards': 0, 'draftPick': 0
             }
@@ -193,7 +193,7 @@ def scrape_season(year: int, players: dict) -> int:
         p['games'] += season_g
         p['vorp'] += season_vorp
         p['name'] = name
-        p['pos'] = pos
+        p['positions'][pos] = p['positions'].get(pos, 0) + 1
         for t in teams:
             fr = ABBR_TO_FRANCHISE.get(t)
             if fr:
@@ -389,9 +389,16 @@ def organize_by_team(players: dict) -> dict:
     """File each player under every current franchise they played for."""
     teams = {fr: [] for fr in set(ABBR_TO_FRANCHISE.values())}
     for pid, p in players.items():
+        # Get top 2 positions by frequency (or default to 'G')
+        if p['positions']:
+            pos_list = sorted(p['positions'].items(), key=lambda x: x[1], reverse=True)
+            positions = [pos[0] for pos in pos_list[:2]]
+        else:
+            positions = ['G']
+
         entry = {
             'name': p['name'],
-            'position': p['pos'] or 'G',
+            'positions': positions,
             'careerGames': p['games'],
             'careerVORP': round(p['vorp'], 1),
             'draftPick': p['draftPick'],
@@ -418,9 +425,10 @@ def export_to_datajs(teams: dict, filename: str = 'data.js'):
         for j, p in enumerate(roster):
             comma = ',' if j < len(roster) - 1 else ''
             sn = p['name'].replace('\\', '\\\\').replace('"', '\\"')
+            pos_json = ', '.join(f'"{pos}"' for pos in p['positions'])
             lines.append(
                 f'    {{'
-                f'"name": "{sn}", "position": "{p["position"]}", '
+                f'"name": "{sn}", "positions": [{pos_json}], '
                 f'"careerGames": {p["careerGames"]}, "careerVORP": {p["careerVORP"]}, '
                 f'"draftPick": {p["draftPick"]}, '
                 f'"mvpAwards": {p["mvpAwards"]}, "fmvpAwards": {p["fmvpAwards"]}, '
