@@ -615,12 +615,21 @@
       return bestDistance <= 3 ? bestMatch : null;
     }
 
-    function calculateObscurityScore(player) {
-      let score = 100;
+    function getScoreLabel(total) {
+      if (total >= 430) return '👁️ Deep Cuts Archivist';
+      if (total >= 370) return '🔬 Serious Historian';
+      if (total >= 310) return '📚 True Hooper';
+      if (total >= 250) return '🎯 Knowledgeable Fan';
+      if (total >= 190) return '🏀 Solid Basketball Guy';
+      if (total >= 130) return '📺 Casual Watcher';
+      return '😬 You named Steph Curry five times';
+    }
 
+    function getPlayerStats(player) {
       const games = player.careerGames || 0;
       const vorp = player.careerVORP || 0;
       const draftPick = player.draftPick || 0;
+      const undrafted = player.undrafted || false;
       const mvp = player.mvpAwards || 0;
       const fmvp = player.fmvpAwards || 0;
       const dpoy = player.dpoyAwards || 0;
@@ -628,131 +637,116 @@
       const roy = player.royAward || 0;
       const smoy = player.smoyAwards || 0;
       const mip = player.mipAwards || 0;
-      const hofProb = player.hofProb || 0;
-
-      // HOF probability — composite signal that includes championships, career value, era
-      if (hofProb >= 90) score -= 45;
-      else if (hofProb >= 75) score -= 32;
-      else if (hofProb >= 50) score -= 20;
-      else if (hofProb >= 25) score -= 10;
-      else if (hofProb >= 10) score -= 4;
-
-      // Career games — rewards longevity but capped low since stars can be young
-      if (games < 100) score -= 0;
-      else if (games < 300) score -= 2;
-      else if (games < 500) score -= 5;
-      else if (games < 800) score -= 8;
-      else if (games < 1200) score -= 15;
-      else score -= 22;
-
-      // Career VORP — raw career value
-      if (vorp < 0) score -= 0;
-      else if (vorp < 5) score -= 5;
-      else if (vorp < 10) score -= 10;
-      else if (vorp < 15) score -= 15;
-      else if (vorp < 20) score -= 18;
-      else if (vorp < 30) score -= 22;
-      else if (vorp < 50) score -= 30;
-      else if (vorp < 80) score -= 42;
-      else score -= 58;
-
-      // VORP per season — catches elite young players like Wemby
-      // Estimated as vorp / (games / 60), minimum 1 season
+      const allNBA1 = player.allNBA1 || 0;
+      const allNBA2 = player.allNBA2 || 0;
+      const allNBA3 = player.allNBA3 || 0;
+      const allDef1 = player.allDef1 || 0;
+      const allDef2 = player.allDef2 || 0;
       const seasons = Math.max(games / 60, 1);
       const vorpPerSeason = vorp / seasons;
-      if (vorpPerSeason >= 6) score -= 25;
-      else if (vorpPerSeason >= 4) score -= 18;
-      else if (vorpPerSeason >= 2.5) score -= 10;
-      else if (vorpPerSeason >= 1.5) score -= 5;
+      return { games, vorp, draftPick, undrafted, mvp, fmvp, dpoy, allStarApps, roy, smoy, mip,
+               allNBA1, allNBA2, allNBA3, allDef1, allDef2, vorpPerSeason };
+    }
 
-      // Awards — heavier weights, each is a major notoriety signal
-      score -= mvp * 25;
-      score -= fmvp * 18;
-      score -= dpoy * 15;
-      score -= allStarApps * 6;
-      score -= roy * 8;
-      score -= smoy * 4;
-      score -= mip * 3;
+    function calculateObscurityScore(player) {
+      let score = 100;
+      const s = getPlayerStats(player);
 
-      // Draft position — top picks are household names before they play a game
-      if (draftPick === 1) score -= 50;
-      else if (draftPick === 2) score -= 38;
-      else if (draftPick === 3) score -= 28;
-      else if (draftPick <= 5) score -= 20;
-      else if (draftPick <= 14) score -= 12;
-      else if (draftPick <= 30) score -= 6;
-      else if (draftPick <= 60) score -= 2;
+      // Career games
+      if (s.games >= 1200) score -= 22;
+      else if (s.games >= 800) score -= 15;
+      else if (s.games >= 500) score -= 8;
+      else if (s.games >= 300) score -= 5;
+      else if (s.games >= 100) score -= 2;
+
+      // Career VORP
+      if (s.vorp >= 80) score -= 58;
+      else if (s.vorp >= 50) score -= 42;
+      else if (s.vorp >= 30) score -= 30;
+      else if (s.vorp >= 20) score -= 22;
+      else if (s.vorp >= 15) score -= 18;
+      else if (s.vorp >= 10) score -= 15;
+      else if (s.vorp >= 5) score -= 10;
+      else if (s.vorp > 0) score -= 5;
+
+      // VORP per season — catches elite young players
+      if (s.vorpPerSeason >= 6) score -= 25;
+      else if (s.vorpPerSeason >= 4) score -= 18;
+      else if (s.vorpPerSeason >= 2.5) score -= 10;
+      else if (s.vorpPerSeason >= 1.5) score -= 5;
+
+      // Individual awards
+      score -= s.mvp * 25;
+      score -= s.fmvp * 18;
+      score -= s.dpoy * 15;
+      score -= s.allStarApps * 6;
+      score -= s.roy * 8;
+      score -= s.smoy * 4;
+      score -= s.mip * 3;
+
+      // All-NBA teams
+      score -= s.allNBA1 * 15;
+      score -= s.allNBA2 * 10;
+      score -= s.allNBA3 * 6;
+
+      // All-Defensive teams
+      score -= s.allDef1 * 12;
+      score -= s.allDef2 * 6;
+
+      // Draft position
+      if (s.draftPick === 1) score -= 50;
+      else if (s.draftPick === 2) score -= 38;
+      else if (s.draftPick === 3) score -= 28;
+      else if (s.draftPick <= 5) score -= 20;
+      else if (s.draftPick <= 14) score -= 12;
+      else if (s.draftPick <= 30) score -= 6;
+      else if (s.draftPick <= 60) score -= 2;
 
       return Math.max(1, Math.min(99, score));
     }
 
     function getScoreBreakdown(player) {
-      const games = player.careerGames || 0;
-      const vorp = player.careerVORP || 0;
-      const draftPick = player.draftPick || 0;
-      const mvp = player.mvpAwards || 0;
-      const fmvp = player.fmvpAwards || 0;
-      const dpoy = player.dpoyAwards || 0;
-      const allStarApps = player.allStarAppearances || 0;
-      const roy = player.royAward || 0;
-      const smoy = player.smoyAwards || 0;
-      const mip = player.mipAwards || 0;
-
-      const hofProb = player.hofProb || 0;
+      const s = getPlayerStats(player);
       const breakdown = [];
-      breakdown.push({ label: 'Base', value: '100' });
+      breakdown.push({ label: 'Base', value: 100 });
 
-      let hofPenalty = 0;
-      if (hofProb >= 90) hofPenalty = -45;
-      else if (hofProb >= 75) hofPenalty = -32;
-      else if (hofProb >= 50) hofPenalty = -20;
-      else if (hofProb >= 25) hofPenalty = -10;
-      else if (hofProb >= 10) hofPenalty = -4;
-      if (hofPenalty !== 0) breakdown.push({ label: `HOF prob (${hofProb}%)`, value: hofPenalty });
+      if (s.games >= 100) {
+        const p = s.games >= 1200 ? -22 : s.games >= 800 ? -15 : s.games >= 500 ? -8 : s.games >= 300 ? -5 : -2;
+        breakdown.push({ label: `Games (${s.games})`, value: p });
+      }
 
-      let gamesPenalty = 0;
-      if (games >= 1200) gamesPenalty = -22;
-      else if (games >= 800) gamesPenalty = -15;
-      else if (games >= 500) gamesPenalty = -8;
-      else if (games >= 300) gamesPenalty = -5;
-      else if (games >= 100) gamesPenalty = -2;
-      if (gamesPenalty !== 0) breakdown.push({ label: `Games (${games})`, value: gamesPenalty });
+      if (s.vorp > 0) {
+        const p = s.vorp >= 80 ? -58 : s.vorp >= 50 ? -42 : s.vorp >= 30 ? -30 : s.vorp >= 20 ? -22 :
+                  s.vorp >= 15 ? -18 : s.vorp >= 10 ? -15 : s.vorp >= 5 ? -10 : -5;
+        breakdown.push({ label: `VORP (${s.vorp.toFixed(1)})`, value: p });
+      }
 
-      let vorpPenalty = 0;
-      if (vorp >= 80) vorpPenalty = -58;
-      else if (vorp >= 50) vorpPenalty = -42;
-      else if (vorp >= 30) vorpPenalty = -30;
-      else if (vorp >= 20) vorpPenalty = -22;
-      else if (vorp >= 15) vorpPenalty = -18;
-      else if (vorp >= 10) vorpPenalty = -15;
-      else if (vorp >= 5) vorpPenalty = -10;
-      else if (vorp > 0) vorpPenalty = -5;
-      if (vorpPenalty !== 0) breakdown.push({ label: `VORP (${vorp.toFixed(1)})`, value: vorpPenalty });
+      if (s.vorpPerSeason >= 1.5) {
+        const p = s.vorpPerSeason >= 6 ? -25 : s.vorpPerSeason >= 4 ? -18 : s.vorpPerSeason >= 2.5 ? -10 : -5;
+        breakdown.push({ label: `VORP/season (${s.vorpPerSeason.toFixed(1)})`, value: p });
+      }
 
-      const seasons = Math.max(games / 60, 1);
-      const vorpPerSeason = vorp / seasons;
-      let vorpRatePenalty = 0;
-      if (vorpPerSeason >= 6) vorpRatePenalty = -25;
-      else if (vorpPerSeason >= 4) vorpRatePenalty = -18;
-      else if (vorpPerSeason >= 2.5) vorpRatePenalty = -10;
-      else if (vorpPerSeason >= 1.5) vorpRatePenalty = -5;
-      if (vorpRatePenalty !== 0) breakdown.push({ label: `VORP/season (${vorpPerSeason.toFixed(1)})`, value: vorpRatePenalty });
+      if (s.mvp > 0) breakdown.push({ label: `MVP ×${s.mvp}`, value: -25 * s.mvp });
+      if (s.fmvp > 0) breakdown.push({ label: `Finals MVP ×${s.fmvp}`, value: -18 * s.fmvp });
+      if (s.dpoy > 0) breakdown.push({ label: `DPOY ×${s.dpoy}`, value: -15 * s.dpoy });
+      if (s.allStarApps > 0) breakdown.push({ label: `All-Star ×${s.allStarApps}`, value: -6 * s.allStarApps });
+      if (s.roy > 0) breakdown.push({ label: `ROY`, value: -8 });
+      if (s.smoy > 0) breakdown.push({ label: `SMOY ×${s.smoy}`, value: -4 * s.smoy });
+      if (s.mip > 0) breakdown.push({ label: `MIP ×${s.mip}`, value: -3 * s.mip });
+      if (s.allNBA1 > 0) breakdown.push({ label: `All-NBA 1st ×${s.allNBA1}`, value: -15 * s.allNBA1 });
+      if (s.allNBA2 > 0) breakdown.push({ label: `All-NBA 2nd ×${s.allNBA2}`, value: -10 * s.allNBA2 });
+      if (s.allNBA3 > 0) breakdown.push({ label: `All-NBA 3rd ×${s.allNBA3}`, value: -6 * s.allNBA3 });
+      if (s.allDef1 > 0) breakdown.push({ label: `All-Defensive 1st ×${s.allDef1}`, value: -12 * s.allDef1 });
+      if (s.allDef2 > 0) breakdown.push({ label: `All-Defensive 2nd ×${s.allDef2}`, value: -6 * s.allDef2 });
 
-      if (mvp > 0) breakdown.push({ label: `MVP ×${mvp}`, value: -25 * mvp });
-      if (fmvp > 0) breakdown.push({ label: `Finals MVP ×${fmvp}`, value: -18 * fmvp });
-      if (dpoy > 0) breakdown.push({ label: `DPOY ×${dpoy}`, value: -15 * dpoy });
-      if (allStarApps > 0) breakdown.push({ label: `All-Star ×${allStarApps}`, value: -6 * allStarApps });
-      if (roy > 0) breakdown.push({ label: `ROY`, value: -8 });
-      if (smoy > 0) breakdown.push({ label: `SMOY ×${smoy}`, value: -4 * smoy });
-      if (mip > 0) breakdown.push({ label: `MIP ×${mip}`, value: -3 * mip });
-
-      if (draftPick === 1) breakdown.push({ label: 'Draft: #1 overall', value: -50 });
-      else if (draftPick === 2) breakdown.push({ label: `Draft: #2 overall`, value: -38 });
-      else if (draftPick === 3) breakdown.push({ label: `Draft: #3 overall`, value: -28 });
-      else if (draftPick <= 5) breakdown.push({ label: `Draft: #${draftPick}`, value: -20 });
-      else if (draftPick <= 14) breakdown.push({ label: `Draft: #${draftPick}`, value: -12 });
-      else if (draftPick <= 30) breakdown.push({ label: `Draft: #${draftPick}`, value: -6 });
-      else if (draftPick <= 60) breakdown.push({ label: `Draft: #${draftPick}`, value: -2 });
+      if (s.draftPick === 1) breakdown.push({ label: 'Draft: #1 overall', value: -50 });
+      else if (s.draftPick === 2) breakdown.push({ label: 'Draft: #2 overall', value: -38 });
+      else if (s.draftPick === 3) breakdown.push({ label: 'Draft: #3 overall', value: -28 });
+      else if (s.draftPick <= 5) breakdown.push({ label: `Draft: #${s.draftPick}`, value: -20 });
+      else if (s.draftPick <= 14) breakdown.push({ label: `Draft: #${s.draftPick}`, value: -12 });
+      else if (s.draftPick <= 30) breakdown.push({ label: `Draft: #${s.draftPick}`, value: -6 });
+      else if (s.draftPick <= 60) breakdown.push({ label: `Draft: #${s.draftPick}`, value: -2 });
+      else if (s.undrafted) breakdown.push({ label: 'Undrafted', value: 0 });
 
       return breakdown;
     }
@@ -1147,6 +1141,7 @@
     }
 
     function endGame() {
+      const label = getScoreLabel(gameState.totalScore);
       document.getElementById('gameSection').innerHTML = `
         <div class="end-screen">
           <h2>🏀 Game Complete!</h2>
@@ -1156,6 +1151,7 @@
           <div style="margin-top: 20px; text-align: center;">
             <div class="score-label">Final Score</div>
             <div class="total">${gameState.totalScore}</div>
+            <div style="font-size: 1.1rem; margin-top: 8px; color: rgba(255,255,255,0.85);">${label}</div>
           </div>
           <button class="share-btn" onclick="shareResult()">SHARE RESULT</button>
           <button class="spin-btn" style="margin-top: 10px;" onclick="location.reload()">PLAY AGAIN</button>

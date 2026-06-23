@@ -186,7 +186,9 @@ def scrape_season(year: int, players: dict) -> int:
             players[pid] = {
                 'name': name, 'positions': {}, 'games': 0, 'vorp': 0.0, 'franchises': set(),
                 'mvpAwards': 0, 'fmvpAwards': 0, 'dpoyAwards': 0,
-                'royAward': 0, 'smoyAwards': 0, 'mipAwards': 0, 'draftPick': 0, 'hofProb': 0
+                'royAward': 0, 'smoyAwards': 0, 'mipAwards': 0, 'draftPick': 0,
+                'allNBA1': 0, 'allNBA2': 0, 'allNBA3': 0,
+                'allDef1': 0, 'allDef2': 0, 'undrafted': False
             }
 
         p = players[pid]
@@ -270,6 +272,46 @@ def scrape_award(award_name: str, award_id: str, field: str) -> dict:
     return awards
 
 
+def scrape_tiered_team(award_name: str, url_path: str) -> dict:
+    """Scrape an All-NBA or All-Defensive page; return {name: {'first': n, 'second': n, 'third': n}}."""
+    url = f'{BASE}/awards/{url_path}.html'
+    html = fetch(url)
+    if not html:
+        logger.warning(f'{award_name}: no data')
+        return {}
+
+    soup = BeautifulSoup(html, 'html.parser')
+    table = find_table(soup, url_path, f'div_{url_path}')
+    if not table:
+        logger.warning(f'{award_name}: no table')
+        return {}
+
+    counts = {}
+    for row in table.select('tbody tr'):
+        link = row.find('a', href=lambda h: h and '/players/' in h)
+        if not link:
+            continue
+        name = normalize_name(link.get_text(strip=True))
+        if name not in counts:
+            counts[name] = {'first': 0, 'second': 0, 'third': 0}
+
+        # Determine which team tier this row is for
+        tm_td = row.find('td', {'data-stat': 'team_id'}) or row.find('td', {'data-stat': 'tm'})
+        tier_td = row.find('td', {'data-stat': 'class'}) or row.find('td', {'data-stat': 'lg_id'})
+
+        # Try the season/team name cell text for "1st", "2nd", "3rd"
+        row_text = row.get_text()
+        if '1st' in row_text or 'First' in row_text:
+            counts[name]['first'] += 1
+        elif '2nd' in row_text or 'Second' in row_text:
+            counts[name]['second'] += 1
+        elif '3rd' in row_text or 'Third' in row_text:
+            counts[name]['third'] += 1
+
+    logger.info(f'{award_name}: {len(counts)} players')
+    return counts
+
+
 def scrape_draft(year: int) -> dict:
     """Scrape a single draft page; return {name: overall_pick}."""
     url = f'{BASE}/draft/NBA_{year}.html'
@@ -339,42 +381,6 @@ def scrape_all_drafts() -> dict:
     return all_picks
 
 
-def scrape_hof_prob() -> dict:
-    """Scrape HOF probability page; return {name: probability_0_to_100}."""
-    url = f'{BASE}/leaders/hof_prob.html'
-    html = fetch(url)
-    if not html:
-        logger.warning('HOF prob: no data')
-        return {}
-
-    soup = BeautifulSoup(html, 'html.parser')
-    table = find_table(soup, 'hof_prob', 'div_hof_prob')
-    if not table:
-        logger.warning('HOF prob: no table')
-        return {}
-
-    probs = {}
-    for row in table.select('tbody tr'):
-        link = row.find('a', href=lambda h: h and '/players/' in h)
-        if not link:
-            continue
-        name = normalize_name(link.get_text(strip=True))
-        prob_td = row.find('td', {'data-stat': 'hof_prob'})
-        if prob_td:
-            try:
-                # Value is a percentage string like "99.9%" or a decimal like "0.999"
-                raw = prob_td.get_text(strip=True).replace('%', '')
-                val = float(raw)
-                # BBRef stores as 0-100 percentage
-                if val <= 1.0:
-                    val *= 100
-                probs[name] = round(val, 1)
-            except (ValueError, TypeError):
-                pass
-
-    logger.info(f'HOF prob: {len(probs)} players')
-    return probs
-
 
 def build_seasons() -> dict:
     """Scrape all seasons and return players dict."""
@@ -407,29 +413,42 @@ def merge_awards(players: dict):
             p['allStarAppearances'] = all_star_data[name]
 
 
-def merge_hof(players: dict):
-    """Merge HOF probability into players dict (matched by player name)."""
-    hof_data = scrape_hof_prob()
-    matched = 0
+def merge_tiered_teams(players: dict):
+    """Merge All-NBA and All-Defensive team data into players dict."""
+    all_nba = scrape_tiered_team('All-NBA', 'all_league')
+    all_def = scrape_tiered_team('All-Defensive', 'all_defense')
+
+    nba_matched = def_matched = 0
     for pid, p in players.items():
         name = normalize_name(p['name'])
-        if name in hof_data:
-            p['hofProb'] = hof_data[name]
-            matched += 1
-    logger.info(f'HOF prob: matched {matched}/{len(players)} players')
+        if name in all_nba:
+            p['allNBA1'] = all_nba[name]['first']
+            p['allNBA2'] = all_nba[name]['second']
+            p['allNBA3'] = all_nba[name]['third']
+            nba_matched += 1
+        if name in all_def:
+            p['allDef1'] = all_def[name]['first']
+            p['allDef2'] = all_def[name]['second']
+            def_matched += 1
+    logger.info(f'All-NBA: matched {nba_matched}, All-Defensive: matched {def_matched}')
 
 
 def merge_draft(players: dict):
     """Merge draft data into players dict (matched by player name)."""
     logger.info('Scraping draft pages...')
     draft_picks = scrape_all_drafts()
-    matched = 0
+    matched = undrafted = 0
     for pid, p in players.items():
         name = normalize_name(p['name'])
         if name in draft_picks:
             p['draftPick'] = draft_picks[name]
             matched += 1
-    logger.info(f'Draft: matched {matched}/{len(players)} players')
+        else:
+            # Players with meaningful careers not in any draft class are undrafted
+            if p['games'] >= 50:
+                p['undrafted'] = True
+                undrafted += 1
+    logger.info(f'Draft: matched {matched}/{len(players)} players, {undrafted} flagged undrafted')
 
 
 def organize_by_team(players: dict) -> dict:
@@ -456,7 +475,12 @@ def organize_by_team(players: dict) -> dict:
             'smoyAwards': p['smoyAwards'],
             'mipAwards': p['mipAwards'],
             'allStarAppearances': p.get('allStarAppearances', 0),
-            'hofProb': p.get('hofProb', 0),
+            'allNBA1': p.get('allNBA1', 0),
+            'allNBA2': p.get('allNBA2', 0),
+            'allNBA3': p.get('allNBA3', 0),
+            'allDef1': p.get('allDef1', 0),
+            'allDef2': p.get('allDef2', 0),
+            'undrafted': p.get('undrafted', False),
         }
         for fr in p['franchises']:
             teams[fr].append(entry)
@@ -483,7 +507,9 @@ def export_to_datajs(teams: dict, filename: str = 'data.js'):
                 f'"dpoyAwards": {p["dpoyAwards"]}, "royAward": {p["royAward"]}, '
                 f'"smoyAwards": {p["smoyAwards"]}, "mipAwards": {p["mipAwards"]}, '
                 f'"allStarAppearances": {p["allStarAppearances"]}, '
-                f'"hofProb": {p["hofProb"]}'
+                f'"allNBA1": {p["allNBA1"]}, "allNBA2": {p["allNBA2"]}, "allNBA3": {p["allNBA3"]}, '
+                f'"allDef1": {p["allDef1"]}, "allDef2": {p["allDef2"]}, '
+                f'"undrafted": {"true" if p["undrafted"] else "false"}'
                 f'}}{comma}'
             )
         team_comma = ',' if i < len(names) - 1 else ''
@@ -510,9 +536,9 @@ def main():
 
     merge_awards(players)
     merge_draft(players)
-    merge_hof(players)
+    merge_tiered_teams(players)
 
-    logger.info(f'Merged awards, draft, and HOF data')
+    logger.info(f'Merged awards, draft, and All-NBA/Defensive data')
     export_to_datajs(organize_by_team(players))
     logger.info('Done!')
     return 0
