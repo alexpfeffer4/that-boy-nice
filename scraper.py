@@ -219,7 +219,6 @@ def scrape_all_star() -> dict:
         return {}
 
     stars = {}
-    logged_stats = False
     for row in table.select('tbody tr'):
         # Find player link in any td
         link = row.find('a', href=lambda h: h and '/players/' in h)
@@ -228,22 +227,13 @@ def scrape_all_star() -> dict:
 
         name = normalize_name(link.get_text(strip=True))
 
-        # Log all data-stats in first row to find the correct total column
-        if not logged_stats:
-            all_tds = row.find_all('td')
-            stat_map = {f"{i}:{td.get('data-stat', 'no-attr')}": td.get_text(strip=True) for i, td in enumerate(all_tds)}
-            logger.info(f'All-Star row all TDs: {stat_map}')
-            logged_stats = True
-
-        # Find the total column — try known names
-        apps_td = (row.find('td', {'data-stat': 'all_star_count'}) or
-                   row.find('td', {'data-stat': 'tot'}) or
-                   row.find('td', {'data-stat': 'count'}) or
-                   row.find('td', {'data-stat': 'total'}))
-
-        if apps_td:
+        # BBRef all_star_by_player table has no data-stat attributes.
+        # Column layout: [rank, player_name, total_selections, ...year_columns...]
+        # Total selections is at index 2.
+        all_tds = row.find_all('td')
+        if len(all_tds) >= 3:
             try:
-                apps = int(apps_td.get_text(strip=True) or 0)
+                apps = int(all_tds[2].get_text(strip=True) or 0)
                 if apps > 0:
                     stars[name] = apps
             except (ValueError, TypeError):
