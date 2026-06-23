@@ -306,6 +306,78 @@
       margin-top: 20px;
     }
 
+    .lives-display {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .life-heart {
+      display: inline-block;
+      margin: 0 4px;
+      font-size: 1.5rem;
+      color: #FF4444;
+    }
+
+    .autocomplete-wrapper {
+      position: relative;
+      flex: 1;
+    }
+
+    .autocomplete-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.9);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 10;
+      display: none;
+    }
+
+    .autocomplete-dropdown.show {
+      display: block;
+    }
+
+    .autocomplete-item {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer;
+      transition: background 0.15s;
+      color: rgba(255,255,255,0.8);
+      font-size: 0.9rem;
+    }
+
+    .autocomplete-item:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .autocomplete-item.selected {
+      background: rgba(102,126,234,0.3);
+    }
+
+    .score-breakdown {
+      background: rgba(255,255,255,0.08);
+      border-left: 3px solid #4ECDC4;
+      padding: 12px;
+      margin-top: 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.5;
+    }
+
+    .breakdown-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 4px 0;
+    }
+
     .center {
       grid-column: span 2;
     }
@@ -339,6 +411,8 @@
     </header>
 
     <div class="game-section" id="gameSection">
+      <div class="lives-display" id="livesDisplay">❤️ ❤️ ❤️</div>
+
       <div class="wheel-container">
         <div class="slot-machine">
           <div class="reel-window" id="reelWindow">
@@ -348,18 +422,21 @@
       </div>
 
       <div class="controls">
-        <button class="spin-btn" id="spinBtn">SPIN WHEEL</button>
+        <button class="spin-btn" id="spinBtn" disabled>SPIN WHEEL</button>
         <button class="respin-btn" id="respinBtn" disabled>RE-SPIN (1)</button>
       </div>
 
       <div class="team-display">
         <div class="current-team" id="currentTeam">—</div>
-        <div class="position-label" id="positionLabel">waiting for spin</div>
+        <div class="position-label" id="positionLabel">Spin to start</div>
       </div>
 
       <div class="input-group">
-        <input type="text" id="playerInput" placeholder="Enter player name">
-        <button class="submit-btn" id="submitBtn">SUBMIT</button>
+        <div class="autocomplete-wrapper">
+          <input type="text" id="playerInput" placeholder="Enter player name" disabled>
+          <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+        </div>
+        <button class="submit-btn" id="submitBtn" disabled>SUBMIT</button>
       </div>
 
       <div id="message"></div>
@@ -401,7 +478,9 @@
       currentPosition: null,
       respinsLeft: 1,
       spinning: false,
-      teams: []
+      teams: [],
+      lives: 3,
+      hasSpun: false
     };
 
     // Levenshtein distance
@@ -505,6 +584,96 @@
       return Math.max(1, Math.min(99, score));
     }
 
+    function getScoreBreakdown(player) {
+      const games = player.careerGames || 0;
+      const vorp = player.careerVORP || 0;
+      const draftPick = player.draftPick || 0;
+      const mvp = player.mvpAwards || 0;
+      const fmvp = player.fmvpAwards || 0;
+      const dpoy = player.dpoyAwards || 0;
+      const allStarApps = player.allStarAppearances || 0;
+      const roy = player.royAward || 0;
+      const smoy = player.smoyAwards || 0;
+      const mip = player.mipAwards || 0;
+
+      const breakdown = [];
+      breakdown.push({ label: 'Base', value: '100' });
+
+      let gamesPenalty = 0;
+      if (games >= 1200) gamesPenalty = -25;
+      else if (games >= 800) gamesPenalty = -15;
+      else if (games >= 500) gamesPenalty = -8;
+      else if (games >= 300) gamesPenalty = -5;
+      else if (games >= 100) gamesPenalty = -2;
+      if (gamesPenalty !== 0) breakdown.push({ label: `Games (${games})`, value: gamesPenalty });
+
+      let vorpPenalty = 0;
+      if (vorp >= 80) vorpPenalty = -55;
+      else if (vorp >= 50) vorpPenalty = -40;
+      else if (vorp >= 30) vorpPenalty = -28;
+      else if (vorp >= 20) vorpPenalty = -20;
+      else if (vorp >= 15) vorpPenalty = -18;
+      else if (vorp >= 10) vorpPenalty = -15;
+      else if (vorp >= 5) vorpPenalty = -10;
+      else if (vorp > 0) vorpPenalty = -5;
+      if (vorpPenalty !== 0) breakdown.push({ label: `VORP (${vorp.toFixed(1)})`, value: vorpPenalty });
+
+      if (mvp > 0) breakdown.push({ label: `MVP ×${mvp}`, value: -20 * mvp });
+      if (fmvp > 0) breakdown.push({ label: `Finals MVP ×${fmvp}`, value: -15 * fmvp });
+      if (dpoy > 0) breakdown.push({ label: `DPOY ×${dpoy}`, value: -12 * dpoy });
+      if (allStarApps > 0) breakdown.push({ label: `All-Star ×${allStarApps}`, value: -4 * allStarApps });
+      if (roy > 0) breakdown.push({ label: `ROY`, value: -8 });
+      if (smoy > 0) breakdown.push({ label: `SMOY ×${smoy}`, value: -4 * smoy });
+      if (mip > 0) breakdown.push({ label: `MIP ×${mip}`, value: -3 * mip });
+
+      if (draftPick === 1) breakdown.push({ label: 'Draft: #1', value: -20 });
+      else if (draftPick <= 3) breakdown.push({ label: `Draft: #${draftPick}`, value: -15 });
+      else if (draftPick <= 14) breakdown.push({ label: `Draft: #${draftPick}`, value: -10 });
+      else if (draftPick <= 30) breakdown.push({ label: `Draft: #${draftPick}`, value: -5 });
+      else if (draftPick <= 60) breakdown.push({ label: `Draft: #${draftPick}`, value: -2 });
+
+      return breakdown;
+    }
+
+    function showAutocomplete(input) {
+      const dropdown = document.getElementById('autocompleteDropdown');
+      const franchisePlayers = players[gameState.currentTeam] || [];
+
+      if (!input || input.length < 1) {
+        dropdown.classList.remove('show');
+        return;
+      }
+
+      const normalized = input.toLowerCase();
+      const matches = franchisePlayers
+        .filter(p => p.name.toLowerCase().includes(normalized))
+        .slice(0, 8);
+
+      if (matches.length === 0) {
+        dropdown.classList.remove('show');
+        return;
+      }
+
+      dropdown.innerHTML = matches.map((p, i) => `
+        <div class="autocomplete-item" data-index="${i}">${p.name}</div>
+      `).join('');
+
+      dropdown.classList.add('show');
+
+      document.querySelectorAll('.autocomplete-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          document.getElementById('playerInput').value = matches[parseInt(e.target.dataset.index)].name;
+          dropdown.classList.remove('show');
+          document.getElementById('playerInput').focus();
+        });
+      });
+    }
+
+    function updateLivesDisplay() {
+      const hearts = Array(gameState.lives).fill('❤️').join(' ');
+      document.getElementById('livesDisplay').innerHTML = hearts || '<span style="color: #666;">Game Over</span>';
+    }
+
     function loadPlayers() {
       players = playersData;
       gameState.teams = Object.keys(players).sort();
@@ -577,40 +746,40 @@
     }
 
     function spinWheel() {
-      if (gameState.spinning || Object.keys(gameState.lineup).length === 5) return;
+      if (gameState.spinning || Object.keys(gameState.lineup).length === 5 || gameState.lives <= 0) return;
       gameState.spinning = true;
       document.getElementById('spinBtn').disabled = true;
       document.getElementById('respinBtn').disabled = true;
       document.getElementById('playerInput').disabled = true;
       document.getElementById('submitBtn').disabled = true;
+      document.getElementById('autocompleteDropdown').classList.remove('show');
 
       const display = document.getElementById('reelDisplay');
       gameState.currentTeam = getRandomTeam();
       display.classList.add('spinning');
 
-      // Animate cycling through random teams
       let spinCount = 0;
       const spinInterval = setInterval(() => {
         const randomTeam = gameState.teams[Math.floor(Math.random() * gameState.teams.length)];
         display.src = getTeamLogo(randomTeam);
         spinCount++;
 
-        // Stop after ~30 spins
         if (spinCount >= 30) {
           clearInterval(spinInterval);
           display.src = getTeamLogo(gameState.currentTeam);
           display.classList.remove('spinning');
 
-          // Re-enable controls
+          gameState.hasSpun = true;
+          gameState.spinning = false;
           updateDisplay();
           document.getElementById('playerInput').disabled = false;
+          document.getElementById('playerInput').value = '';
           document.getElementById('playerInput').focus();
           document.getElementById('submitBtn').disabled = false;
           document.getElementById('spinBtn').disabled = false;
           if (gameState.respinsLeft > 0) {
             document.getElementById('respinBtn').disabled = false;
           }
-          gameState.spinning = false;
 
           if (Object.keys(gameState.lineup).length === 5) {
             endGame();
@@ -631,6 +800,8 @@
     }
 
     function submitPlayer() {
+      if (!gameState.hasSpun || gameState.lives <= 0) return;
+
       const input = document.getElementById('playerInput').value;
       const messageEl = document.getElementById('message');
 
@@ -643,17 +814,60 @@
       const matched = fuzzyMatchPlayer(input, franchisePlayers);
 
       if (!matched) {
-        messageEl.innerHTML = '<div class="error">Player not found on this team</div>';
+        gameState.lives--;
+        updateLivesDisplay();
+        messageEl.innerHTML = `<div class="error">❌ Not found on ${gameState.currentTeam} (${gameState.lives} lives left)</div>`;
+
+        if (gameState.lives <= 0) {
+          setTimeout(() => {
+            document.getElementById('gameSection').innerHTML = `
+              <div class="end-screen">
+                <h2>💔 Game Over!</h2>
+                <div style="margin: 30px 0; text-align: center;">
+                  <div style="font-size: 1.2rem; margin-bottom: 10px;">Final Score: ${gameState.totalScore}</div>
+                  <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">You filled ${Object.keys(gameState.lineup).length}/5 positions</div>
+                </div>
+                <button class="spin-btn" onclick="location.reload()">PLAY AGAIN</button>
+              </div>
+            `;
+          }, 1500);
+        } else {
+          document.getElementById('spinBtn').disabled = false;
+          document.getElementById('playerInput').disabled = true;
+          document.getElementById('submitBtn').disabled = true;
+        }
         return;
       }
 
       const playerPosition = matched.position;
       if (gameState.lineup[playerPosition]) {
-        messageEl.innerHTML = `<div class="error">${playerPosition} slot is already filled</div>`;
+        gameState.lives--;
+        updateLivesDisplay();
+        messageEl.innerHTML = `<div class="error">❌ ${playerPosition} slot filled (${gameState.lives} lives left)</div>`;
+
+        if (gameState.lives <= 0) {
+          setTimeout(() => {
+            document.getElementById('gameSection').innerHTML = `
+              <div class="end-screen">
+                <h2>💔 Game Over!</h2>
+                <div style="margin: 30px 0; text-align: center;">
+                  <div style="font-size: 1.2rem; margin-bottom: 10px;">Final Score: ${gameState.totalScore}</div>
+                  <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">You filled ${Object.keys(gameState.lineup).length}/5 positions</div>
+                </div>
+                <button class="spin-btn" onclick="location.reload()">PLAY AGAIN</button>
+              </div>
+            `;
+          }, 1500);
+        } else {
+          document.getElementById('spinBtn').disabled = false;
+          document.getElementById('playerInput').disabled = true;
+          document.getElementById('submitBtn').disabled = true;
+        }
         return;
       }
 
       const score = calculateObscurityScore(matched);
+      const breakdown = getScoreBreakdown(matched);
       gameState.lineup[playerPosition] = {
         name: matched.name,
         score: score
@@ -663,11 +877,19 @@
       updateLineup();
       updateScore();
 
-      messageEl.innerHTML = `<div class="success">✓ ${matched.name} added to ${playerPosition}! (+${score} pts)</div>`;
+      let breakdownHTML = breakdown.map(b =>
+        `<div class="breakdown-item"><span>${b.label}</span><span>${b.value > 0 ? '+' : ''}${b.value}</span></div>`
+      ).join('');
+
+      messageEl.innerHTML = `
+        <div class="success">✓ ${matched.name} added to ${playerPosition}! (+${score} pts)</div>
+        <div class="score-breakdown">${breakdownHTML}</div>
+      `;
       document.getElementById('playerInput').value = '';
+      document.getElementById('autocompleteDropdown').classList.remove('show');
 
       if (Object.keys(gameState.lineup).length === 5) {
-        setTimeout(endGame, 1500);
+        setTimeout(endGame, 2000);
       } else {
         document.getElementById('spinBtn').disabled = false;
         document.getElementById('playerInput').disabled = true;
@@ -755,6 +977,14 @@
     document.getElementById('playerInput').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') submitPlayer();
     });
+    document.getElementById('playerInput').addEventListener('input', (e) => {
+      showAutocomplete(e.target.value);
+    });
+    document.addEventListener('click', (e) => {
+      if (e.target.id !== 'playerInput') {
+        document.getElementById('autocompleteDropdown').classList.remove('show');
+      }
+    });
 
     // Initialize
     console.log('Initializing game...');
@@ -767,9 +997,11 @@
       buildReel();
       gameState.currentTeam = gameState.teams[0];
       updateDisplay();
-      const input = document.getElementById('playerInput');
-      input.disabled = false;
-      console.log('Input enabled:', !input.disabled);
+      document.getElementById('spinBtn').disabled = false;
+      document.getElementById('playerInput').disabled = true;
+      document.getElementById('submitBtn').disabled = true;
+      updateLivesDisplay();
+      console.log('Game ready for first spin');
     } else {
       console.error('No teams loaded!');
     }
