@@ -1437,8 +1437,10 @@
 
     if (gameState.teams.length > 0) {
       buildReel();
-      gameState.currentTeam = gameState.teams[0];
-      updateDisplay();
+      gameState.currentTeam = null;
+      document.getElementById('currentTeam').textContent = '';
+      document.getElementById('reelDisplay').src = '';
+      document.getElementById('positionLabel').textContent = 'Spin the wheel to start';
       document.getElementById('spinBtn').disabled = false;
       document.getElementById('playerInput').disabled = true;
       document.getElementById('submitBtn').disabled = true;
