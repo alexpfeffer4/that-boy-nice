@@ -436,14 +436,20 @@
 
     function calculateObscurityScore(player) {
       let score = 50;
+      // Games played: fewer = more obscure
       if (player.careerGames < 100) score += 30;
       else if (player.careerGames < 300) score += 20;
       else if (player.careerGames < 600) score += 10;
       else score -= 10;
-      if (player.careerPPG < 5) score += 25;
-      else if (player.careerPPG < 10) score += 15;
-      else if (player.careerPPG < 15) score += 5;
-      else if (player.careerPPG > 25) score -= 20;
+      // Win Shares: lower = more obscure (accounts for all-around play, not just scoring)
+      const ws = player.careerWS || 0;
+      if (ws < 20) score += 30;
+      else if (ws < 50) score += 20;
+      else if (ws < 100) score += 10;
+      else if (ws < 200) score += 0;
+      else if (ws < 300) score -= 10;
+      else score -= 20;
+      // Draft & All-Star (placeholders for now)
       if (player.draftRound === 2) score += 15;
       else if (player.draftRound > 2) score += 25;
       if (player.allStarAppearances > 0) {
