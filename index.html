@@ -681,8 +681,8 @@
       score -= s.dpoy * 15;
       score -= s.allStarApps * 6;
       score -= s.roy * 8;
-      score -= s.smoy * 4;
-      score -= s.mip * 3;
+      score -= s.smoy * 8;
+      score -= s.mip * 5;
 
       // All-NBA teams
       score -= s.allNBA1 * 15;
@@ -692,6 +692,20 @@
       // All-Defensive teams
       score -= s.allDef1 * 12;
       score -= s.allDef2 * 6;
+
+      // Repeat award penalty — winning the same award 3+ times marks a perennial elite
+      const repeatAwards = [
+        { count: s.smoy, label: 'SMOY' },
+        { count: s.dpoy, label: 'DPOY' },
+        { count: s.mip, label: 'MIP' },
+        { count: s.allNBA1, label: 'All-NBA 1st' },
+        { count: s.allNBA2, label: 'All-NBA 2nd' },
+        { count: s.allDef1, label: 'All-Def 1st' },
+      ];
+      repeatAwards.forEach(a => {
+        if (a.count >= 5) score -= 20;
+        else if (a.count >= 3) score -= 10;
+      });
 
       // Draft position
       if (s.draftPick === 1) score -= 50;
@@ -731,13 +745,23 @@
       if (s.dpoy > 0) breakdown.push({ label: `DPOY ×${s.dpoy}`, value: -15 * s.dpoy });
       if (s.allStarApps > 0) breakdown.push({ label: `All-Star ×${s.allStarApps}`, value: -6 * s.allStarApps });
       if (s.roy > 0) breakdown.push({ label: `ROY`, value: -8 });
-      if (s.smoy > 0) breakdown.push({ label: `SMOY ×${s.smoy}`, value: -4 * s.smoy });
-      if (s.mip > 0) breakdown.push({ label: `MIP ×${s.mip}`, value: -3 * s.mip });
+      if (s.smoy > 0) breakdown.push({ label: `SMOY ×${s.smoy}`, value: -8 * s.smoy });
+      if (s.mip > 0) breakdown.push({ label: `MIP ×${s.mip}`, value: -5 * s.mip });
       if (s.allNBA1 > 0) breakdown.push({ label: `All-NBA 1st ×${s.allNBA1}`, value: -15 * s.allNBA1 });
       if (s.allNBA2 > 0) breakdown.push({ label: `All-NBA 2nd ×${s.allNBA2}`, value: -10 * s.allNBA2 });
       if (s.allNBA3 > 0) breakdown.push({ label: `All-NBA 3rd ×${s.allNBA3}`, value: -6 * s.allNBA3 });
       if (s.allDef1 > 0) breakdown.push({ label: `All-Defensive 1st ×${s.allDef1}`, value: -12 * s.allDef1 });
       if (s.allDef2 > 0) breakdown.push({ label: `All-Defensive 2nd ×${s.allDef2}`, value: -6 * s.allDef2 });
+
+      const repeatAwards = [
+        { count: s.smoy, label: 'SMOY' }, { count: s.dpoy, label: 'DPOY' },
+        { count: s.mip, label: 'MIP' }, { count: s.allNBA1, label: 'All-NBA 1st' },
+        { count: s.allNBA2, label: 'All-NBA 2nd' }, { count: s.allDef1, label: 'All-Def 1st' },
+      ];
+      repeatAwards.forEach(a => {
+        if (a.count >= 5) breakdown.push({ label: `${a.label} ×5+ (dynasty)`, value: -20 });
+        else if (a.count >= 3) breakdown.push({ label: `${a.label} ×3+ (perennial)`, value: -10 });
+      });
 
       if (s.draftPick === 1) breakdown.push({ label: 'Draft: #1 overall', value: -50 });
       else if (s.draftPick === 2) breakdown.push({ label: 'Draft: #2 overall', value: -38 });
