@@ -270,7 +270,7 @@ def scrape_award(award_name: str, award_id: str, field: str) -> dict:
 
 
 def scrape_draft(year: int) -> dict:
-    """Scrape a single draft page; return {pid: overall_pick}."""
+    """Scrape a single draft page; return {name: overall_pick}."""
     url = f'{BASE}/draft/NBA_{year}.html'
     html = fetch(url)
     if not html:
@@ -288,7 +288,7 @@ def scrape_draft(year: int) -> dict:
         if not link:
             continue
 
-        pid = link['href'].split('/')[-1].replace('.html', '')
+        name = link.get_text(strip=True)
 
         # Try both 'pick_number' and 'pick_overall' data-stat variants
         pick_td = row.find('td', {'data-stat': 'pick_number'}) or row.find('td', {'data-stat': 'pick_overall'})
@@ -297,23 +297,23 @@ def scrape_draft(year: int) -> dict:
         except (ValueError, TypeError):
             pick = 0
 
-        if pick > 0 and pid not in picks:
-            picks[pid] = pick
+        if pick > 0 and name not in picks:
+            picks[name] = pick
 
     return picks
 
 
 def scrape_all_drafts() -> dict:
-    """Scrape all draft pages (2000-2025); return {pid: overall_pick} (earliest draft only)."""
+    """Scrape all draft pages (2000-2025); return {name: overall_pick} (earliest draft only)."""
     all_picks = {}
     failed_count = 0
     for year in DRAFT_SEASONS:
         picks = scrape_draft(year)
         if not picks:
             failed_count += 1
-        for pid, pick in picks.items():
-            if pid not in all_picks:
-                all_picks[pid] = pick
+        for name, pick in picks.items():
+            if name not in all_picks:
+                all_picks[name] = pick
     logger.info(f'Drafts (2000-2025): {len(all_picks)} players with pick numbers ({failed_count} years failed)')
     return all_picks
 
@@ -350,12 +350,13 @@ def merge_awards(players: dict):
 
 
 def merge_draft(players: dict):
-    """Merge draft data into players dict."""
+    """Merge draft data into players dict (matched by player name)."""
     logger.info('Scraping draft pages...')
     draft_picks = scrape_all_drafts()
-    for pid, pick in draft_picks.items():
-        if pid in players:
-            players[pid]['draftPick'] = pick
+    for pid, p in players.items():
+        name = p['name']
+        if name in draft_picks:
+            p['draftPick'] = draft_picks[name]
 
 
 def organize_by_team(players: dict) -> dict:
