@@ -907,17 +907,25 @@
       else if (s.undrafted) breakdown.push({ label: 'Undrafted', value: 0 });
 
       const subtotal = breakdown.reduce((sum, b) => sum + b.value, 0);
-      breakdown.push({ label: `Subtotal`, value: subtotal, isSeparator: true });
+      const displaySubtotal = Math.max(0, subtotal);
+      breakdown.push({ label: `Subtotal`, value: displaySubtotal, isSeparator: true });
 
       let finalScore = subtotal;
       if (s.recencyMultiplier < 1.0) {
         const multiplierPercent = Math.round(s.recencyMultiplier * 100);
+        const yearsAgo = 2026 - s.lastSeason;
+        let bucket = '';
+        if (yearsAgo <= 1) bucket = '0 yrs ago';
+        else if (yearsAgo <= 3) bucket = '2-3 yrs ago';
+        else if (yearsAgo <= 6) bucket = '4-6 yrs ago';
+
         const recencyAdjust = Math.round(subtotal * s.recencyMultiplier) - subtotal;
-        breakdown.push({ label: `Recency ×${multiplierPercent}%`, value: recencyAdjust, isMultiplier: true });
+        breakdown.push({ label: `Recency ×${multiplierPercent}% (${s.lastSeason}, ${bucket})`, value: recencyAdjust, isMultiplier: true });
         finalScore = Math.round(subtotal * s.recencyMultiplier);
       }
 
-      breakdown.push({ label: `Total`, value: finalScore, isTotal: true });
+      const displayFinal = Math.max(0, finalScore);
+      breakdown.push({ label: `Total`, value: displayFinal, isTotal: true });
 
       return breakdown;
     }
@@ -1063,6 +1071,9 @@
         setTimeout(endGame, 2000);
       } else {
         document.getElementById('spinBtn').disabled = false;
+        if (gameState.respinsLeft > 0) {
+          document.getElementById('respinBtn').disabled = false;
+        }
         document.getElementById('playerInput').disabled = true;
         document.getElementById('submitBtn').disabled = true;
       }
@@ -1276,9 +1287,6 @@
             document.getElementById('playerInput').focus();
             document.getElementById('submitBtn').disabled = false;
             document.getElementById('spinBtn').disabled = false;
-            if (gameState.respinsLeft > 0) {
-              document.getElementById('respinBtn').disabled = false;
-            }
             if (Object.keys(gameState.lineup).length === 5) {
               endGame();
             }
