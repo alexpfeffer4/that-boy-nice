@@ -1117,9 +1117,7 @@
         setTimeout(endGame, 2000);
       } else {
         document.getElementById('spinBtn').disabled = false;
-        if (gameState.respinsLeft > 0) {
-          document.getElementById('respinBtn').disabled = false;
-        }
+        document.getElementById('respinBtn').disabled = true;
         document.getElementById('playerInput').disabled = true;
         document.getElementById('submitBtn').disabled = true;
       }
@@ -1335,7 +1333,10 @@
             document.getElementById('playerInput').value = '';
             document.getElementById('playerInput').focus();
             document.getElementById('submitBtn').disabled = false;
-            document.getElementById('spinBtn').disabled = false;
+            document.getElementById('spinBtn').disabled = true;
+            if (gameState.respinsLeft > 0) {
+              document.getElementById('respinBtn').disabled = false;
+            }
             if (Object.keys(gameState.lineup).length === 5) {
               endGame();
             }
