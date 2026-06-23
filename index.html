@@ -47,6 +47,86 @@
       letter-spacing: 2px;
     }
 
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal-box {
+      background: #1a1a2e;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 32px 28px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .modal-icon {
+      font-size: 2.4rem;
+      margin-bottom: 10px;
+    }
+
+    .modal-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 14px;
+      color: #ffd200;
+    }
+
+    .modal-body {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+
+    .modal-tiers {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 18px 0 22px;
+    }
+
+    .modal-tier {
+      background: rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.7);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-tier span {
+      font-weight: 700;
+      color: #ffd200;
+    }
+
+    .modal-confirm-btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+      color: #1a1a2e;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+    }
+
+    .modal-confirm-btn:hover {
+      opacity: 0.9;
+    }
+
     .era-note {
       font-size: 0.72rem;
       color: rgba(255,255,255,0.4);
@@ -900,6 +980,26 @@
 
   <div class="share-card-wrap" id="shareCardWrap"></div>
 
+  <div class="modal-overlay" id="oldheadModal" style="display:none;" onclick="closeOldheadModal(event)">
+    <div class="modal-box">
+      <div class="modal-icon">🧓</div>
+      <h2 class="modal-title">Oldhead Mode</h2>
+      <p class="modal-body">
+        Daily Challenge uses <strong>Oldhead Mode</strong> — recency bias is on.
+      </p>
+      <p class="modal-body">
+        Players active in the last few years score <em>lower</em> because everyone knows them. To score high, dig deep into the vault.
+      </p>
+      <div class="modal-tiers">
+        <div class="modal-tier">Last 1 yr <span>×0.80</span></div>
+        <div class="modal-tier">Last 3 yrs <span>×0.88</span></div>
+        <div class="modal-tier">Last 6 yrs <span>×0.95</span></div>
+        <div class="modal-tier">Older <span>×1.00</span></div>
+      </div>
+      <button class="modal-confirm-btn" onclick="confirmDailyChallenge()">Let's Play →</button>
+    </div>
+  </div>
+
   <div class="container">
     <header>
       <h1>that boy nice</h1>
@@ -1091,8 +1191,6 @@
     // --- Mode start functions ---
     function startDailyChallenge() {
       const dateStr = getTodayString();
-      const alreadyKey = `tbn_daily_${dateStr}`;
-      const saved = localStorage.getItem(alreadyKey);
 
       gameState.isDailyChallenge = true;
       gameState.dailyTeams = getDailyTeams(gameState.teams, dateStr);
@@ -1107,17 +1205,29 @@
         }
       }
 
+      // Show Oldhead explanation modal before starting
+      document.getElementById('oldheadModal').style.display = 'flex';
+    }
+
+    function confirmDailyChallenge() {
+      document.getElementById('oldheadModal').style.display = 'none';
+      const dateStr = getTodayString();
       document.getElementById('tagline').textContent = `📅 Daily Challenge — ${dateStr}`;
       document.getElementById('startScreen').style.display = 'none';
       document.getElementById('gameSection').style.display = 'block';
 
-      // Daily challenge always uses Oldhead mode
       gameState.gameMode = 'oldhead';
       const indicator = document.getElementById('modeIndicator');
       indicator.textContent = '🧓 Oldhead Mode';
       indicator.className = 'mode-indicator mode-oldhead';
 
       initGame();
+    }
+
+    function closeOldheadModal(e) {
+      if (e.target === document.getElementById('oldheadModal')) {
+        document.getElementById('oldheadModal').style.display = 'none';
+      }
     }
 
     function startPractice() {
