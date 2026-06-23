@@ -288,6 +288,7 @@ def scrape_tiered_team(award_name: str, url_path: str) -> dict:
         return {}
 
     counts = {}
+    logged = False
     for row in table.select('tbody tr'):
         link = row.find('a', href=lambda h: h and '/players/' in h)
         if not link:
@@ -296,18 +297,28 @@ def scrape_tiered_team(award_name: str, url_path: str) -> dict:
         if name not in counts:
             counts[name] = {'first': 0, 'second': 0, 'third': 0}
 
-        # Determine which team tier this row is for
-        tm_td = row.find('td', {'data-stat': 'team_id'}) or row.find('td', {'data-stat': 'tm'})
-        tier_td = row.find('td', {'data-stat': 'class'}) or row.find('td', {'data-stat': 'lg_id'})
+        # Log first row to see all data-stats and text
+        if not logged:
+            all_tds = row.find_all('td')
+            stat_map = {f"{i}:{td.get('data-stat','?')}": td.get_text(strip=True) for i, td in enumerate(all_tds)}
+            logger.info(f'{award_name} first row: {stat_map}')
+            logged = True
 
-        # Try the season/team name cell text for "1st", "2nd", "3rd"
-        row_text = row.get_text()
-        if '1st' in row_text or 'First' in row_text:
-            counts[name]['first'] += 1
-        elif '2nd' in row_text or 'Second' in row_text:
-            counts[name]['second'] += 1
-        elif '3rd' in row_text or 'Third' in row_text:
-            counts[name]['third'] += 1
+        # Find the team tier - scan each td for exact "1st"/"2nd"/"3rd" text
+        tier = None
+        for td in row.find_all('td'):
+            t = td.get_text(strip=True)
+            if t in ('1st', 'First', '1'):
+                tier = 'first'
+                break
+            elif t in ('2nd', 'Second', '2'):
+                tier = 'second'
+                break
+            elif t in ('3rd', 'Third', '3'):
+                tier = 'third'
+                break
+        if tier:
+            counts[name][tier] += 1
 
     logger.info(f'{award_name}: {len(counts)} players')
     return counts
