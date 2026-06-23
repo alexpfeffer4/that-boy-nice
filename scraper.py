@@ -231,8 +231,8 @@ def scrape_all_star() -> dict:
         # Log all data-stats in first row to find the correct total column
         if not logged_stats:
             all_tds = row.find_all('td')
-            stat_map = {td.get('data-stat', ''): td.get_text(strip=True) for td in all_tds}
-            logger.info(f'All-Star row data-stats: {stat_map}')
+            stat_map = {f"{i}:{td.get('data-stat', 'no-attr')}": td.get_text(strip=True) for i, td in enumerate(all_tds)}
+            logger.info(f'All-Star row all TDs: {stat_map}')
             logged_stats = True
 
         # Find the total column — try known names, then fall back to max numeric td
