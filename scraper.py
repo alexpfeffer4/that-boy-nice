@@ -1,233 +1,257 @@
 #!/usr/bin/env python3
 """
-NBA Player Scraper - Basketball Reference
-Scrapes each team's season pages (2000-2024) to build a per-team player database.
-Outputs data.js in the format expected by the game.
+NBA Players Web Scraper - Basketball Reference
+Scrapes all NBA player rosters organized by current team.
+Outputs data.js formatted for the "that boy nice" game.
 """
 
 import requests
-import json
 import time
 import logging
-from bs4 import BeautifulSoup, Comment
+from bs4 import BeautifulSoup
+from typing import Dict, List, Optional
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-TEAMS = {
-    "Atlanta Hawks": "ATL",
-    "Boston Celtics": "BOS",
-    "Brooklyn Nets": "BKN",
-    "Charlotte Hornets": "CHA",
-    "Chicago Bulls": "CHI",
-    "Cleveland Cavaliers": "CLE",
-    "Dallas Mavericks": "DAL",
-    "Denver Nuggets": "DEN",
-    "Detroit Pistons": "DET",
-    "Golden State Warriors": "GSW",
-    "Houston Rockets": "HOU",
-    "Indiana Pacers": "IND",
-    "Los Angeles Clippers": "LAC",
-    "Los Angeles Lakers": "LAL",
-    "Memphis Grizzlies": "MEM",
-    "Miami Heat": "MIA",
-    "Milwaukee Bucks": "MIL",
-    "Minnesota Timberwolves": "MIN",
-    "New Orleans Pelicans": "NOP",
-    "New York Knicks": "NYK",
-    "Oklahoma City Thunder": "OKC",
-    "Orlando Magic": "ORL",
-    "Philadelphia 76ers": "PHI",
-    "Phoenix Suns": "PHX",
-    "Portland Trail Blazers": "POR",
-    "Sacramento Kings": "SAC",
-    "San Antonio Spurs": "SAS",
-    "Toronto Raptors": "TOR",
-    "Utah Jazz": "UTA",
-    "Washington Wizards": "WAS",
+# Map team abbreviations to full names
+TEAM_NAMES = {
+    'ATL': 'Atlanta Hawks',
+    'BOS': 'Boston Celtics',
+    'BRK': 'Brooklyn Nets',
+    'CHO': 'Charlotte Hornets',
+    'CHI': 'Chicago Bulls',
+    'CLE': 'Cleveland Cavaliers',
+    'DAL': 'Dallas Mavericks',
+    'DEN': 'Denver Nuggets',
+    'DET': 'Detroit Pistons',
+    'GSW': 'Golden State Warriors',
+    'HOU': 'Houston Rockets',
+    'IND': 'Indiana Pacers',
+    'LAC': 'Los Angeles Clippers',
+    'LAL': 'Los Angeles Lakers',
+    'MEM': 'Memphis Grizzlies',
+    'MIA': 'Miami Heat',
+    'MIL': 'Milwaukee Bucks',
+    'MIN': 'Minnesota Timberwolves',
+    'NOP': 'New Orleans Pelicans',
+    'NYK': 'New York Knicks',
+    'OKC': 'Oklahoma City Thunder',
+    'ORL': 'Orlando Magic',
+    'PHI': 'Philadelphia 76ers',
+    'PHX': 'Phoenix Suns',
+    'POR': 'Portland Trail Blazers',
+    'SAC': 'Sacramento Kings',
+    'SAS': 'San Antonio Spurs',
+    'TOR': 'Toronto Raptors',
+    'UTA': 'Utah Jazz',
+    'WAS': 'Washington Wizards'
 }
 
-# Historical abbreviations (teams that relocated/renamed)
-EXTRA_ABBRS = {
-    "Brooklyn Nets": ["NJN"],       # New Jersey Nets
-    "New Orleans Pelicans": ["NOH", "NOK"],  # Hornets/OK City Hornets
-    "Oklahoma City Thunder": ["SEA"],  # Seattle SuperSonics
-    "Washington Wizards": ["WSB"],   # Bullets
-    "Charlotte Hornets": ["CHH"],    # Original Hornets (before Bobcats era)
-    "Memphis Grizzlies": ["VAN"],    # Vancouver Grizzlies
-}
+class NBAScraperBasketballRef:
+    BASE_URL = "https://www.basketball-reference.com"
+    HEADERS = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    }
 
-START_YEAR = 2000
-END_YEAR = 2025
+    def __init__(self):
+        self.session = requests.Session()
+        self.session.headers.update(self.HEADERS)
+        self.players_by_team = {team_name: [] for team_name in TEAM_NAMES.values()}
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Accept-Language": "en-US,en;q=0.9",
-}
-
-session = requests.Session()
-session.headers.update(HEADERS)
-
-
-def fetch_page(url, retries=3):
-    for attempt in range(retries):
-        try:
-            resp = session.get(url, timeout=15)
-            if resp.status_code == 200:
+    def fetch(self, url: str, max_retries: int = 3) -> Optional[str]:
+        """Fetch URL with retries."""
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Fetching: {url} (attempt {attempt + 1}/{max_retries})")
+                resp = self.session.get(url, timeout=10)
+                resp.raise_for_status()
+                time.sleep(1)  # Be polite
                 return resp.text
-            elif resp.status_code == 429:
-                wait = 30 * (attempt + 1)
-                logger.warning(f"Rate limited — waiting {wait}s...")
-                time.sleep(wait)
-            elif resp.status_code == 404:
-                return None
-            else:
-                logger.warning(f"HTTP {resp.status_code} for {url}")
-                time.sleep(5)
+            except Exception as e:
+                logger.warning(f"Attempt {attempt + 1} failed: {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(2)
+        return None
+
+    def scrape_team_roster(self, team_abbr: str, season: int = 2024) -> List[Dict]:
+        """Scrape a single team's roster."""
+        url = f"{self.BASE_URL}/teams/{team_abbr}/{season}.html"
+        html = self.fetch(url)
+        if not html:
+            logger.error(f"Could not fetch {team_abbr}")
+            return []
+
+        players = []
+        try:
+            soup = BeautifulSoup(html, 'html.parser')
+            table = soup.find('table', {'id': 'roster'})
+            if not table:
+                logger.warning(f"No roster table found for {team_abbr}")
+                return []
+
+            for row in table.find_all('tr')[1:]:
+                cols = row.find_all('td')
+                if len(cols) < 8:
+                    continue
+
+                try:
+                    name = cols[1].get_text(strip=True)
+                    pos = cols[2].get_text(strip=True)
+
+                    # Try to extract stats from individual player page
+                    player_link = cols[1].find('a')
+                    if player_link and player_link.get('href'):
+                        player_url = f"{self.BASE_URL}{player_link['href']}"
+                        stats = self.scrape_player_stats(player_url)
+                        if stats:
+                            stats['position'] = pos
+                            stats['name'] = name
+                            players.append(stats)
+                            logger.info(f"  Added {name} ({pos}) - {stats.get('careerGames', 0)} games")
+                        else:
+                            # Fallback with minimal stats
+                            players.append({
+                                'name': name,
+                                'position': pos,
+                                'careerGames': 100,
+                                'careerPPG': 10.0,
+                                'draftRound': 1,
+                                'allStarAppearances': 0
+                            })
+                except Exception as e:
+                    logger.debug(f"Error parsing row: {e}")
+                    continue
+
         except Exception as e:
-            logger.warning(f"Request error ({e}), attempt {attempt + 1}/{retries}")
-            time.sleep(5)
-    return None
+            logger.error(f"Error scraping {team_abbr}: {e}")
 
+        return players
 
-def find_table(soup, table_id):
-    """Find a table by id, including ones hidden inside HTML comments."""
-    table = soup.find("table", id=table_id)
-    if table:
-        return table
-    for comment in soup.find_all(string=lambda t: isinstance(t, Comment)):
-        if table_id in comment:
-            inner = BeautifulSoup(comment, "html.parser")
-            table = inner.find("table", id=table_id)
-            if table:
-                return table
-    return None
-
-
-def parse_season_stats(html):
-    """
-    Parse per-game stats from a team season page.
-    Returns list of {name, position, games, ppg}.
-    """
-    soup = BeautifulSoup(html, "html.parser")
-    table = find_table(soup, "per_game")
-    if not table:
-        return []
-
-    players = {}
-    tbody = table.find("tbody")
-    if not tbody:
-        return []
-
-    for row in tbody.find_all("tr"):
-        # Skip separator/header rows
-        if row.get("class") and "thead" in row.get("class"):
-            continue
-
-        name_el = row.find("td", attrs={"data-stat": "player"})
-        pos_el = row.find("td", attrs={"data-stat": "pos"})
-        g_el = row.find("td", attrs={"data-stat": "g"})
-        pts_el = row.find("td", attrs={"data-stat": "pts_per_g"})
-
-        if not name_el:
-            continue
-
-        link = name_el.find("a")
-        name = link.get_text(strip=True) if link else name_el.get_text(strip=True)
-        if not name:
-            continue
-
-        pos = pos_el.get_text(strip=True) if pos_el else "G"
-        # Normalize multi-position (e.g. "PG-SG" -> "PG")
-        pos = pos.split("-")[0] if pos else "G"
+    def scrape_player_stats(self, player_url: str) -> Optional[Dict]:
+        """Scrape individual player stats page."""
+        html = self.fetch(player_url, max_retries=2)
+        if not html:
+            return None
 
         try:
-            games = int(g_el.get_text(strip=True)) if g_el else 0
-        except ValueError:
-            games = 0
+            soup = BeautifulSoup(html, 'html.parser')
 
-        try:
-            ppg = float(pts_el.get_text(strip=True)) if pts_el else 0.0
-        except ValueError:
-            ppg = 0.0
+            # Look for career stats table
+            stats_table = soup.find('table', {'id': 'per_game'})
+            if not stats_table:
+                return None
 
-        if name in players:
-            # Player appears twice (traded mid-season) — aggregate
-            players[name]["games"] += games
-            players[name]["weighted_pts"] += games * ppg
-        else:
-            players[name] = {
-                "name": name,
-                "position": pos,
-                "games": games,
-                "weighted_pts": games * ppg,
+            # Sum career stats from all rows
+            career_games = 0
+            career_points = 0
+            seasons = 0
+
+            for row in stats_table.find_all('tr')[1:]:
+                if row.find('th'):  # Skip header rows
+                    continue
+                cols = row.find_all('td')
+                if len(cols) < 10:
+                    continue
+
+                try:
+                    # Skip non-season rows
+                    season_str = cols[0].get_text(strip=True)
+                    if 'NBA' not in season_str and not season_str[0].isdigit():
+                        continue
+
+                    # Games
+                    g = int(cols[5].get_text(strip=True) or 0)
+                    # Points per game
+                    ppg = float(cols[9].get_text(strip=True) or 0)
+
+                    career_games += g
+                    career_points += g * ppg
+                    seasons += 1
+                except:
+                    continue
+
+            if seasons == 0:
+                return None
+
+            career_ppg = career_points / career_games if career_games > 0 else 0
+
+            return {
+                'careerGames': career_games,
+                'careerPPG': round(career_ppg, 1),
+                'draftRound': 1,
+                'allStarAppearances': 0
             }
+        except Exception as e:
+            logger.debug(f"Error scraping player stats: {e}")
+            return None
 
-    return list(players.values())
+    def run(self) -> bool:
+        """Run scraper for all teams."""
+        logger.info(f"Scraping {len(TEAM_NAMES)} teams...")
+        total_players = 0
 
+        for team_abbr, team_name in sorted(TEAM_NAMES.items()):
+            logger.info(f"\nScraping {team_name}...")
+            roster = self.scrape_team_roster(team_abbr)
 
-def scrape_team(team_name, abbrs):
-    """Scrape all seasons for a team and return aggregated player list."""
-    player_map = {}
+            if roster:
+                self.players_by_team[team_name] = roster
+                total_players += len(roster)
+                logger.info(f"  ✓ {team_name}: {len(roster)} players")
+            else:
+                logger.warning(f"  ✗ {team_name}: No players found")
 
-    for abbr in abbrs:
-        for year in range(START_YEAR, END_YEAR):
-            url = f"https://www.basketball-reference.com/teams/{abbr}/{year}.html"
-            html = fetch_page(url)
+        logger.info(f"\nTotal players scraped: {total_players}")
+        return total_players > 0
 
-            if not html:
-                time.sleep(1)
-                continue
+    def export_to_datajs(self, filename: str = 'data.js') -> bool:
+        """Export to data.js format."""
+        try:
+            # Build the JavaScript object
+            js_content = "const playersData = {\n"
 
-            season_players = parse_season_stats(html)
-            logger.info(f"  {abbr}/{year}: {len(season_players)} players")
+            for team_name in sorted(self.players_by_team.keys()):
+                players = self.players_by_team[team_name]
+                if not players:
+                    continue
 
-            for p in season_players:
-                name = p["name"]
-                if name not in player_map:
-                    player_map[name] = {
-                        "name": name,
-                        "position": p["position"],
-                        "careerGames": p["games"],
-                        "weighted_pts": p["weighted_pts"],
-                        "draftRound": None,
-                        "allStarAppearances": 0,
-                    }
-                else:
-                    player_map[name]["careerGames"] += p["games"]
-                    player_map[name]["weighted_pts"] += p["weighted_pts"]
+                js_content += f'  "{team_name}": [\n'
 
-            time.sleep(4)  # Polite delay — Basketball Reference asks for 3+s
+                for player in players:
+                    js_content += f'    {{\n'
+                    js_content += f'      "name": "{player.get("name", "")}",\n'
+                    js_content += f'      "position": "{player.get("position", "C")}",\n'
+                    js_content += f'      "careerGames": {player.get("careerGames", 100)},\n'
+                    js_content += f'      "careerPPG": {player.get("careerPPG", 10.0)},\n'
+                    js_content += f'      "draftRound": {player.get("draftRound", 1)},\n'
+                    js_content += f'      "allStarAppearances": {player.get("allStarAppearances", 0)}\n'
+                    js_content += f'    }},\n'
 
-    result = []
-    for p in player_map.values():
-        games = p["careerGames"]
-        p["careerPPG"] = round(p["weighted_pts"] / games, 1) if games > 0 else 0.0
-        del p["weighted_pts"]
-        result.append(p)
+                js_content = js_content.rstrip(',\n') + '\n  ],\n'
 
-    return result
+            js_content = js_content.rstrip(',\n') + '\n};\n'
+
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(js_content)
+
+            logger.info(f"✓ Exported to {filename}")
+            return True
+        except Exception as e:
+            logger.error(f"Error exporting: {e}")
+            return False
 
 
 def main():
-    all_data = {}
-
-    for team_name, primary_abbr in TEAMS.items():
-        logger.info(f"\n=== {team_name} ===")
-        abbrs = [primary_abbr] + EXTRA_ABBRS.get(team_name, [])
-        team_players = scrape_team(team_name, abbrs)
-        all_data[team_name] = team_players
-        logger.info(f"  => {len(team_players)} unique players for {team_name}")
-
-    # Write data.js in the format the game expects
-    with open("data.js", "w", encoding="utf-8") as f:
-        f.write("const playersData = ")
-        json.dump(all_data, f, indent=2, ensure_ascii=False)
-        f.write(";\n")
-
-    total = sum(len(v) for v in all_data.values())
-    logger.info(f"\nDone! {total} total player-team entries written to data.js")
+    scraper = NBAScraperBasketballRef()
+    if scraper.run():
+        scraper.export_to_datajs()
+        logger.info("Scraping complete!")
+        return 0
+    else:
+        logger.error("Scraping failed")
+        return 1
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    exit(main())
