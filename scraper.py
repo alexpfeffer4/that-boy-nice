@@ -274,18 +274,30 @@ def scrape_draft(year: int) -> dict:
     url = f'{BASE}/draft/NBA_{year}.html'
     html = fetch(url, timeout=30)
     if not html:
-        logger.debug(f'Draft {year}: no HTML')
+        logger.info(f'Draft {year}: fetch failed')
         return {}
 
     soup = BeautifulSoup(html, 'html.parser')
-    # BBRef draft table is 'drafts' (plural) and often hidden in HTML comments
+
+    # First, log all table IDs found to debug
+    all_tables = soup.find_all('table')
+    table_ids = [t.get('id', 'no-id') for t in all_tables]
+    logger.debug(f'Draft {year}: found {len(all_tables)} tables: {table_ids[:5]}')
+
+    # Try to find the draft table
     table = find_table(soup, 'drafts', 'draft', 'div_drafts', 'draft_table')
     if not table:
-        logger.debug(f'Draft {year}: no table found')
+        logger.info(f'Draft {year}: no draft table found (checked 4 variants)')
         return {}
 
     picks = {}
-    for row in table.select('tbody tr'):
+    tbody = table.find('tbody')
+    if not tbody:
+        logger.info(f'Draft {year}: table has no tbody')
+        return {}
+
+    rows = tbody.find_all('tr')
+    for row in rows:
         link = row.find('a', href=lambda h: h and '/players/' in h)
         if not link:
             continue
@@ -307,7 +319,7 @@ def scrape_draft(year: int) -> dict:
     if picks:
         logger.info(f'Draft {year}: {len(picks)} picks')
     else:
-        logger.debug(f'Draft {year}: 0 picks found')
+        logger.info(f'Draft {year}: 0 picks (table found but no valid rows)')
     return picks
 
 
