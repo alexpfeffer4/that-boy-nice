@@ -797,11 +797,11 @@
       score -= s.allDef1 * 12;
       score -= s.allDef2 * 6;
 
-      // Games started — starters are more recognizable than bench players
-      if (s.gamesStarted >= 600) score -= 12;
-      else if (s.gamesStarted >= 400) score -= 8;
-      else if (s.gamesStarted >= 200) score -= 5;
-      else if (s.gamesStarted >= 75) score -= 2;
+      // Games started ratio — starters are more recognizable than bench players
+      const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
+      if (gsRatio >= 0.75) score -= 10;
+      else if (gsRatio >= 0.60) score -= 6;
+      else if (gsRatio >= 0.40) score -= 3;
 
       // Repeat award penalty — winning the same award 3+ times marks a perennial elite
       const repeatAwards = [
@@ -818,12 +818,12 @@
       });
 
       // Draft position
-      if (s.draftPick === 1) score -= 50;
-      else if (s.draftPick === 2) score -= 38;
-      else if (s.draftPick === 3) score -= 28;
-      else if (s.draftPick <= 5) score -= 20;
-      else if (s.draftPick <= 14) score -= 12;
-      else if (s.draftPick <= 30) score -= 6;
+      if (s.draftPick === 1) score -= 30;
+      else if (s.draftPick === 2) score -= 22;
+      else if (s.draftPick === 3) score -= 18;
+      else if (s.draftPick <= 5) score -= 15;
+      else if (s.draftPick <= 14) score -= 10;
+      else if (s.draftPick <= 30) score -= 5;
       else if (s.draftPick <= 60) score -= 2;
 
       return Math.max(1, Math.min(99, Math.round(score * s.recencyMultiplier)));
@@ -843,11 +843,6 @@
         const p = s.vorp >= 80 ? -58 : s.vorp >= 50 ? -42 : s.vorp >= 30 ? -30 : s.vorp >= 20 ? -22 :
                   s.vorp >= 15 ? -18 : s.vorp >= 10 ? -15 : s.vorp >= 5 ? -10 : -5;
         breakdown.push({ label: `VORP (${s.vorp.toFixed(1)})`, value: p });
-      }
-
-      if (s.vorpPerSeason >= 1.5) {
-        const p = s.vorpPerSeason >= 6 ? -25 : s.vorpPerSeason >= 4 ? -18 : s.vorpPerSeason >= 2.5 ? -10 : -5;
-        breakdown.push({ label: `VORP/season (${s.vorpPerSeason.toFixed(1)})`, value: p });
       }
 
       if (s.mvp > 0) breakdown.push({ label: `MVP ×${s.mvp}`, value: -25 * s.mvp });
