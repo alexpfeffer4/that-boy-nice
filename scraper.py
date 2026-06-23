@@ -70,6 +70,11 @@ HEADERS = {
 NTM_RE = re.compile(r'^\d+TM$')
 
 
+def normalize_name(name: str) -> str:
+    """Normalize player name for matching: lowercase, strip extra whitespace."""
+    return ' '.join(name.lower().split())
+
+
 def find_table(soup, *table_ids):
     """Find a table by any of the given IDs, including tables hidden in HTML comments (BBRef pattern)."""
     for tid in table_ids:
@@ -220,23 +225,18 @@ def scrape_all_star() -> dict:
         if not link:
             continue
 
-        name = link.get_text(strip=True)
+        name = normalize_name(link.get_text(strip=True))
 
-        # Try explicit count column first, fall back to counting rows per player
-        apps_td = row.find('td', {'data-stat': 'all_star_count'})
-        if apps_td:
-            try:
-                apps = int(apps_td.get_text(strip=True) or 0)
-            except (ValueError, TypeError):
-                apps = 1
-        else:
-            apps = 1
+        # Read the "tot" column which has total All-Star appearances
+        apps_td = (row.find('td', {'data-stat': 'all_star_count'}) or
+                   row.find('td', {'data-stat': 'tot'}))
+        try:
+            apps = int(apps_td.get_text(strip=True) or 0) if apps_td else 0
+        except (ValueError, TypeError):
+            apps = 0
 
         if apps > 0:
-            if name in stars:
-                stars[name] += apps
-            else:
-                stars[name] = apps
+            stars[name] = apps  # Store the actual count, don't accumulate
 
     logger.info(f'All-Star: {len(stars)} players')
     return stars
@@ -262,7 +262,7 @@ def scrape_award(award_name: str, award_id: str, field: str) -> dict:
         link = row.find('a', href=lambda h: h and '/players/' in h)
         if not link:
             continue
-        name = link.get_text(strip=True)
+        name = normalize_name(link.get_text(strip=True))
         awards[name] = awards.get(name, 0) + 1
 
     logger.info(f'{award_name}: {len(awards)} players')
@@ -302,7 +302,7 @@ def scrape_draft(year: int) -> dict:
         if not link:
             continue
 
-        name = link.get_text(strip=True)
+        name = normalize_name(link.get_text(strip=True))
 
         # Try multiple data-stat variants for pick number
         pick_td = (row.find('td', {'data-stat': 'pick_number'}) or
@@ -358,7 +358,7 @@ def merge_awards(players: dict):
     fmvp_data = scrape_award('FMVP', 'finals_mvp', 'fmvpAwards')
 
     for pid, p in players.items():
-        name = p['name']
+        name = normalize_name(p['name'])
         p['mvpAwards'] = mvp_data.get(name, 0)
         p['fmvpAwards'] = fmvp_data.get(name, 0)
         p['dpoyAwards'] = dpoy_data.get(name, 0)
