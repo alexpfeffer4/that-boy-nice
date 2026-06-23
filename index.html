@@ -883,6 +883,14 @@
       else if (s.draftPick <= 60) breakdown.push({ label: `Draft: #${s.draftPick}`, value: -2 });
       else if (s.undrafted) breakdown.push({ label: 'Undrafted', value: 0 });
 
+      const subtotal = breakdown.reduce((sum, b) => sum + b.value, 0);
+      breakdown.push({ label: `Subtotal`, value: subtotal, isSeparator: true });
+
+      if (s.recencyMultiplier < 1.0) {
+        const multiplierPercent = Math.round(s.recencyMultiplier * 100);
+        breakdown.push({ label: `Recency ×${multiplierPercent}%`, value: Math.round(subtotal * s.recencyMultiplier) - subtotal, isMultiplier: true });
+      }
+
       return breakdown;
     }
 
