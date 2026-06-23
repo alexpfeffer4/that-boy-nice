@@ -6,26 +6,27 @@ on:
     - cron: '0 0 1 * *'  # Monthly on the 1st
 
 jobs:
-  fetch:
+  scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 120
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          node-version: '18'
+          python-version: '3.11'
 
-      - name: Fetch players from BallDontLie API
-        run: node fetch-players.js
-        env:
-          BALLDONTLIE_API_KEY: ${{ secrets.BALLDONTLIE_API_KEY }}
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Run scraper
+        run: python scraper.py
 
       - name: Commit updated data.js
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add data.js
-          git diff --staged --quiet || (git commit -m "Update player data from BallDontLie API" && git push)
+          git diff --staged --quiet || (git commit -m "Update player data from Basketball Reference" && git push)
