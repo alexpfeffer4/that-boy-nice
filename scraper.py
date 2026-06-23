@@ -59,24 +59,25 @@ def should_skip(team_abbr: str, season: int) -> bool:
             return True
     return False
 
-def fetch(url: str, max_retries: int = 2) -> Optional[str]:
-    """Fetch URL with retries and polite delay."""
+def fetch(url: str, max_retries: int = 3) -> Optional[str]:
+    """Fetch URL with retries and exponential backoff."""
     for attempt in range(max_retries):
         try:
             resp = requests.get(url, headers=HEADERS, timeout=15)
             if resp.status_code == 429:
-                logger.warning('Rate limited — waiting 15s...')
-                time.sleep(15)
+                wait_time = 30 * (2 ** attempt)  # 30s, 60s, 120s
+                logger.warning(f'Rate limited — waiting {wait_time}s (attempt {attempt+1}/{max_retries})')
+                time.sleep(wait_time)
                 continue
             if resp.status_code == 404:
                 return None
             resp.raise_for_status()
-            time.sleep(2)  # Polite delay
+            time.sleep(5)  # Polite delay between successful requests
             return resp.text
         except Exception as e:
             logger.debug(f'Attempt {attempt+1} failed: {e}')
             if attempt < max_retries - 1:
-                time.sleep(3)
+                time.sleep(5)
     return None
 
 
@@ -143,7 +144,7 @@ def build_database() -> Dict:
     # Structure: player_name -> {position, total_games, total_ws}
     players: Dict[str, Dict] = {}
 
-    total_combos = len(TEAM_ABBRS) * 27  # 2000-2026 = 27 years
+    total_combos = len(TEAM_ABBRS) * 27  # 2000-2026
     done = 0
 
     for team_abbr in TEAM_ABBRS:
