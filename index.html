@@ -719,6 +719,18 @@
       opacity: 0.85;
     }
 
+    .start-mode-tag {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      background: rgba(0,0,0,0.25);
+      border-radius: 12px;
+      padding: 2px 10px;
+      text-transform: uppercase;
+    }
+
     .already-played {
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.15);
@@ -894,6 +906,7 @@
         <button class="start-btn daily-btn" onclick="startDailyChallenge()">
           📅 Daily Challenge
           <span class="start-desc">Same 5 teams for everyone today</span>
+          <span class="start-mode-tag">🧓 Oldhead Mode</span>
         </button>
         <button class="start-btn free-play-btn" onclick="startPractice()">
           🏀 Free Play
