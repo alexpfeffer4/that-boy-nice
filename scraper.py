@@ -42,8 +42,9 @@ TEAM_NAMES = {
 # Teams that didn't exist in certain years or had different names
 SKIP_COMBOS = {
     ('CHO', range(2002, 2014)),  # Charlotte Hornets relocated to NOLA 2002-2013, returned 2014
-    ('NOP', range(2000, 2002)),  # New Orleans didn't exist before 2002 (was Hornets)
+    ('NOP', range(2000, 2002)),  # New Orleans didn't exist before 2002
     ('BRK', range(2000, 2013)),  # New Jersey Nets until 2012, became Brooklyn 2013+
+    ('MEM', range(2000, 2001)),  # Vancouver Grizzlies until 2000, became Memphis 2001+
 }
 
 BASE_URL = 'https://www.basketball-reference.com'
@@ -118,12 +119,12 @@ def scrape_team_season(team_abbr: str, season: int) -> List[Dict]:
             except (ValueError, TypeError):
                 pass
 
-        # Get Win Shares (data-stat="ws")
-        ws_td = row.find('td', {'data-stat': 'ws'})
-        ws = 0.0
-        if ws_td:
+        # Get VORP - Value Over Replacement Player (data-stat="vorp")
+        vorp_td = row.find('td', {'data-stat': 'vorp'})
+        vorp = 0.0
+        if vorp_td:
             try:
-                ws = float(ws_td.get_text(strip=True) or 0)
+                vorp = float(vorp_td.get_text(strip=True) or 0)
             except (ValueError, TypeError):
                 pass
 
@@ -131,7 +132,7 @@ def scrape_team_season(team_abbr: str, season: int) -> List[Dict]:
             'name': name,
             'position': pos,
             'games': games,
-            'ws': ws,
+            'vorp': vorp,
         })
 
     return players
@@ -162,11 +163,11 @@ def build_database() -> Dict:
                         players[name] = {
                             'position': p['position'],
                             'total_games': 0,
-                            'total_ws': 0.0,
+                            'total_vorp': 0.0,
                         }
 
                     players[name]['total_games'] += p['games']
-                    players[name]['total_ws'] += p['ws']
+                    players[name]['total_vorp'] += p['vorp']
             else:
                 logger.debug(f'  {season}: no data')
 
@@ -208,7 +209,7 @@ def organize_by_team(players: Dict) -> Dict:
             'name': player_name,
             'position': data['position'],
             'careerGames': data['total_games'],
-            'careerWS': round(data['total_ws'], 1),
+            'careerVORP': round(data['total_vorp'], 1),
             'draftRound': 1,
             'allStarAppearances': 0
         })
@@ -231,7 +232,7 @@ def export_to_datajs(teams_dict: Dict, filename: str = 'data.js'):
             safe_name = p['name'].replace('\\', '\\\\').replace('"', '\\"')
             lines.append(
                 f'    {{"name": "{safe_name}", "position": "{p["position"]}", '
-                f'"careerGames": {p["careerGames"]}, "careerWS": {p["careerWS"]}, '
+                f'"careerGames": {p["careerGames"]}, "careerVORP": {p["careerVORP"]}, '
                 f'"draftRound": {p["draftRound"]}, "allStarAppearances": {p["allStarAppearances"]}}}{comma}'
             )
 

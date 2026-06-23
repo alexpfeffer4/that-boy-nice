@@ -437,23 +437,26 @@
     function calculateObscurityScore(player) {
       let score = 50;
       // Games played: fewer = more obscure
-      if (player.careerGames < 100) score += 30;
-      else if (player.careerGames < 300) score += 20;
-      else if (player.careerGames < 600) score += 10;
-      else score -= 10;
-      // Win Shares: lower = more obscure (accounts for all-around play, not just scoring)
-      const ws = player.careerWS || 0;
-      if (ws < 20) score += 30;
-      else if (ws < 50) score += 20;
-      else if (ws < 100) score += 10;
-      else if (ws < 200) score += 0;
-      else if (ws < 300) score -= 10;
-      else score -= 20;
-      // Draft & All-Star (placeholders for now)
-      if (player.draftRound === 2) score += 15;
-      else if (player.draftRound > 2) score += 25;
+      if (player.careerGames < 100) score += 25;
+      else if (player.careerGames < 300) score += 15;
+      else if (player.careerGames < 600) score += 5;
+      else score -= 5;
+      // VORP: Value Over Replacement Player - lower = more obscure
+      // Negative/near-zero VORP = bench, High VORP = all-time great
+      const vorp = player.careerVORP || 0;
+      if (vorp < 0) score += 40;
+      else if (vorp < 5) score += 35;
+      else if (vorp < 10) score += 25;
+      else if (vorp < 20) score += 15;
+      else if (vorp < 30) score += 5;
+      else if (vorp < 50) score -= 10;
+      else if (vorp < 80) score -= 20;
+      else score -= 30;
+      // Draft & All-Star (placeholders)
+      if (player.draftRound === 2) score += 10;
+      else if (player.draftRound > 2) score += 15;
       if (player.allStarAppearances > 0) {
-        score -= player.allStarAppearances * 5;
+        score -= player.allStarAppearances * 3;
       }
       return Math.max(1, Math.min(99, score));
     }
