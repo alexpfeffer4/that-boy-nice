@@ -200,7 +200,7 @@ def scrape_season(year: int, players: dict) -> int:
 
 
 def scrape_all_star() -> dict:
-    """Scrape All-Star by player page; return {pid: count}."""
+    """Scrape All-Star by player page; return {name: count}."""
     url = f'{BASE}/awards/all_star_by_player.html'
     html = fetch(url)
     if not html:
@@ -220,7 +220,7 @@ def scrape_all_star() -> dict:
         if not link:
             continue
 
-        pid = link['href'].split('/')[-1].replace('.html', '')
+        name = link.get_text(strip=True)
 
         # Try explicit count column first, fall back to counting rows per player
         apps_td = row.find('td', {'data-stat': 'all_star_count'})
@@ -233,17 +233,17 @@ def scrape_all_star() -> dict:
             apps = 1
 
         if apps > 0:
-            if pid in stars:
-                stars[pid] += apps
+            if name in stars:
+                stars[name] += apps
             else:
-                stars[pid] = apps
+                stars[name] = apps
 
     logger.info(f'All-Star: {len(stars)} players')
     return stars
 
 
 def scrape_award(award_name: str, award_id: str, field: str) -> dict:
-    """Scrape a single award page; return {pid: count}."""
+    """Scrape a single award page; return {name: count}."""
     url = f'{BASE}/awards/{award_id}.html'
     html = fetch(url)
     if not html:
@@ -262,8 +262,8 @@ def scrape_award(award_name: str, award_id: str, field: str) -> dict:
         link = row.find('a', href=lambda h: h and '/players/' in h)
         if not link:
             continue
-        pid = link['href'].split('/')[-1].replace('.html', '')
-        awards[pid] = awards.get(pid, 0) + 1
+        name = link.get_text(strip=True)
+        awards[name] = awards.get(name, 0) + 1
 
     logger.info(f'{award_name}: {len(awards)} players')
     return awards
@@ -327,7 +327,7 @@ def build_seasons() -> dict:
 
 
 def merge_awards(players: dict):
-    """Merge award data into players dict."""
+    """Merge award data into players dict (matched by player name)."""
     logger.info('Scraping awards pages...')
     all_star_data = scrape_all_star()
     mvp_data = scrape_award('MVP', 'mvp', 'mvpAwards')
@@ -338,14 +338,15 @@ def merge_awards(players: dict):
     fmvp_data = scrape_award('FMVP', 'finals_mvp', 'fmvpAwards')
 
     for pid, p in players.items():
-        p['mvpAwards'] = mvp_data.get(pid, 0)
-        p['fmvpAwards'] = fmvp_data.get(pid, 0)
-        p['dpoyAwards'] = dpoy_data.get(pid, 0)
-        p['royAward'] = roy_data.get(pid, 0)
-        p['smoyAwards'] = smoy_data.get(pid, 0)
-        p['mipAwards'] = mip_data.get(pid, 0)
-        if pid in all_star_data:
-            p['allStarAppearances'] = all_star_data[pid]
+        name = p['name']
+        p['mvpAwards'] = mvp_data.get(name, 0)
+        p['fmvpAwards'] = fmvp_data.get(name, 0)
+        p['dpoyAwards'] = dpoy_data.get(name, 0)
+        p['royAward'] = roy_data.get(name, 0)
+        p['smoyAwards'] = smoy_data.get(name, 0)
+        p['mipAwards'] = mip_data.get(name, 0)
+        if name in all_star_data:
+            p['allStarAppearances'] = all_star_data[name]
 
 
 def merge_draft(players: dict):
