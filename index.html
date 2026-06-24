@@ -2632,20 +2632,16 @@
       const grouped = groupBreakdown(breakdown);
       let breakdownHTML = grouped.map(b => {
         if (b.isGroupHeader) {
-          return `<div class="breakdown-item breakdown-group-header"><span>${b.label}</span><span>${b.subtotal > 0 ? '+' : ''}${b.subtotal}</span></div>`;
-        } else if (b.isSeparator) {
-          return `<div class="breakdown-item breakdown-separator"><span>${b.label}</span><span>${b.value > 0 ? '+' : ''}${b.value}</span></div>`;
-        } else if (b.isTotal) {
-          return `<div class="breakdown-item breakdown-total"><span>${b.label}</span><span>${b.value > 0 ? '+' : ''}${b.value}</span></div>`;
-        } else if (b.isMultiplier) {
-          return `<div class="breakdown-item"><span>${b.label}</span><span>${b.value > 0 ? '+' : ''}${b.value}</span></div>`;
+          return `<div class="breakdown-item breakdown-group-header"><span>${b.label}</span></div>`;
+        } else if (b.isSeparator || b.isTotal || b.isMultiplier) {
+          return '';
         }
         const itemClass = b.group ? 'breakdown-group-item' : '';
-        return `<div class="breakdown-item ${itemClass}"><span>${b.label}</span><span>${b.value > 0 ? '+' : ''}${b.value}</span></div>`;
-      }).join('');
+        return `<div class="breakdown-item ${itemClass}"><span>${b.label}</span></div>`;
+      }).filter(h => h).join('');
 
       document.getElementById('message').innerHTML = `
-        <div class="success">✓ ${player.name} added to ${position}! (+${score} pts)</div>
+        <div class="success">✓ ${player.name} added to ${position}!</div>
         <div class="score-breakdown">${breakdownHTML}</div>
       `;
       document.getElementById('playerInput').value = '';
@@ -3036,8 +3032,7 @@
           if (player) {
             slot.innerHTML =
               '<div class="formation-pos-label">' + shortTeamName(team) + '</div>' +
-              '<div class="formation-player-name">' + player.name + '</div>' +
-              '<div class="formation-player-score">+' + player.score + '</div>';
+              '<div class="formation-player-name">' + player.name + '</div>';
           } else if (team) {
             slot.innerHTML = '<div class="formation-pos-label">' + shortTeamName(team) + '</div>';
           } else {
@@ -3058,7 +3053,6 @@
             slot.innerHTML =
               '<div class="formation-pos-label">' + pos + '</div>' +
               '<div class="formation-player-name">' + player.name + '</div>' +
-              '<div class="formation-player-score">+' + player.score + '</div>' +
               moveBtn;
           } else {
             slot.innerHTML = '<div class="formation-pos-label">' + pos + '</div>';
