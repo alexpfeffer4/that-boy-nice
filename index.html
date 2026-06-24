@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>that boy nice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     :root {
@@ -22,14 +25,34 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+      background-attachment: fixed;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 20px;
       color: #fff;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 50%;
+      width: 1200px;
+      height: 800px;
+      background: radial-gradient(ellipse at center, rgba(102, 126, 234, 0.15) 0%, transparent 70%);
+      transform: translateX(-50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
     }
 
     .help-btn {
@@ -68,10 +91,11 @@
     }
 
     h1 {
-      font-size: 3.5rem;
-      font-weight: 900;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3.8rem;
+      font-weight: 400;
       margin-bottom: 8px;
-      letter-spacing: -1px;
+      letter-spacing: 2px;
     }
 
     .tagline {
@@ -539,8 +563,8 @@
     .formation-slot[data-position="C"]  { grid-area: c; }
 
     .formation-slot {
-      background: rgba(255,255,255,0.05);
-      border: 2px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.02);
+      border: 2px dashed rgba(255,255,255,0.15);
       border-radius: 10px;
       padding: 8px 6px;
       text-align: center;
@@ -553,9 +577,16 @@
     }
 
     .formation-slot.active {
+      border-style: solid;
       border-color: #4ECDC4;
       background: rgba(78,205,196,0.12);
       box-shadow: 0 0 14px rgba(78,205,196,0.28);
+      animation: pulse-glow 2s infinite;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 14px rgba(78,205,196,0.28); }
+      50% { box-shadow: 0 0 24px rgba(78,205,196,0.42); }
     }
 
     .formation-slot.filled {
@@ -658,6 +689,16 @@
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 16px;
       margin-bottom: 16px;
+      position: relative;
+    }
+
+    .end-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      background: radial-gradient(circle at center, rgba(102,126,234,0.1) 0%, transparent 70%);
+      pointer-events: none;
     }
 
     .end-meta-tag {
@@ -673,6 +714,8 @@
       font-weight: 900;
       line-height: 1;
       margin-bottom: 12px;
+      position: relative;
+      z-index: 1;
     }
 
     .end-score-num.tier-god    { color: var(--tier-god-base); text-shadow: 0 0 30px color-mix(in srgb, var(--tier-god-base) 50%, transparent); }
@@ -1270,13 +1313,25 @@
     }
 
     .mode-oldhead-btn {
-      background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
-      color: #1a1a2e;
+      background: linear-gradient(135deg, #2a2a3e 0%, #1a1a2e 100%);
+      color: #ffd200;
+      border: 2px solid rgba(255,210,0,0.4);
+    }
+
+    .mode-oldhead-btn:hover {
+      border-color: rgba(255,210,0,0.7);
+      box-shadow: 0 0 20px rgba(255,210,0,0.2);
     }
 
     .mode-classic-btn {
-      background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
-      color: #1a1a2e;
+      background: linear-gradient(135deg, #2a3a4a 0%, #1a2a3e 100%);
+      color: #9db4d4;
+      border: 2px solid rgba(157,180,212,0.3);
+    }
+
+    .mode-classic-btn:hover {
+      border-color: rgba(157,180,212,0.6);
+      box-shadow: 0 0 20px rgba(157,180,212,0.15);
     }
 
     .mode-back-btn {
