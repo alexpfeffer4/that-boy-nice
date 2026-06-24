@@ -3237,7 +3237,7 @@
         tierLabel = 'All-Star'; tierType = 'badge-tier-allstar';
       } else if (s.allStarApps === 1 && s.games < 300) {
         tierLabel = 'Rising Star'; tierType = 'badge-tier-great';
-      } else if (!s.undrafted && s.draftPick <= 5 && s.allStarApps === 0 && s.games < 500) {
+      } else if (!s.undrafted && s.draftPick <= 5 && s.allStarApps === 0 && s.games < 500 && (s.lastSeason - s.firstSeason >= 3)) {
         tierLabel = 'Lottery Bust'; tierType = 'badge-tier-role';
       } else if ((s.undrafted || s.draftPick > 30) && s.games >= 400) {
         tierLabel = 'Hidden Gem'; tierType = 'badge-tier-solid';
