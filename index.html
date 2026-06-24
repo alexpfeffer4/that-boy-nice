@@ -24,7 +24,7 @@
     }
 
     .container {
-      max-width: 600px;
+      max-width: 900px;
       width: 100%;
     }
 
@@ -422,77 +422,163 @@
       padding: 12px 32px;
     }
 
-    .lineup-card {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 12px;
-      padding: 20px;
-      margin-top: 30px;
-    }
-
-    .lineup-grid {
+    /* ── Two-column game layout ── */
+    .game-layout {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
     }
 
-    .lineup-item {
-      background: rgba(255,255,255,0.05);
-      border: 2px solid rgba(255,255,255,0.1);
-      border-radius: 8px;
-      padding: 16px;
-      text-align: center;
-      min-height: 100px;
+    .game-controls-panel {
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      transition: all 0.3s;
+      gap: 0;
     }
 
-    .lineup-item.filled {
-      border-color: rgba(78, 205, 196, 0.5);
-      background: rgba(78, 205, 196, 0.1);
+    /* Compact logo + team name row */
+    .team-logo-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
     }
 
-    .position {
-      font-size: 0.75rem;
-      color: rgba(255,255,255,0.6);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      font-weight: 600;
+    .team-logo-row .wheel-container {
+      margin: 0;
+      gap: 0;
+      flex-shrink: 0;
     }
 
-    .player-name {
-      font-size: 1rem;
-      font-weight: bold;
-      color: #4ECDC4;
-      margin-bottom: 4px;
+    .team-logo-row .reel-window {
+      width: 80px;
+      height: 80px;
+      border-width: 3px;
     }
 
-    .player-score {
-      font-size: 0.85rem;
-      color: rgba(255,255,255,0.7);
+    .team-logo-row .reel-display {
+      width: 54px;
+      height: 54px;
     }
 
-    .total-score {
-      background: rgba(255,255,255,0.1);
-      border-top: 1px solid rgba(255,255,255,0.1);
-      margin-top: 16px;
-      padding-top: 16px;
+    .team-logo-row .team-display {
+      flex: 1;
+      text-align: left;
+      margin: 0;
+      min-height: 0;
+    }
+
+    .team-logo-row .current-team {
+      font-size: 1.1rem;
+    }
+
+    .team-logo-row .position-label {
+      margin-top: 2px;
+    }
+
+    /* ── Formation panel ── */
+    .formation-panel {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 14px 12px 10px;
+    }
+
+    .formation-grid {
+      display: grid;
+      grid-template-areas:
+        ". pg ."
+        "sg . sf"
+        "pf . c";
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .formation-slot { grid-area: unset; }
+    .formation-slot[data-position="PG"] { grid-area: pg; }
+    .formation-slot[data-position="SG"] { grid-area: sg; }
+    .formation-slot[data-position="SF"] { grid-area: sf; }
+    .formation-slot[data-position="PF"] { grid-area: pf; }
+    .formation-slot[data-position="C"]  { grid-area: c; }
+
+    .formation-slot {
+      background: rgba(255,255,255,0.05);
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 8px 6px;
       text-align: center;
+      min-height: 82px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s;
+    }
+
+    .formation-slot.active {
+      border-color: #4ECDC4;
+      background: rgba(78,205,196,0.12);
+      box-shadow: 0 0 14px rgba(78,205,196,0.28);
+    }
+
+    .formation-slot.filled {
+      border-color: rgba(78,205,196,0.4);
+      background: rgba(78,205,196,0.07);
+    }
+
+    .formation-pos-label {
+      font-size: 0.58rem;
+      color: rgba(255,255,255,0.42);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+      margin-bottom: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      line-height: 1;
+    }
+
+    .formation-player-name {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #4ECDC4;
+      line-height: 1.2;
+      margin-bottom: 3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+
+    .formation-player-score {
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: rgba(255,255,255,0.9);
+      line-height: 1;
+    }
+
+    .formation-total {
+      text-align: center;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.1);
     }
 
     .score-label {
-      font-size: 0.8rem;
-      color: rgba(255,255,255,0.6);
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.5);
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 4px;
+      letter-spacing: 0.08em;
+      margin-bottom: 2px;
     }
 
     .total {
-      font-size: 2rem;
+      font-size: 1.8rem;
       font-weight: 900;
       color: #FFD700;
     }
@@ -1436,106 +1522,76 @@
         padding: 3px 10px;
       }
 
-      /* Wheel and controls */
-      .wheel-container {
-        margin-bottom: 16px;
+      /* Stack layout on mobile */
+      .game-layout {
+        grid-template-columns: 1fr;
+        gap: 14px;
       }
 
-      .slot-machine {
-        max-width: 200px;
-        margin: 0 auto;
+      /* Keep logo row compact on mobile */
+      .team-logo-row {
+        padding: 8px 12px;
+        margin-bottom: 10px;
       }
 
-      .reel-window {
-        height: 160px;
-      }
-
-      .reel-display {
-        width: 140px;
-        height: 140px;
-      }
-
-      .wheel-pointer {
-        top: 12px;
-      }
-
+      /* Controls stay horizontal on mobile */
       .controls {
-        flex-direction: column;
+        flex-direction: row;
         gap: 8px;
-        margin-bottom: 14px;
+        margin-bottom: 12px;
       }
 
       .spin-btn, .respin-btn {
-        padding: 12px;
-        font-size: 0.85rem;
-      }
-
-      /* Team/input */
-      .team-display {
-        margin-bottom: 14px;
-      }
-
-      .current-team {
-        font-size: 0.9rem;
-        margin-bottom: 6px;
-      }
-
-      .position-label {
-        font-size: 0.75rem;
+        padding: 10px 8px;
+        font-size: 0.8rem;
       }
 
       .input-group {
-        flex-direction: column;
+        flex-direction: row;
         gap: 8px;
       }
 
-      .autocomplete-wrapper {
-        min-width: 0;
-      }
-
-      .playerInput {
-        padding: 12px;
-        font-size: 1rem;
-      }
-
       .submit-btn {
-        padding: 12px;
+        padding: 10px 14px;
         font-size: 0.85rem;
-        width: 100%;
+        white-space: nowrap;
       }
 
       .autocomplete-dropdown {
-        max-height: 200px;
+        max-height: 180px;
         overflow-y: auto;
       }
 
       .autocomplete-item {
-        padding: 12px;
+        padding: 10px 12px;
         font-size: 0.85rem;
       }
 
-      /* Lineup */
-      .lineup-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
+      /* Formation on mobile: tighter */
+      .formation-panel {
+        padding: 10px 8px 8px;
       }
 
-      .center {
-        grid-column: span 1;
+      .formation-grid {
+        gap: 6px;
       }
 
-      .lineup-card {
-        padding: 12px;
+      .formation-slot {
+        min-height: 70px;
+        padding: 6px 4px;
       }
 
-      .lineup-item {
-        padding: 12px;
-        font-size: 0.8rem;
+      .formation-player-name {
+        font-size: 0.62rem;
+      }
+
+      .formation-player-score {
+        font-size: 0.9rem;
       }
 
       .move-btn {
-        padding: 4px 8px;
-        font-size: 0.7rem;
+        padding: 2px 5px;
+        font-size: 0.55rem;
       }
 
       /* Breakdown tooltip */
@@ -1840,60 +1896,68 @@
     </div>
 
     <div class="game-section" id="gameSection" style="display:none;">
-      <div class="lives-display" id="livesDisplay">❤️ ❤️ ❤️</div>
+      <div class="game-layout">
 
-      <div class="mode-indicator" id="modeIndicator"></div>
+        <!-- Left: controls -->
+        <div class="game-controls-panel">
+          <div class="lives-display" id="livesDisplay">❤️ ❤️ ❤️</div>
+          <div class="mode-indicator" id="modeIndicator"></div>
 
-      <div class="wheel-container">
-        <div class="slot-machine">
-          <div class="reel-window" id="reelWindow">
-            <img class="reel-display" id="reelDisplay" src="" alt="team logo">
+          <div class="team-logo-row">
+            <div class="wheel-container">
+              <div class="slot-machine">
+                <div class="reel-window" id="reelWindow">
+                  <img class="reel-display" id="reelDisplay" src="" alt="team logo">
+                </div>
+              </div>
+            </div>
+            <div class="team-display">
+              <div class="current-team" id="currentTeam">—</div>
+              <div class="position-label" id="positionLabel">Spin to start</div>
+            </div>
           </div>
+
+          <div class="controls">
+            <button class="spin-btn" id="spinBtn" disabled>SPIN WHEEL</button>
+            <button class="respin-btn" id="respinBtn" disabled>RE-SPIN (1)</button>
+          </div>
+
+          <div class="input-group">
+            <div class="autocomplete-wrapper">
+              <input type="text" id="playerInput" placeholder="Enter player name" disabled>
+              <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+            </div>
+            <button class="submit-btn" id="submitBtn" disabled>SUBMIT</button>
+          </div>
+
+          <div id="message"></div>
         </div>
-      </div>
 
-      <div class="controls">
-        <button class="spin-btn" id="spinBtn" disabled>SPIN WHEEL</button>
-        <button class="respin-btn" id="respinBtn" disabled>RE-SPIN (1)</button>
-      </div>
-
-      <div class="team-display">
-        <div class="current-team" id="currentTeam">—</div>
-        <div class="position-label" id="positionLabel">Spin to start</div>
-      </div>
-
-      <div class="input-group">
-        <div class="autocomplete-wrapper">
-          <input type="text" id="playerInput" placeholder="Enter player name" disabled>
-          <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
-        </div>
-        <button class="submit-btn" id="submitBtn" disabled>SUBMIT</button>
-      </div>
-
-      <div id="message"></div>
-
-      <div class="lineup-card">
-        <div class="lineup-grid" id="lineup">
-          <div class="lineup-item" data-position="PG">
-            <div class="position">PG</div>
+        <!-- Right: formation -->
+        <div class="formation-panel">
+          <div class="formation-grid" id="lineup">
+            <div class="formation-slot" data-position="PG" id="slot-PG">
+              <div class="formation-pos-label">PG</div>
+            </div>
+            <div class="formation-slot" data-position="SG" id="slot-SG">
+              <div class="formation-pos-label">SG</div>
+            </div>
+            <div class="formation-slot" data-position="SF" id="slot-SF">
+              <div class="formation-pos-label">SF</div>
+            </div>
+            <div class="formation-slot" data-position="PF" id="slot-PF">
+              <div class="formation-pos-label">PF</div>
+            </div>
+            <div class="formation-slot" data-position="C" id="slot-C">
+              <div class="formation-pos-label">C</div>
+            </div>
           </div>
-          <div class="lineup-item" data-position="SG">
-            <div class="position">SG</div>
-          </div>
-          <div class="lineup-item" data-position="SF">
-            <div class="position">SF</div>
-          </div>
-          <div class="lineup-item" data-position="PF">
-            <div class="position">PF</div>
-          </div>
-          <div class="lineup-item center" data-position="C">
-            <div class="position">C</div>
-          </div>
-          <div class="total-score center">
+          <div class="formation-total">
             <div class="score-label">Total Score</div>
             <div class="total" id="totalScore">0</div>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -2843,49 +2907,50 @@
       document.getElementById('positionLabel').textContent = progress;
     }
 
+    function shortTeamName(name) {
+      const parts = name.split(' ');
+      return parts[parts.length - 1]; // "Los Angeles Lakers" → "Lakers"
+    }
+
     function updateLineup() {
+      const formationPositions = ['PG', 'SG', 'SF', 'PF', 'C'];
       if (gameState.isDailyChallenge) {
-        const grid = document.getElementById('lineup');
-        grid.innerHTML = '';
-        gameState.dailyTeams.slice(0, gameState.dailyTeamIndex).forEach(team => {
-          const player = gameState.lineup[team];
-          const div = document.createElement('div');
-          div.className = 'lineup-item' + (player ? ' filled' : '');
+        formationPositions.forEach(function(pos, idx) {
+          const slot = document.getElementById('slot-' + pos);
+          if (!slot) return;
+          const team = gameState.dailyTeams[idx];
+          const player = team ? gameState.lineup[team] : null;
+          const isActive = idx === gameState.dailyTeamIndex && !player;
+          slot.className = 'formation-slot' + (player ? ' filled' : '') + (isActive ? ' active' : '');
           if (player) {
-            div.innerHTML = `
-              <div class="position">${team}</div>
-              <div class="player-name">${player.name}</div>
-              <div class="player-score">+${player.score}</div>
-            `;
+            slot.innerHTML =
+              '<div class="formation-pos-label">' + shortTeamName(team) + '</div>' +
+              '<div class="formation-player-name">' + player.name + '</div>' +
+              '<div class="formation-player-score">+' + player.score + '</div>';
+          } else if (team) {
+            slot.innerHTML = '<div class="formation-pos-label">' + shortTeamName(team) + '</div>';
           } else {
-            div.innerHTML = `<div class="position">${team}</div>`;
+            slot.innerHTML = '<div class="formation-pos-label">' + pos + '</div>';
           }
-          grid.appendChild(div);
         });
-        // Add current team slot if still in progress
-        if (gameState.dailyTeamIndex < 5) {
-          const div = document.createElement('div');
-          div.className = 'lineup-item';
-          div.innerHTML = `<div class="position">${gameState.dailyTeams[gameState.dailyTeamIndex]}</div>`;
-          grid.appendChild(div);
-        }
       } else {
-        positions.forEach(pos => {
-          const item = document.querySelector(`[data-position="${pos}"]`);
-          if (gameState.lineup[pos]) {
-            item.classList.add('filled');
-            const player = gameState.lineup[pos];
+        positions.forEach(function(pos) {
+          const slot = document.getElementById('slot-' + pos);
+          if (!slot) return;
+          const player = gameState.lineup[pos];
+          slot.className = 'formation-slot' + (player ? ' filled' : '');
+          if (player) {
             const hasOtherPositions = player.positions && player.positions.length > 1;
-            const moveBtn = hasOtherPositions ? `<button class="move-btn" onclick="movePlayer('${pos}')" style="margin-top: 6px; font-size: 0.8rem; padding: 4px 8px;">Move</button>` : '';
-            item.innerHTML = `
-              <div class="position">${pos}</div>
-              <div class="player-name">${player.name}</div>
-              <div class="player-score">+${player.score}</div>
-              ${moveBtn}
-            `;
+            const moveBtn = hasOtherPositions
+              ? '<button class="move-btn" onclick="movePlayer(\'' + pos + '\')" style="margin-top:4px;font-size:0.6rem;padding:2px 5px;">Move</button>'
+              : '';
+            slot.innerHTML =
+              '<div class="formation-pos-label">' + pos + '</div>' +
+              '<div class="formation-player-name">' + player.name + '</div>' +
+              '<div class="formation-player-score">+' + player.score + '</div>' +
+              moveBtn;
           } else {
-            item.classList.remove('filled');
-            item.innerHTML = `<div class="position">${pos}</div>`;
+            slot.innerHTML = '<div class="formation-pos-label">' + pos + '</div>';
           }
         });
       }
