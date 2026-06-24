@@ -171,8 +171,14 @@ def scrape_season(year: int, players: dict) -> int:
         except (ValueError, TypeError):
             vorp = 0.0
 
+        pts_td = row.find('td', {'data-stat': 'pts_per_g'})
+        try:
+            pts = float(pts_td.get_text(strip=True) or 0) if pts_td else 0.0
+        except (ValueError, TypeError):
+            pts = 0.0
+
         season_rows.setdefault(pid, []).append({
-            'name': name, 'team': team, 'pos': pos, 'g': g, 'gs': gs, 'vorp': vorp
+            'name': name, 'team': team, 'pos': pos, 'g': g, 'gs': gs, 'vorp': vorp, 'pts': pts
         })
 
     count = 0
@@ -200,13 +206,18 @@ def scrape_season(year: int, players: dict) -> int:
                 'royAward': 0, 'smoyAwards': 0, 'mipAwards': 0, 'draftPick': 0,
                 'allNBA1': 0, 'allNBA2': 0, 'allNBA3': 0,
                 'allDef1': 0, 'allDef2': 0, 'undrafted': False, 'lastSeason': year,
-                'gamesStarted': 0
+                'gamesStarted': 0, 'seasons20ppg': 0
             }
+
+        # Count season PPG using TOT row for traded players, else first row
+        season_pts = combined['pts'] if combined else rows[0]['pts']
 
         p = players[pid]
         p['games'] += season_g
         p['gamesStarted'] += season_gs
         p['vorp'] += season_vorp
+        if season_pts >= 20.0 and season_g >= 41:  # min 41 games to count a season
+            p['seasons20ppg'] += 1
         p['name'] = name
         p['lastSeason'] = max(p['lastSeason'], year)
         p['positions'][pos] = p['positions'].get(pos, 0) + 1
@@ -515,6 +526,7 @@ def organize_by_team(players: dict) -> dict:
             'allDef2': p.get('allDef2', 0),
             'undrafted': p.get('undrafted', False),
             'lastSeason': p.get('lastSeason', 0),
+            'seasons20ppg': p.get('seasons20ppg', 0),
         }
         for fr in p['franchises']:
             teams[fr].append(entry)
@@ -544,7 +556,8 @@ def export_to_datajs(teams: dict, filename: str = 'data.js'):
                 f'"allNBA1": {p["allNBA1"]}, "allNBA2": {p["allNBA2"]}, "allNBA3": {p["allNBA3"]}, '
                 f'"allDef1": {p["allDef1"]}, "allDef2": {p["allDef2"]}, '
                 f'"undrafted": {"true" if p["undrafted"] else "false"}, '
-                f'"lastSeason": {p["lastSeason"]}'
+                f'"lastSeason": {p["lastSeason"]}, '
+                f'"seasons20ppg": {p.get("seasons20ppg", 0)}'
                 f'}}{comma}'
             )
         team_comma = ',' if i < len(names) - 1 else ''

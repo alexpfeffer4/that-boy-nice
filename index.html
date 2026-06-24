@@ -2108,10 +2108,11 @@
       const allDef2 = player.allDef2 || 0;
       const gamesStarted = player.careerGS || 0;
       const lastSeason = player.lastSeason || 0;
+      const seasons20ppg = player.seasons20ppg || 0;
       const yearsAgo = 2026 - lastSeason;
       const recencyMultiplier = yearsAgo <= 0 ? 0.80 : yearsAgo <= 2 ? 0.90 : yearsAgo <= 4 ? 0.95 : 1.0;
       return { games, vorp, draftPick, undrafted, mvp, fmvp, dpoy, allStarApps, roy, smoy, mip,
-               allNBA1, allNBA2, allNBA3, allDef1, allDef2, gamesStarted, lastSeason, recencyMultiplier };
+               allNBA1, allNBA2, allNBA3, allDef1, allDef2, gamesStarted, lastSeason, seasons20ppg, recencyMultiplier };
     }
 
     function calculateObscurityScore(player) {
@@ -2132,10 +2133,15 @@
       score -= s.dpoy * 15;
       const allNBACount = s.allNBA1 + s.allNBA2 + s.allNBA3;
       const excessAllStars = Math.max(0, s.allStarApps - allNBACount);
-      score -= Math.min(excessAllStars * 4, 20); // capped at -20, only excess All-Stars
+      score -= excessAllStars * 4; // uncapped, only excess All-Stars beyond All-NBA count
       score -= s.roy * 8;
       score -= s.smoy * 5;
       score -= s.mip * 5;
+
+      // Scoring seasons (20+ PPG in 41+ games)
+      if (s.seasons20ppg >= 4) score -= 15;
+      else if (s.seasons20ppg >= 2) score -= 10;
+      else if (s.seasons20ppg >= 1) score -= 5;
 
       // All-NBA teams
       score -= s.allNBA1 * 10;
@@ -2190,10 +2196,14 @@
       if (s.dpoy > 0) breakdown.push({ label: `DPOY ×${s.dpoy}`, value: -15 * s.dpoy });
       const allNBACount = s.allNBA1 + s.allNBA2 + s.allNBA3;
       const excessAllStars = Math.max(0, s.allStarApps - allNBACount);
-      if (excessAllStars > 0) breakdown.push({ label: `All-Star ×${Math.min(excessAllStars, 5)}${excessAllStars > 5 ? '+' : ''}`, value: -Math.min(excessAllStars * 4, 20) });
+      if (excessAllStars > 0) breakdown.push({ label: `All-Star ×${excessAllStars}`, value: -(excessAllStars * 4) });
       if (s.roy > 0) breakdown.push({ label: `ROY`, value: -8 });
       if (s.smoy > 0) breakdown.push({ label: `SMOY ×${s.smoy}`, value: -5 * s.smoy });
       if (s.mip > 0) breakdown.push({ label: `MIP ×${s.mip}`, value: -5 * s.mip });
+      if (s.seasons20ppg >= 1) {
+        const ppgPenalty = s.seasons20ppg >= 4 ? -15 : s.seasons20ppg >= 2 ? -10 : -5;
+        breakdown.push({ label: `20+ PPG seasons (${s.seasons20ppg})`, value: ppgPenalty });
+      }
       if (s.allNBA1 > 0) breakdown.push({ label: `All-NBA 1st ×${s.allNBA1}`, value: -10 * s.allNBA1 });
       if (s.allNBA2 > 0) breakdown.push({ label: `All-NBA 2nd ×${s.allNBA2}`, value: -7 * s.allNBA2 });
       if (s.allNBA3 > 0) breakdown.push({ label: `All-NBA 3rd ×${s.allNBA3}`, value: -5 * s.allNBA3 });
@@ -2716,24 +2726,51 @@
     }
 
     function updateLineup() {
-      positions.forEach(pos => {
-        const item = document.querySelector(`[data-position="${pos}"]`);
-        if (gameState.lineup[pos]) {
-          item.classList.add('filled');
-          const player = gameState.lineup[pos];
-          const hasOtherPositions = player.positions && player.positions.length > 1;
-          const moveBtn = hasOtherPositions ? `<button class="move-btn" onclick="movePlayer('${pos}')" style="margin-top: 6px; font-size: 0.8rem; padding: 4px 8px;">Move</button>` : '';
-          item.innerHTML = `
-            <div class="position">${pos}</div>
-            <div class="player-name">${player.name}</div>
-            <div class="player-score">+${player.score}</div>
-            ${moveBtn}
-          `;
-        } else {
-          item.classList.remove('filled');
-          item.innerHTML = `<div class="position">${pos}</div>`;
+      if (gameState.isDailyChallenge) {
+        const grid = document.getElementById('lineup');
+        grid.innerHTML = '';
+        gameState.dailyTeams.slice(0, gameState.dailyTeamIndex).forEach(team => {
+          const player = gameState.lineup[team];
+          const div = document.createElement('div');
+          div.className = 'lineup-item' + (player ? ' filled' : '');
+          if (player) {
+            div.innerHTML = `
+              <div class="position">${team}</div>
+              <div class="player-name">${player.name}</div>
+              <div class="player-score">+${player.score}</div>
+            `;
+          } else {
+            div.innerHTML = `<div class="position">${team}</div>`;
+          }
+          grid.appendChild(div);
+        });
+        // Add current team slot if still in progress
+        if (gameState.dailyTeamIndex < 5) {
+          const div = document.createElement('div');
+          div.className = 'lineup-item';
+          div.innerHTML = `<div class="position">${gameState.dailyTeams[gameState.dailyTeamIndex]}</div>`;
+          grid.appendChild(div);
         }
-      });
+      } else {
+        positions.forEach(pos => {
+          const item = document.querySelector(`[data-position="${pos}"]`);
+          if (gameState.lineup[pos]) {
+            item.classList.add('filled');
+            const player = gameState.lineup[pos];
+            const hasOtherPositions = player.positions && player.positions.length > 1;
+            const moveBtn = hasOtherPositions ? `<button class="move-btn" onclick="movePlayer('${pos}')" style="margin-top: 6px; font-size: 0.8rem; padding: 4px 8px;">Move</button>` : '';
+            item.innerHTML = `
+              <div class="position">${pos}</div>
+              <div class="player-name">${player.name}</div>
+              <div class="player-score">+${player.score}</div>
+              ${moveBtn}
+            `;
+          } else {
+            item.classList.remove('filled');
+            item.innerHTML = `<div class="position">${pos}</div>`;
+          }
+        });
+      }
     }
 
     function updateScore() {
