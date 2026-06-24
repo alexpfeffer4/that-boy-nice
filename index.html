@@ -12,6 +12,7 @@
       --tier-good-base:   #43C59E;
       --tier-mid-base:    #5B7FB5;
       --tier-casual-base: #9CA3AF;
+      --tier-archival-base: #6366F1;
     }
 
     * {
@@ -29,6 +30,31 @@
       justify-content: center;
       padding: 20px;
       color: #fff;
+    }
+
+    .help-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255,215,0,0.2);
+      border: 1px solid rgba(255,215,0,0.4);
+      color: #FFD700;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      transition: all 0.2s;
+    }
+
+    .help-btn:hover {
+      background: rgba(255,215,0,0.3);
+      border-color: rgba(255,215,0,0.6);
+      transform: scale(1.1);
     }
 
     .container {
@@ -650,6 +676,7 @@
     .end-score-num.tier-good   { color: var(--tier-good-base); }
     .end-score-num.tier-mid    { color: var(--tier-mid-base); }
     .end-score-num.tier-casual { color: rgba(255,255,255,0.6); }
+    .end-score-num.tier-archival { color: var(--tier-archival-base); }
 
     .end-tier-pill {
       display: inline-block;
@@ -666,6 +693,7 @@
     .end-tier-pill.tier-good   { background: color-mix(in srgb, var(--tier-good-base) 15%, transparent); color: var(--tier-good-base); border: 1px solid color-mix(in srgb, var(--tier-good-base) 35%, transparent); }
     .end-tier-pill.tier-mid    { background: color-mix(in srgb, var(--tier-mid-base) 15%, transparent); color: var(--tier-mid-base); border: 1px solid color-mix(in srgb, var(--tier-mid-base) 35%, transparent); }
     .end-tier-pill.tier-casual { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.2); }
+    .end-tier-pill.tier-archival { background: color-mix(in srgb, var(--tier-archival-base) 15%, transparent); color: var(--tier-archival-base); border: 1px solid color-mix(in srgb, var(--tier-archival-base) 35%, transparent); }
 
     .end-players {
       display: flex;
@@ -686,6 +714,7 @@
     .end-player-card.tier-good   { border-left: 3px solid var(--tier-good-base); }
     .end-player-card.tier-mid    { border-left: 3px solid var(--tier-mid-base); }
     .end-player-card.tier-casual { border-left: 3px solid rgba(255,255,255,0.3); }
+    .end-player-card.tier-archival { border-left: 3px solid var(--tier-archival-base); }
 
     .end-player-top {
       display: flex;
@@ -739,6 +768,7 @@
     .end-player-score.tier-good   { color: var(--tier-good-base); }
     .end-player-score.tier-mid    { color: var(--tier-mid-base); }
     .end-player-score.tier-casual { color: rgba(255,255,255,0.55); }
+    .end-player-score.tier-archival { color: var(--tier-archival-base); }
 
     .end-player-bar-track {
       height: 4px;
@@ -759,6 +789,7 @@
     .end-player-bar.tier-good   { background: var(--tier-good-base); }
     .end-player-bar.tier-mid    { background: var(--tier-mid-base); }
     .end-player-bar.tier-casual { background: rgba(255,255,255,0.3); }
+    .end-player-bar.tier-archival { background: var(--tier-archival-base); }
 
     .end-player-avatar {
       width: 44px;
@@ -787,6 +818,7 @@
     .end-player-avatar.tier-good   { background: color-mix(in srgb, var(--tier-good-base) 18%, transparent); color: var(--tier-good-base); }
     .end-player-avatar.tier-mid    { background: color-mix(in srgb, var(--tier-mid-base) 18%, transparent); color: var(--tier-mid-base); }
     .end-player-avatar.tier-casual { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
+    .end-player-avatar.tier-archival { background: color-mix(in srgb, var(--tier-archival-base) 18%, transparent); color: var(--tier-archival-base); }
 
     .end-player-era {
       display: block;
@@ -900,6 +932,7 @@
     .result-score.tier-good   { color: var(--tier-good-base); }
     .result-score.tier-mid    { color: var(--tier-mid-base); }
     .result-score.tier-casual { color: rgba(255,255,255,0.7); }
+    .result-score.tier-archival { color: var(--tier-archival-base); }
 
     .result-tier-label {
       font-size: 1rem;
@@ -958,6 +991,7 @@
     .result-bar.tier-good   { background: var(--tier-good-base); }
     .result-bar.tier-mid    { background: var(--tier-mid-base); }
     .result-bar.tier-casual { background: rgba(255,255,255,0.4); }
+    .result-bar.tier-archival { background: var(--tier-archival-base); }
 
     .result-pts {
       font-size: 0.85rem;
@@ -1848,6 +1882,8 @@
   </style>
 </head>
 <body>
+  <button class="help-btn" id="helpBtn" onclick="showHowToPlay()">?</button>
+
   <div class="wheel-pointer"></div>
 
   <div class="share-card-wrap" id="shareCardWrap"></div>
@@ -1909,6 +1945,10 @@
     <div id="startScreen" class="game-section start-screen">
       <div id="alreadyPlayedBanner"></div>
       <div id="rivalBanner"></div>
+      <div style="text-align:center; margin-bottom:24px; color:rgba(255,255,255,0.8);">
+        <p style="margin-bottom:8px;"><strong>🎯 Low scores win</strong></p>
+        <p style="font-size:0.9rem;">Pick the most obscure players from each team to score lowest</p>
+      </div>
       <div class="start-options" id="startOptions">
         <button class="start-btn daily-btn" onclick="startDailyChallenge()">
           📅 Daily Challenge
@@ -2627,6 +2667,15 @@
     }
 
     function addPlayerToLineup(player, position) {
+      // Check for duplicates
+      const existingPlayers = Object.values(gameState.lineup).map(p => p.name.toLowerCase());
+      if (existingPlayers.includes(player.name.toLowerCase())) {
+        document.getElementById('message').innerHTML = `<div class="error">❌ ${player.name} already in your lineup!</div>`;
+        document.getElementById('playerInput').value = '';
+        document.getElementById('autocompleteDropdown').classList.remove('show');
+        return;
+      }
+
       const score = calculateObscurityScore(player);
       const breakdown = getScoreBreakdown(player);
 
@@ -3080,6 +3129,7 @@
     }
 
     function getScoreTier(score) {
+      if (score >= 88) return 'tier-archival';
       if (score >= 76) return 'tier-casual';
       if (score >= 51) return 'tier-mid';
       if (score >= 31) return 'tier-good';
@@ -3204,6 +3254,25 @@
           return p ? { team, name: p.name, score: p.score } : null;
         }).filter(Boolean);
         localStorage.setItem(`tbn_daily_${getTodayString()}`, JSON.stringify({ score: gameState.totalScore, label, lineup: lineupArr }));
+
+        // Update streak and personal best
+        const streakKey = 'tbn_streak';
+        const bestKey = 'tbn_best_daily';
+        const lastPlayKey = 'tbn_last_play';
+        const todayStr = getTodayString();
+
+        const lastPlay = localStorage.getItem(lastPlayKey);
+        const currentStreak = Math.max(0, JSON.parse(localStorage.getItem(streakKey) || '0'));
+        const personalBest = Math.max(0, JSON.parse(localStorage.getItem(bestKey) || '0'));
+
+        let newStreak = currentStreak;
+        if (!lastPlay || lastPlay === todayStr) {
+          newStreak = currentStreak + 1;
+        }
+
+        localStorage.setItem(lastPlayKey, todayStr);
+        localStorage.setItem(streakKey, newStreak);
+        localStorage.setItem(bestKey, Math.max(personalBest, gameState.totalScore));
       }
 
       const rivalHTML = gameState.rivalData ? buildRivalComparison() : '';
@@ -3212,9 +3281,15 @@
         <button class="share-btn" onclick="downloadShareCard()" style="margin-top:0">🖼️ SAVE SHARE CARD</button>
       ` : '';
 
-      const modeLabel = gameState.isDailyChallenge
+      let modeLabel = gameState.isDailyChallenge
         ? `📅 Daily Challenge · ${getTodayString()}`
         : `🏀 Free Play · ${gameState.gameMode === 'oldhead' ? 'Oldhead Mode' : 'Classic Mode'}`;
+
+      if (gameState.isDailyChallenge) {
+        const streak = JSON.parse(localStorage.getItem('tbn_streak') || '0');
+        const best = JSON.parse(localStorage.getItem('tbn_best_daily') || '0');
+        modeLabel += ` · 🔥 ${streak} day${streak !== 1 ? 's' : ''} · 🏆 ${best}`;
+      }
 
       document.getElementById('gameSection').innerHTML = `
         <div class="end-screen">
@@ -3357,25 +3432,29 @@
     }
 
     function shareResult() {
-      const tierEmoji = { 'tier-god': '🔥', 'tier-great': '💎', 'tier-good': '🎯', 'tier-mid': '📺', 'tier-casual': '😬' };
-      const lines = positions
+      const tierEmoji = { 'tier-god': '🔥', 'tier-great': '💎', 'tier-good': '🎯', 'tier-mid': '📺', 'tier-casual': '😬', 'tier-archival': '📦' };
+      const emojiGrid = positions
         .filter(pos => gameState.lineup[pos])
-        .map(pos => {
-          const p = gameState.lineup[pos];
-          const tier = getScoreTier(p.score);
-          return `${tierEmoji[tier]} ${pos}: ${p.name} (${p.score})`;
-        });
+        .map(pos => tierEmoji[getScoreTier(gameState.lineup[pos].score)])
+        .join('');
       const label = getScoreLabel(gameState.totalScore);
       const dateTag = gameState.isDailyChallenge ? ` · ${getTodayString()}` : '';
       const modeTag = gameState.gameMode === 'oldhead' ? 'Oldhead' : 'Classic';
-      const text = `that boy nice 🏀${dateTag} [${modeTag}]\n${label}\nScore: ${gameState.totalScore}\n\n${lines.join('\n')}\n\nthatboynice.vercel.app`;
-      navigator.clipboard.writeText(text).then(() => {
+      const shareText = `that boy nice 🏀${dateTag} [${modeTag}]\n${label}\nScore: ${gameState.totalScore}\n\n${emojiGrid}\n\nthatboynice.vercel.app`;
+
+      if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
+        navigator.share({ title: 'that boy nice 🏀', text: shareText }).catch(() => {
+          navigator.clipboard.writeText(shareText).then(() => updateShareBtn()).catch(() => prompt('Copy your result:', shareText));
+        });
+      } else {
+        navigator.clipboard.writeText(shareText).then(() => updateShareBtn()).catch(() => prompt('Copy your result:', shareText));
+      }
+
+      function updateShareBtn() {
         const btn = document.querySelector('.share-btn');
         btn.textContent = '✓ COPIED!';
         setTimeout(() => btn.textContent = '📋 COPY RESULT', 2000);
-      }).catch(() => {
-        prompt('Copy your result:', text);
-      });
+      }
     }
 
     // Other event listeners
