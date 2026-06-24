@@ -1910,6 +1910,7 @@
   <script>
     // Load players data and initialize game
     let players = playersData || {};
+    const allPlayers = Object.values(players).flat();
     let gameState = {
       lineup: {},
       totalScore: 0,
@@ -2918,7 +2919,7 @@
     }
 
     function getPlayerTierBadges(playerName) {
-      const playerObj = players.find(p => p.name === playerName);
+      const playerObj = allPlayers.find(p => p.name === playerName);
       if (!playerObj) return [];
       const s = getPlayerStats(playerObj);
       const badges = [];
