@@ -608,6 +608,19 @@
     }
 
     /* ── End / Results screen ── */
+    .end-verdict {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.7);
+      margin-top: 16px;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .end-verdict-pick {
+      color: rgba(255,255,255,0.85);
+      font-weight: 600;
+    }
+
     .end-hero {
       text-align: center;
       padding: 32px 20px 24px;
@@ -2121,7 +2134,7 @@
         <div class="end-screen">
           <div class="end-hero">
             <div class="end-meta-tag">📅 Daily Challenge · ${dateStr}</div>
-            <div class="end-score-num ${totalTier}">${saved.score}</div>
+            <div class="end-score-num ${totalTier}" data-target="${saved.score}">0</div>
             <div class="end-tier-pill ${totalTier}">${label}</div>
           </div>
           <div class="end-players" id="resultPlayers"></div>
@@ -2137,15 +2150,23 @@
       `;
 
       const container = document.getElementById('resultPlayers');
+      const lineupObj = {};
       saved.lineup.forEach(entry => {
+        lineupObj[entry.team] = entry;
         container.appendChild(buildPlayerCard(entry.name, entry.team, entry.score));
       });
 
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        container.querySelectorAll('.end-player-bar').forEach(bar => {
-          bar.style.width = bar.dataset.width;
-        });
-      }));
+      const verdicts = getGameVerdicts(lineupObj);
+      if (verdicts) {
+        const verdictHTML = document.createElement('div');
+        verdictHTML.className = 'end-verdict';
+        verdictHTML.innerHTML = `Deepest cut: <span class="end-verdict-pick">${verdicts.best.name} (${verdicts.best.score})</span> · Most obvious: <span class="end-verdict-pick">${verdicts.worst.name} (${verdicts.worst.score})</span>`;
+        container.parentNode.insertBefore(verdictHTML, container.nextSibling);
+      }
+
+      requestAnimationFrame(() => {
+        runEndScreenReveal();
+      });
 
       buildShareCard();
     }
@@ -2806,6 +2827,36 @@
       return acronyms[teamName] || teamName.substring(0, 3).toUpperCase();
     }
 
+    function getGameVerdicts(lineup) {
+      const picks = Object.values(lineup).filter(p => p && p.name);
+      if (picks.length === 0) return null;
+      const best = picks.reduce((a, b) => b.score > a.score ? b : a);
+      const worst = picks.reduce((a, b) => b.score < a.score ? b : a);
+      return { best, worst };
+    }
+
+    function animateCountUp(element, target, duration) {
+      const start = 0;
+      const startTime = performance.now();
+      const animate = (currentTime) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const current = Math.round(start + (target - start) * progress);
+        element.textContent = current;
+        if (progress < 1) requestAnimationFrame(animate);
+      };
+      requestAnimationFrame(animate);
+    }
+
+    function runEndScreenReveal() {
+      animateCountUp(document.querySelector('.end-score-num'), parseInt(document.querySelector('.end-score-num').dataset.target || '0'), 600);
+      document.querySelectorAll('.end-player-bar').forEach((bar, i) => {
+        setTimeout(() => {
+          bar.style.width = bar.dataset.width;
+        }, 200 + i * 100);
+      });
+    }
+
     function spinWheel() {
       if (gameState.spinning || Object.keys(gameState.lineup).length === 5 || gameState.lives <= 0) return;
       gameState.spinning = true;
@@ -3155,7 +3206,7 @@
         <div class="end-screen">
           <div class="end-hero">
             <div class="end-meta-tag">${modeLabel}</div>
-            <div class="end-score-num ${totalTier}">${gameState.totalScore}</div>
+            <div class="end-score-num ${totalTier}" data-target="${gameState.totalScore}">0</div>
             <div class="end-tier-pill ${totalTier}">${label}</div>
           </div>
           <div class="end-players" id="resultPlayers"></div>
@@ -3190,11 +3241,17 @@
         }
       });
 
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        container.querySelectorAll('.end-player-bar').forEach(bar => {
-          bar.style.width = bar.dataset.width;
-        });
-      }));
+      const verdicts = getGameVerdicts(gameState.lineup);
+      if (verdicts) {
+        const verdictHTML = document.createElement('div');
+        verdictHTML.className = 'end-verdict';
+        verdictHTML.innerHTML = `Deepest cut: <span class="end-verdict-pick">${verdicts.best.name} (${verdicts.best.score})</span> · Most obvious: <span class="end-verdict-pick">${verdicts.worst.name} (${verdicts.worst.score})</span>`;
+        container.parentNode.insertBefore(verdictHTML, container.nextSibling);
+      }
+
+      requestAnimationFrame(() => {
+        runEndScreenReveal();
+      });
 
       try { buildShareCard(); } catch(e) { console.error('buildShareCard error:', e); }
     }
