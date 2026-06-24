@@ -1915,7 +1915,7 @@
         <div class="htp-item bad"><span class="htp-icon-sm">🏆</span><div><strong>Awards</strong><span>MVP, DPOY, Finals MVP, ROY... all cost points</span></div></div>
         <div class="htp-item bad"><span class="htp-icon-sm">🥇</span><div><strong>All-NBA / All-Defensive teams</strong><span>Perennial selections hit hard</span></div></div>
         <div class="htp-item bad"><span class="htp-icon-sm">🔄</span><div><strong>High starter ratio</strong><span>Bench players score higher than starters</span></div></div>
-        <div class="htp-item bad recency-row" id="htpRecencyRow"><span class="htp-icon-sm">🕒</span><div><strong>Played recently</strong><span>Last 5 yrs get a multiplier — dig into the vault</span></div></div>
+        <div class="htp-item bad recency-row" id="htpRecencyRow"><span class="htp-icon-sm">🕒</span><div><strong>Played recently</strong><span>Classic Mode — recent players score lower, dig into the vault</span></div></div>
       </div>
       <div class="htp-tip">💡 Sweet spot: late-round or undrafted bench guys with no accolades</div>
       <div class="htp-footer">
@@ -1929,10 +1929,10 @@
 
   <div class="modal-overlay" id="oldheadModal" style="display:none;" onclick="closeOldheadModal(event)">
     <div class="modal-box">
-      <div class="modal-icon">🧓</div>
-      <h2 class="modal-title">Oldhead Mode</h2>
+      <div class="modal-icon">📅</div>
+      <h2 class="modal-title">Classic Mode</h2>
       <p class="modal-body">
-        Daily Challenge uses <strong>Oldhead Mode</strong> — recency bias is on.
+        Daily Challenge uses <strong>Classic Mode</strong> — recency bias is on.
       </p>
       <p class="modal-body">
         Players active in the last few years score <em>lower</em> because everyone knows them. To score high, dig deep into the vault.
@@ -1965,7 +1965,7 @@
         <button class="start-btn daily-btn" onclick="startDailyChallenge()">
           📅 Daily Challenge
           <span class="start-desc">Same 5 teams for everyone today</span>
-          <span class="start-mode-tag">🧓 Oldhead Mode</span>
+          <span class="start-mode-tag">📅 Classic Mode</span>
         </button>
         <button class="start-btn free-play-btn" onclick="startPractice()">
           🏀 Free Play
@@ -1977,11 +1977,11 @@
         <h2 class="mode-select-title">Choose Your Mode</h2>
         <div class="mode-select-options">
           <button class="start-btn mode-oldhead-btn" onclick="startWithMode('oldhead')">
-            🧓 Oldhead Mode
-            <span class="start-desc">Recency bias on — recent stars score lower because everyone knows them. The classic trivia challenge.</span>
+            📅 Classic Mode
+            <span class="start-desc">Recency bias on — recent stars score lower because everyone knows them. Dig deep into the vault.</span>
           </button>
           <button class="start-btn mode-classic-btn" onclick="startWithMode('classic')">
-            📊 Classic Mode
+            ⏳ Timeless Mode
             <span class="start-desc">Pure stats only — scoring based on career numbers with no time adjustment. All eras treated equally.</span>
           </button>
         </div>
@@ -2235,7 +2235,7 @@
 
       gameState.gameMode = 'oldhead';
       const indicator = document.getElementById('modeIndicator');
-      indicator.textContent = '🧓 Oldhead Mode';
+      indicator.textContent = '📅 Classic Mode';
       indicator.className = 'mode-indicator mode-oldhead';
 
       // Hide spin wheel for daily challenge
@@ -2273,7 +2273,7 @@
       document.getElementById('startScreen').style.display = 'none';
       document.getElementById('gameSection').style.display = 'block';
       const indicator = document.getElementById('modeIndicator');
-      indicator.textContent = mode === 'oldhead' ? '🧓 Oldhead Mode' : '📊 Classic Mode';
+      indicator.textContent = mode === 'oldhead' ? '📅 Classic Mode' : '⏳ Timeless Mode';
       indicator.className = 'mode-indicator ' + (mode === 'oldhead' ? 'mode-oldhead' : 'mode-classic');
       showHowToPlay(mode);
     }
@@ -2397,11 +2397,11 @@
       const lastSeason = player.lastSeason || 0;
       const seasons20ppg = player.seasons20ppg || 0;
       const yearsAgo = 2026 - lastSeason;
-      const recencyMultiplier = yearsAgo <= 0 ? 0.80 : yearsAgo <= 2 ? 0.90 : yearsAgo <= 4 ? 0.95 : 1.0;
+      const recencyPenalty = yearsAgo <= 0 ? -18 : yearsAgo <= 2 ? -10 : yearsAgo <= 4 ? -4 : 0;
       // GS data not tracked by BBRef before 1982 — flag players who started before then
       const hasReliableGS = firstSeason >= 1982;
       return { games, vorp, draftPick, undrafted, mvp, fmvp, dpoy, allStarApps, roy, smoy, mip,
-               allNBA1, allNBA2, allNBA3, allDef1, allDef2, gamesStarted, firstSeason, lastSeason, seasons20ppg, recencyMultiplier, hasReliableGS };
+               allNBA1, allNBA2, allNBA3, allDef1, allDef2, gamesStarted, firstSeason, lastSeason, seasons20ppg, recencyPenalty, hasReliableGS };
     }
 
     // Single source of truth for the career-games penalty.
@@ -2486,8 +2486,8 @@
         else if (s.draftPick <= 60) score -= 1;
       }
 
-      const multiplier = gameState.gameMode === 'oldhead' ? s.recencyMultiplier : 1.0;
-      return Math.max(0, Math.min(100, Math.round(score * multiplier)));
+      if (gameState.gameMode === 'oldhead') score += s.recencyPenalty;
+      return Math.max(0, Math.min(100, Math.round(score)));
     }
 
     function getScoreBreakdown(player) {
@@ -2563,19 +2563,11 @@
       breakdown.push({ label: `Subtotal`, value: displaySubtotal, isSeparator: true });
 
       let finalScore = subtotal;
-      if (gameState.gameMode === 'oldhead' && s.recencyMultiplier < 1.0) {
-        const multiplierPercent = Math.round(s.recencyMultiplier * 100);
+      if (gameState.gameMode === 'oldhead' && s.recencyPenalty < 0) {
         const yearsAgo = 2026 - s.lastSeason;
-        let bucket = '';
-        if (yearsAgo <= 0) bucket = 'Active';
-        else if (yearsAgo <= 2) bucket = '1-2 yrs retired';
-        else if (yearsAgo <= 4) bucket = '3-4 yrs retired';
-
-        const recencyAdjust = Math.round(subtotal * s.recencyMultiplier) - subtotal;
-        breakdown.push({ label: `Recency ×${multiplierPercent}% (${s.lastSeason}, ${bucket})`, value: recencyAdjust, isMultiplier: true });
-        finalScore = Math.round(subtotal * s.recencyMultiplier);
-      } else if (gameState.gameMode === 'classic') {
-        finalScore = subtotal;
+        let bucket = yearsAgo <= 0 ? 'Active' : yearsAgo <= 2 ? '1-2 yrs retired' : '3-4 yrs retired';
+        breakdown.push({ label: `Recency (${s.lastSeason}, ${bucket})`, value: s.recencyPenalty, isMultiplier: true });
+        finalScore = subtotal + s.recencyPenalty;
       }
 
       const displayFinal = Math.max(0, finalScore);
@@ -3358,7 +3350,7 @@
 
       let modeLabel = gameState.isDailyChallenge
         ? `📅 Daily Challenge · ${getTodayString()}`
-        : `🏀 Free Play · ${gameState.gameMode === 'oldhead' ? 'Oldhead Mode' : 'Classic Mode'}`;
+        : `🏀 Free Play · ${gameState.gameMode === 'oldhead' ? 'Classic Mode' : 'Timeless Mode'}`;
 
       if (gameState.isDailyChallenge) {
         const streak = JSON.parse(localStorage.getItem('tbn_streak') || '0');
@@ -3481,7 +3473,7 @@
       document.getElementById('shareCardWrap').innerHTML = `
         <div class="share-card" id="shareCard">
           <div class="share-card-title">that boy nice</div>
-          <div class="share-card-date">${modeTag} · ${gameState.gameMode === 'oldhead' ? 'Oldhead Mode' : 'Classic Mode'}</div>
+          <div class="share-card-date">${modeTag} · ${gameState.gameMode === 'oldhead' ? 'Classic Mode' : 'Timeless Mode'}</div>
           <div class="share-card-score">${gameState.totalScore}</div>
           <div class="share-card-label">${label}</div>
           ${rows}
@@ -3518,7 +3510,7 @@
         .join('');
       const label = getScoreLabel(gameState.totalScore);
       const dateTag = gameState.isDailyChallenge ? ` · ${getTodayString()}` : '';
-      const modeTag = gameState.gameMode === 'oldhead' ? 'Oldhead' : 'Classic';
+      const modeTag = gameState.gameMode === 'oldhead' ? 'Classic' : 'Timeless';
       const shareText = `that boy nice 🏀${dateTag} [${modeTag}]\n${label}\nScore: ${gameState.totalScore}\n\n${emojiGrid}\n\nthatboynice.vercel.app`;
 
       if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
