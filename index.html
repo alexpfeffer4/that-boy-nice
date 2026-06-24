@@ -2267,7 +2267,8 @@
       if (s.mip > 0) breakdown.push({ label: `MIP ×${s.mip}`, value: -5 * s.mip });
       if (s.seasons20ppg >= 1) {
         const ppgPenalty = s.seasons20ppg >= 4 ? -15 : s.seasons20ppg >= 2 ? -10 : -5;
-        breakdown.push({ label: `20+ PPG seasons (${s.seasons20ppg})`, value: ppgPenalty });
+        const ppgRange = s.seasons20ppg >= 4 ? '4+' : s.seasons20ppg >= 2 ? '2-3' : '1';
+        breakdown.push({ label: `20+ PPG seasons (${ppgRange})`, value: ppgPenalty });
       }
       if (s.allNBA1 > 0) breakdown.push({ label: `All-NBA 1st ×${s.allNBA1}`, value: -15 * s.allNBA1 });
       if (s.allNBA2 > 0) breakdown.push({ label: `All-NBA 2nd ×${s.allNBA2}`, value: -10 * s.allNBA2 });
