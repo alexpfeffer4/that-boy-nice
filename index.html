@@ -2105,16 +2105,6 @@
       else if (s.games >= 300) score -= 5;
       else if (s.games >= 100) score -= 2;
 
-      // Career VORP
-      if (s.vorp >= 80) score -= 58;
-      else if (s.vorp >= 50) score -= 42;
-      else if (s.vorp >= 30) score -= 30;
-      else if (s.vorp >= 20) score -= 22;
-      else if (s.vorp >= 15) score -= 18;
-      else if (s.vorp >= 10) score -= 15;
-      else if (s.vorp >= 5) score -= 10;
-      else if (s.vorp > 0) score -= 5;
-
       // Individual awards
       score -= s.mvp * 25;
       score -= s.fmvp * 18;
@@ -2163,14 +2153,6 @@
         const p = s.games >= 1200 ? -22 : s.games >= 800 ? -15 : s.games >= 500 ? -8 : s.games >= 300 ? -5 : -2;
         const range = s.games >= 1200 ? '1200+' : s.games >= 800 ? '800-1199' : s.games >= 500 ? '500-799' : s.games >= 300 ? '300-499' : '100-299';
         breakdown.push({ label: `Games (${range})`, value: p });
-      }
-
-      if (s.vorp > 0) {
-        const p = s.vorp >= 80 ? -58 : s.vorp >= 50 ? -42 : s.vorp >= 30 ? -30 : s.vorp >= 20 ? -22 :
-                  s.vorp >= 15 ? -18 : s.vorp >= 10 ? -15 : s.vorp >= 5 ? -10 : -5;
-        const range = s.vorp >= 80 ? '80+' : s.vorp >= 50 ? '50-79' : s.vorp >= 30 ? '30-49' : s.vorp >= 20 ? '20-29' :
-                      s.vorp >= 15 ? '15-19' : s.vorp >= 10 ? '10-14' : s.vorp >= 5 ? '5-9' : '0-4';
-        breakdown.push({ label: `VORP (${range})`, value: p });
       }
 
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
