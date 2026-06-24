@@ -2143,11 +2143,11 @@
       if (s.draftPick > 0) {
         if (s.draftPick === 1) score -= 25;
         else if (s.draftPick === 2) score -= 15;
-        else if (s.draftPick === 3) score -= 18;
-        else if (s.draftPick <= 5) score -= 15;
-        else if (s.draftPick <= 14) score -= 10;
-        else if (s.draftPick <= 30) score -= 5;
-        else if (s.draftPick <= 60) score -= 2;
+        else if (s.draftPick === 3) score -= 10;
+        else if (s.draftPick <= 5) score -= 8;
+        else if (s.draftPick <= 14) score -= 5;
+        else if (s.draftPick <= 30) score -= 3;
+        else if (s.draftPick <= 60) score -= 1;
       }
 
       const multiplier = gameState.gameMode === 'oldhead' ? s.recencyMultiplier : 1.0;
@@ -2196,11 +2196,11 @@
       if (s.draftPick > 0) {
         if (s.draftPick === 1) breakdown.push({ label: 'Draft: #1 overall', value: -25 });
         else if (s.draftPick === 2) breakdown.push({ label: 'Draft: #2 overall', value: -15 });
-        else if (s.draftPick === 3) breakdown.push({ label: 'Draft: #3 overall', value: -18 });
-        else if (s.draftPick <= 5) breakdown.push({ label: `Draft: #4-5`, value: -15 });
-        else if (s.draftPick <= 14) breakdown.push({ label: `Draft: #6-14`, value: -10 });
-        else if (s.draftPick <= 30) breakdown.push({ label: `Draft: #15-30`, value: -5 });
-        else if (s.draftPick <= 60) breakdown.push({ label: `Draft: #31-60`, value: -2 });
+        else if (s.draftPick === 3) breakdown.push({ label: 'Draft: #3 overall', value: -10 });
+        else if (s.draftPick <= 5) breakdown.push({ label: `Draft: #4-5`, value: -8 });
+        else if (s.draftPick <= 14) breakdown.push({ label: `Draft: #6-14`, value: -5 });
+        else if (s.draftPick <= 30) breakdown.push({ label: `Draft: #15-30`, value: -3 });
+        else if (s.draftPick <= 60) breakdown.push({ label: `Draft: #31-60`, value: -1 });
       } else {
         breakdown.push({ label: 'Undrafted', value: 0 });
       }
