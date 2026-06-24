@@ -2175,7 +2175,7 @@
       if (s.games >= 164) {
         const p = s.games >= 1400 ? -28 : s.games >= 1200 ? -23 : s.games >= 800 ? -18 : s.games >= 500 ? -12 : s.games >= 330 ? -8 : -3;
         const range = s.games >= 1400 ? '17+' : s.games >= 1200 ? '14-17' : s.games >= 800 ? '10-14' : s.games >= 500 ? '6-10' : s.games >= 330 ? '4-6' : '2-4';
-        breakdown.push({ label: `Career (${range} seasons)`, value: p });
+        breakdown.push({ label: `Seasons played (${range})`, value: p });
       }
 
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
