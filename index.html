@@ -2237,9 +2237,9 @@
       const s = getPlayerStats(player);
 
       // Career games
-      if (s.games >= 1400) score -= 28;
-      else if (s.games >= 1200) score -= 23;
-      else if (s.games >= 800) score -= 18;
+      if (s.games >= 1400) score -= 35;
+      else if (s.games >= 1200) score -= 26;
+      else if (s.games >= 800) score -= 20;
       else if (s.games >= 500) score -= 12;
       else if (s.games >= 330) score -= 8;
       else if (s.games >= 164) score -= 3;
@@ -3040,28 +3040,32 @@
         </div>
       `;
 
-      buildShareCard();
-
       const container = document.getElementById('resultPlayers');
-      if (gameState.isDailyChallenge) {
-        gameState.dailyTeams.slice(0, 5).forEach(team => {
-          const player = gameState.lineup[team];
-          if (!player) return;
-          container.appendChild(buildPlayerCard(player.name, team, player.score));
-        });
-      } else {
-        positions.forEach(pos => {
-          const player = gameState.lineup[pos];
-          if (!player) return;
-          container.appendChild(buildPlayerCard(player.name, pos, player.score));
-        });
-      }
+      const entries = gameState.isDailyChallenge
+        ? gameState.dailyTeams.slice(0, 5).map(team => ({ label: team, player: gameState.lineup[team] }))
+        : positions.map(pos => ({ label: pos, player: gameState.lineup[pos] }));
+
+      entries.forEach(({ label, player }) => {
+        if (!player) return;
+        try {
+          container.appendChild(buildPlayerCard(player.name, label, player.score));
+        } catch(e) {
+          console.error('buildPlayerCard error:', e);
+          const fallback = document.createElement('div');
+          const tier = getScoreTier(player.score);
+          fallback.className = `end-player-card ${tier}`;
+          fallback.innerHTML = `<div class="end-player-top"><span class="end-player-pos">${label}</span><div class="end-player-info"><span class="end-player-name">${player.name}</span></div><span class="end-player-score ${tier}">${player.score}</span></div><div class="end-player-bar-track"><div class="end-player-bar ${tier}" style="width:0%" data-width="${player.score}%"></div></div>`;
+          container.appendChild(fallback);
+        }
+      });
 
       requestAnimationFrame(() => requestAnimationFrame(() => {
         container.querySelectorAll('.end-player-bar').forEach(bar => {
           bar.style.width = bar.dataset.width;
         });
       }));
+
+      try { buildShareCard(); } catch(e) { console.error('buildShareCard error:', e); }
     }
 
     function buildRivalComparison() {
