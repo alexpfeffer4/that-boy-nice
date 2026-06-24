@@ -304,24 +304,22 @@ def scrape_tiered_team(award_name: str, url_path: str) -> dict:
     counts = {}
     logged = False
     for row in table.select('tbody tr'):
-        link = row.find('a', href=lambda h: h and '/players/' in h)
-        if not link:
+        # Each row has all 5 players for a given team/year — grab all player links
+        links = row.find_all('a', href=lambda h: h and '/players/' in h)
+        if not links:
             continue
-        name = normalize_name(link.get_text(strip=True))
-        if name not in counts:
-            counts[name] = {'first': 0, 'second': 0, 'third': 0}
 
         # Log first row to see all data-stats and text
         if not logged:
-            all_tds = row.find_all('td')
-            stat_map = {f"{i}:{td.get('data-stat','?')}": td.get_text(strip=True) for i, td in enumerate(all_tds)}
+            all_cells = row.find_all(['td', 'th'])
+            stat_map = {f"{i}:{c.get('data-stat','?')}": c.get_text(strip=True) for i, c in enumerate(all_cells)}
             logger.info(f'{award_name} first row: {stat_map}')
             logged = True
 
-        # Find the team tier - scan each td for exact "1st"/"2nd"/"3rd" text
+        # Find the team tier - scan both th and td elements
         tier = None
-        for td in row.find_all('td'):
-            t = td.get_text(strip=True)
+        for cell in row.find_all(['td', 'th']):
+            t = cell.get_text(strip=True)
             if t in ('1st', 'First', '1'):
                 tier = 'first'
                 break
@@ -331,7 +329,14 @@ def scrape_tiered_team(award_name: str, url_path: str) -> dict:
             elif t in ('3rd', 'Third', '3'):
                 tier = 'third'
                 break
-        if tier:
+
+        if not tier:
+            continue
+
+        for link in links:
+            name = normalize_name(link.get_text(strip=True))
+            if name not in counts:
+                counts[name] = {'first': 0, 'second': 0, 'third': 0}
             counts[name][tier] += 1
 
     logger.info(f'{award_name}: {len(counts)} players')
