@@ -1256,20 +1256,427 @@
     .rival-btn:hover { opacity: 0.88; }
 
     @media (max-width: 480px) {
+      body {
+        padding: 12px;
+      }
+
       h1 {
-        font-size: 2.5rem;
+        font-size: 2.2rem;
+        margin-bottom: 4px;
       }
 
+      .tagline {
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+      }
+
+      .era-note {
+        font-size: 0.65rem;
+        margin-top: 4px;
+      }
+
+      .container {
+        max-width: 100%;
+      }
+
+      /* Modals: scrollable on mobile */
+      .modal-box {
+        padding: 20px 16px;
+        max-width: 100%;
+        max-height: 85dvh;
+        overflow-y: auto;
+      }
+
+      .htp-box {
+        max-width: 100%;
+      }
+
+      .htp-header {
+        margin-bottom: 14px;
+      }
+
+      .htp-list {
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .htp-item {
+        padding: 8px 10px;
+      }
+
+      .htp-icon {
+        font-size: 1.5rem;
+        margin-bottom: 4px;
+      }
+
+      .htp-icon-sm {
+        font-size: 1rem;
+      }
+
+      .htp-item div {
+        gap: 1px;
+      }
+
+      .htp-item strong {
+        font-size: 0.8rem;
+      }
+
+      .htp-item span {
+        font-size: 0.7rem;
+      }
+
+      .htp-tip {
+        font-size: 0.75rem;
+        padding: 8px 12px;
+        margin-bottom: 12px;
+      }
+
+      .htp-footer {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .htp-skip-label {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .modal-confirm-btn {
+        width: 100%;
+      }
+
+      .modal-icon {
+        font-size: 1.8rem;
+      }
+
+      .modal-title {
+        font-size: 1.1rem;
+      }
+
+      .modal-body {
+        font-size: 0.8rem;
+      }
+
+      .modal-tiers {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        margin: 14px 0;
+      }
+
+      /* Game screen */
       .game-section {
-        padding: 20px;
+        padding: 12px;
       }
 
+      .lives-display {
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+      }
+
+      .mode-indicator {
+        font-size: 0.7rem;
+        margin: 0 auto 10px;
+        padding: 3px 10px;
+      }
+
+      /* Wheel and controls */
+      .wheel-container {
+        margin-bottom: 16px;
+      }
+
+      .slot-machine {
+        max-width: 200px;
+        margin: 0 auto;
+      }
+
+      .reel-window {
+        height: 160px;
+      }
+
+      .reel-display {
+        width: 140px;
+        height: 140px;
+      }
+
+      .wheel-pointer {
+        top: 12px;
+      }
+
+      .controls {
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .spin-btn, .respin-btn {
+        padding: 12px;
+        font-size: 0.85rem;
+      }
+
+      /* Team/input */
+      .team-display {
+        margin-bottom: 14px;
+      }
+
+      .current-team {
+        font-size: 0.9rem;
+        margin-bottom: 6px;
+      }
+
+      .position-label {
+        font-size: 0.75rem;
+      }
+
+      .input-group {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .autocomplete-wrapper {
+        min-width: 0;
+      }
+
+      .playerInput {
+        padding: 12px;
+        font-size: 1rem;
+      }
+
+      .submit-btn {
+        padding: 12px;
+        font-size: 0.85rem;
+        width: 100%;
+      }
+
+      .autocomplete-dropdown {
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      .autocomplete-item {
+        padding: 12px;
+        font-size: 0.85rem;
+      }
+
+      /* Lineup */
       .lineup-grid {
         grid-template-columns: 1fr;
+        gap: 10px;
       }
 
       .center {
         grid-column: span 1;
+      }
+
+      .lineup-card {
+        padding: 12px;
+      }
+
+      .lineup-item {
+        padding: 12px;
+        font-size: 0.8rem;
+      }
+
+      .move-btn {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+      }
+
+      /* Breakdown tooltip */
+      .breakdown-modal {
+        padding: 12px;
+        max-width: calc(100vw - 24px);
+        max-height: 70dvh;
+        overflow-y: auto;
+      }
+
+      .breakdown-close {
+        top: 8px;
+        right: 8px;
+      }
+
+      .breakdown-item {
+        padding: 8px;
+        font-size: 0.8rem;
+      }
+
+      /* Start screen */
+      .start-options {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .start-btn {
+        padding: 14px;
+        font-size: 0.9rem;
+      }
+
+      .start-desc {
+        font-size: 0.75rem;
+      }
+
+      .mode-select-options {
+        max-width: 100%;
+      }
+
+      .mode-oldhead-btn,
+      .mode-classic-btn {
+        padding: 14px;
+      }
+
+      /* End screen */
+      .end-hero {
+        padding: 20px 16px 16px;
+      }
+
+      .end-score-num {
+        font-size: 3.5rem;
+        margin-bottom: 8px;
+      }
+
+      .end-tier-pill {
+        font-size: 0.7rem;
+        padding: 4px 12px;
+      }
+
+      .end-players {
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+
+      .end-player-card {
+        border-radius: 8px;
+      }
+
+      .end-player-top {
+        gap: 10px;
+        padding: 10px 12px 6px;
+      }
+
+      .end-player-pos {
+        font-size: 0.65rem;
+        width: 24px;
+      }
+
+      .end-player-name {
+        font-size: 0.85rem;
+      }
+
+      .end-player-team {
+        font-size: 0.65rem;
+      }
+
+      .end-player-score {
+        font-size: 1rem;
+      }
+
+      .end-player-bar-track {
+        margin: 0 12px 10px;
+        height: 3px;
+      }
+
+      .end-btn-primary {
+        padding: 12px;
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+      }
+
+      .end-btn-row {
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .end-btn-secondary {
+        padding: 10px;
+        font-size: 0.8rem;
+      }
+
+      .end-btn-ghost {
+        padding: 8px;
+        font-size: 0.8rem;
+      }
+
+      /* Rival comparison */
+      .rival-comparison {
+        margin: 12px 0;
+        padding: 10px;
+        font-size: 0.75rem;
+      }
+
+      .rival-header {
+        font-size: 0.7rem;
+        padding: 8px 6px;
+        gap: 4px;
+      }
+
+      .rival-row {
+        padding: 8px 6px;
+        gap: 4px;
+        font-size: 0.75rem;
+      }
+
+      .rival-row span:nth-child(2),
+      .rival-row span:nth-child(3) {
+        flex: 1;
+        min-width: 0;
+        word-break: break-word;
+      }
+
+      .rival-total {
+        font-size: 0.75rem;
+        padding: 8px 6px;
+        gap: 10px;
+      }
+
+      .rival-winner-banner {
+        font-size: 0.85rem;
+        padding: 10px;
+      }
+
+      .rival-btn {
+        padding: 12px;
+        font-size: 0.85rem;
+      }
+
+      /* Share card */
+      .share-btn {
+        padding: 12px;
+        font-size: 0.85rem;
+      }
+
+      /* Message area */
+      #message {
+        font-size: 0.8rem;
+        margin: 8px 0;
+      }
+
+      .error {
+        padding: 8px;
+      }
+
+      .success {
+        padding: 8px;
+      }
+
+      /* Position modal */
+      .position-modal.show {
+        padding: 16px;
+      }
+
+      .position-modal h3 {
+        font-size: 1rem;
+        margin-bottom: 12px;
+      }
+
+      #positionButtons {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .position-btn {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+        flex: 1;
+        min-width: 70px;
       }
     }
   </style>
