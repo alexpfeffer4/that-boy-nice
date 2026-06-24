@@ -2385,12 +2385,15 @@
       const allDef1 = player.allDef1 || 0;
       const allDef2 = player.allDef2 || 0;
       const gamesStarted = player.careerGS || 0;
+      const firstSeason = player.firstSeason || 0;
       const lastSeason = player.lastSeason || 0;
       const seasons20ppg = player.seasons20ppg || 0;
       const yearsAgo = 2026 - lastSeason;
       const recencyMultiplier = yearsAgo <= 0 ? 0.80 : yearsAgo <= 2 ? 0.90 : yearsAgo <= 4 ? 0.95 : 1.0;
+      // GS data not tracked by BBRef before 1982 — flag players who started before then
+      const hasReliableGS = firstSeason >= 1982;
       return { games, vorp, draftPick, undrafted, mvp, fmvp, dpoy, allStarApps, roy, smoy, mip,
-               allNBA1, allNBA2, allNBA3, allDef1, allDef2, gamesStarted, lastSeason, seasons20ppg, recencyMultiplier };
+               allNBA1, allNBA2, allNBA3, allDef1, allDef2, gamesStarted, firstSeason, lastSeason, seasons20ppg, recencyMultiplier, hasReliableGS };
     }
 
     // Single source of truth for the career-games penalty.
@@ -2443,10 +2446,13 @@
       score -= s.allDef2 * 4;
 
       // Games started ratio — starters are more recognizable than bench players
+      // Skip for pre-1982 players: BBRef didn't track GS before then
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
-      if (gsRatio >= 0.75) score -= 10;
-      else if (gsRatio >= 0.60) score -= 6;
-      else if (gsRatio >= 0.40) score -= 3;
+      if (s.hasReliableGS) {
+        if (gsRatio >= 0.75) score -= 10;
+        else if (gsRatio >= 0.60) score -= 6;
+        else if (gsRatio >= 0.40) score -= 3;
+      }
 
       // Draft position (0 = undrafted, no penalty)
       if (s.draftPick > 0) {
@@ -2474,7 +2480,7 @@
       }
 
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
-      if (gsRatio >= 0.40) {
+      if (s.hasReliableGS && gsRatio >= 0.40) {
         const p = gsRatio >= 0.75 ? -10 : gsRatio >= 0.60 ? -6 : -3;
         const range = gsRatio >= 0.75 ? '75%+' : gsRatio >= 0.60 ? '60-74%' : '40-59%';
         breakdown.push({ label: `Starter Ratio (${range})`, value: p, group: 'Longevity' });
@@ -3195,7 +3201,7 @@
         tierLabel = 'Lottery Bust'; tierType = 'badge-tier-role';
       } else if ((s.undrafted || s.draftPick > 30) && s.games >= 400) {
         tierLabel = 'Hidden Gem'; tierType = 'badge-tier-solid';
-      } else if (s.games >= 500 && gsRatio >= 0.55) {
+      } else if (s.games >= 500 && s.hasReliableGS && gsRatio >= 0.55) {
         tierLabel = 'Solid Starter'; tierType = 'badge-tier-solid';
       } else if (s.games >= 330) {
         tierLabel = 'Role Player'; tierType = 'badge-tier-role';

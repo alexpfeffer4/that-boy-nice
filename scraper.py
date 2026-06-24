@@ -27,9 +27,10 @@ logger = logging.getLogger(__name__)
 
 # Basketball Reference team_name_abbr codes -> current franchise.
 ABBR_TO_FRANCHISE = {
-    'ATL': 'Atlanta Hawks',
+    'ATL': 'Atlanta Hawks',          'STL': 'Atlanta Hawks',
     'BOS': 'Boston Celtics',
     'BRK': 'Brooklyn Nets',          'NJN': 'Brooklyn Nets',
+                                     'NYN': 'Brooklyn Nets',
     'CHA': 'Charlotte Hornets',      'CHH': 'Charlotte Hornets',
     'CHO': 'Charlotte Hornets',
     'CHI': 'Chicago Bulls',
@@ -40,29 +41,32 @@ ABBR_TO_FRANCHISE = {
     'GSW': 'Golden State Warriors',
     'HOU': 'Houston Rockets',
     'IND': 'Indiana Pacers',
-    'LAC': 'Los Angeles Clippers',
+    'LAC': 'Los Angeles Clippers',   'SDC': 'Los Angeles Clippers',
+                                     'BUF': 'Los Angeles Clippers',
     'LAL': 'Los Angeles Lakers',
     'MEM': 'Memphis Grizzlies',      'VAN': 'Memphis Grizzlies',
     'MIA': 'Miami Heat',
     'MIL': 'Milwaukee Bucks',
     'MIN': 'Minnesota Timberwolves',
     'NOP': 'New Orleans Pelicans',   'NOH': 'New Orleans Pelicans',
-    'NOK': 'New Orleans Pelicans',
+    'NOK': 'New Orleans Pelicans',   'NOJ': 'Utah Jazz',
     'NYK': 'New York Knicks',
     'OKC': 'Oklahoma City Thunder',  'SEA': 'Oklahoma City Thunder',
     'ORL': 'Orlando Magic',
     'PHI': 'Philadelphia 76ers',
     'PHO': 'Phoenix Suns',
     'POR': 'Portland Trail Blazers',
-    'SAC': 'Sacramento Kings',
+    'SAC': 'Sacramento Kings',       'KCK': 'Sacramento Kings',
+                                     'KCO': 'Sacramento Kings',
     'SAS': 'San Antonio Spurs',
     'TOR': 'Toronto Raptors',
     'UTA': 'Utah Jazz',
-    'WAS': 'Washington Wizards',
+    'WAS': 'Washington Wizards',     'WSB': 'Washington Wizards',
+                                     'CAP': 'Washington Wizards',
 }
 
-SEASONS = list(range(1980, 2027))  # 1980 through 2026
-DRAFT_SEASONS = list(range(1980, 2026))  # 1980 through 2025 (captures everyone's draft era)
+SEASONS = list(range(1976, 2027))  # 1976 through 2026
+DRAFT_SEASONS = list(range(1976, 2026))  # 1976 through 2025
 BASE = 'https://www.basketball-reference.com'
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -242,7 +246,8 @@ def scrape_season(year: int, players: dict) -> int:
                 'mvpAwards': 0, 'fmvpAwards': 0, 'dpoyAwards': 0,
                 'royAward': 0, 'smoyAwards': 0, 'mipAwards': 0, 'draftPick': 0,
                 'allNBA1': 0, 'allNBA2': 0, 'allNBA3': 0,
-                'allDef1': 0, 'allDef2': 0, 'undrafted': False, 'lastSeason': year,
+                'allDef1': 0, 'allDef2': 0, 'undrafted': False,
+                'firstSeason': year, 'lastSeason': year,
                 'gamesStarted': 0, 'seasons20ppg': 0
             }
 
@@ -257,6 +262,7 @@ def scrape_season(year: int, players: dict) -> int:
             if season_pts >= 20.0 and ppg_g >= 41:
                 p['seasons20ppg'] += 1
         p['name'] = name
+        p['firstSeason'] = min(p['firstSeason'], year)
         p['lastSeason'] = max(p['lastSeason'], year)
         p['positions'][pos] = p['positions'].get(pos, 0) + 1
         for t in teams:
@@ -270,7 +276,7 @@ def scrape_season(year: int, players: dict) -> int:
 
 
 def scrape_all_star() -> dict:
-    """Scrape All-Star by player page; return {name: count}."""
+    """Scrape All-Star by player page; return {pid: count}."""
     url = f'{BASE}/awards/all_star_by_player.html'
     html = fetch(url)
     if not html:
@@ -285,12 +291,11 @@ def scrape_all_star() -> dict:
 
     stars = {}
     for row in table.select('tbody tr'):
-        # Find player link in any td
         link = row.find('a', href=lambda h: h and '/players/' in h)
-        if not link:
+        if not link or not link.get('href'):
             continue
 
-        name = normalize_name(link.get_text(strip=True))
+        pid = link['href'].split('/')[-1].replace('.html', '')
 
         # BBRef all_star_by_player table has no data-stat attributes.
         # Column layout: [rank, player_name, total_selections, ...year_columns...]
@@ -300,7 +305,7 @@ def scrape_all_star() -> dict:
             try:
                 apps = int(all_tds[2].get_text(strip=True) or 0)
                 if apps > 0:
-                    stars[name] = apps
+                    stars[pid] = apps
             except (ValueError, TypeError):
                 pass
 
@@ -309,7 +314,7 @@ def scrape_all_star() -> dict:
 
 
 def scrape_award(award_name: str, award_id: str, field: str) -> dict:
-    """Scrape a single award page; return {name: count}."""
+    """Scrape a single award page; return {pid: count}."""
     url = f'{BASE}/awards/{award_id}.html'
     html = fetch(url)
     if not html:
@@ -326,10 +331,10 @@ def scrape_award(award_name: str, award_id: str, field: str) -> dict:
     awards = {}
     for row in table.select('tbody tr'):
         link = row.find('a', href=lambda h: h and '/players/' in h)
-        if not link:
+        if not link or not link.get('href'):
             continue
-        name = normalize_name(link.get_text(strip=True))
-        awards[name] = awards.get(name, 0) + 1
+        pid = link['href'].split('/')[-1].replace('.html', '')
+        awards[pid] = awards.get(pid, 0) + 1
 
     logger.info(f'{award_name}: {len(awards)} players')
     return awards
@@ -383,10 +388,12 @@ def scrape_tiered_team(award_name: str, url_path: str) -> dict:
             continue
 
         for link in links:
-            name = normalize_name(link.get_text(strip=True))
-            if name not in counts:
-                counts[name] = {'first': 0, 'second': 0, 'third': 0}
-            counts[name][tier] += 1
+            if not link.get('href'):
+                continue
+            pid = link['href'].split('/')[-1].replace('.html', '')
+            if pid not in counts:
+                counts[pid] = {'first': 0, 'second': 0, 'third': 0}
+            counts[pid][tier] += 1
 
     logger.info(f'{award_name}: {len(counts)} players')
     return counts
@@ -422,10 +429,10 @@ def scrape_draft(year: int) -> dict:
     rows = tbody.find_all('tr')
     for row in rows:
         link = row.find('a', href=lambda h: h and '/players/' in h)
-        if not link:
+        if not link or not link.get('href'):
             continue
 
-        name = normalize_name(link.get_text(strip=True))
+        pid = link['href'].split('/')[-1].replace('.html', '')
 
         # Try multiple data-stat variants for pick number
         pick_td = (row.find('td', {'data-stat': 'pick_number'}) or
@@ -436,8 +443,8 @@ def scrape_draft(year: int) -> dict:
         except (ValueError, TypeError):
             pick = 0
 
-        if pick > 0 and name not in picks:
-            picks[name] = pick
+        if pick > 0 and pid not in picks:
+            picks[pid] = pick
 
     if picks:
         logger.info(f'Draft {year}: {len(picks)} picks')
@@ -447,17 +454,17 @@ def scrape_draft(year: int) -> dict:
 
 
 def scrape_all_drafts() -> dict:
-    """Scrape all draft pages (1980-2025); return {name: overall_pick} (earliest draft only)."""
+    """Scrape all draft pages; return {pid: overall_pick} (earliest draft only)."""
     all_picks = {}
     success_count = 0
     for year in DRAFT_SEASONS:
         picks = scrape_draft(year)
         if picks:
             success_count += 1
-        for name, pick in picks.items():
-            if name not in all_picks:
-                all_picks[name] = pick
-    logger.info(f'Drafts (1980-2025): {len(all_picks)} unique players with pick numbers ({success_count}/{len(DRAFT_SEASONS)} years)')
+        for pid, pick in picks.items():
+            if pid not in all_picks:
+                all_picks[pid] = pick
+    logger.info(f'Drafts ({DRAFT_SEASONS[0]}-{DRAFT_SEASONS[-1]}): {len(all_picks)} unique players with pick numbers ({success_count}/{len(DRAFT_SEASONS)} years)')
     return all_picks
 
 
@@ -471,7 +478,7 @@ def build_seasons() -> dict:
 
 
 def merge_awards(players: dict):
-    """Merge award data into players dict (matched by player name)."""
+    """Merge award data into players dict (matched by player id)."""
     logger.info('Scraping awards pages...')
     all_star_data = scrape_all_star()
     mvp_data = scrape_award('MVP', 'mvp', 'mvpAwards')
@@ -482,15 +489,14 @@ def merge_awards(players: dict):
     fmvp_data = scrape_award('FMVP', 'finals_mvp', 'fmvpAwards')
 
     for pid, p in players.items():
-        name = normalize_name(p['name'])
-        p['mvpAwards'] = mvp_data.get(name, 0)
-        p['fmvpAwards'] = fmvp_data.get(name, 0)
-        p['dpoyAwards'] = dpoy_data.get(name, 0)
-        p['royAward'] = roy_data.get(name, 0)
-        p['smoyAwards'] = smoy_data.get(name, 0)
-        p['mipAwards'] = mip_data.get(name, 0)
-        if name in all_star_data:
-            p['allStarAppearances'] = all_star_data[name]
+        p['mvpAwards'] = mvp_data.get(pid, 0)
+        p['fmvpAwards'] = fmvp_data.get(pid, 0)
+        p['dpoyAwards'] = dpoy_data.get(pid, 0)
+        p['royAward'] = roy_data.get(pid, 0)
+        p['smoyAwards'] = smoy_data.get(pid, 0)
+        p['mipAwards'] = mip_data.get(pid, 0)
+        if pid in all_star_data:
+            p['allStarAppearances'] = all_star_data[pid]
 
 
 def merge_tiered_teams(players: dict):
@@ -498,31 +504,28 @@ def merge_tiered_teams(players: dict):
     all_nba = scrape_tiered_team('All-NBA', 'all_league')
     all_def = scrape_tiered_team('All-Defensive', 'all_defense')
 
-    player_names = {normalize_name(p['name']) for p in players.values()}
     nba_matched = def_matched = 0
     for pid, p in players.items():
-        name = normalize_name(p['name'])
-        if name in all_nba:
-            p['allNBA1'] = all_nba[name]['first']
-            p['allNBA2'] = all_nba[name]['second']
-            p['allNBA3'] = all_nba[name]['third']
+        if pid in all_nba:
+            p['allNBA1'] = all_nba[pid]['first']
+            p['allNBA2'] = all_nba[pid]['second']
+            p['allNBA3'] = all_nba[pid]['third']
             nba_matched += 1
-        if name in all_def:
-            p['allDef1'] = all_def[name]['first']
-            p['allDef2'] = all_def[name]['second']
+        if pid in all_def:
+            p['allDef1'] = all_def[pid]['first']
+            p['allDef2'] = all_def[pid]['second']
             def_matched += 1
     logger.info(f'All-NBA: matched {nba_matched}, All-Defensive: matched {def_matched}')
 
 
 def merge_draft(players: dict):
-    """Merge draft data into players dict (matched by player name)."""
+    """Merge draft data into players dict (matched by player id)."""
     logger.info('Scraping draft pages...')
     draft_picks = scrape_all_drafts()
     matched = undrafted = 0
     for pid, p in players.items():
-        name = normalize_name(p['name'])
-        if name in draft_picks:
-            p['draftPick'] = draft_picks[name]
+        if pid in draft_picks:
+            p['draftPick'] = draft_picks[pid]
             matched += 1
         else:
             # Players with meaningful careers not in any draft class are undrafted
@@ -563,6 +566,7 @@ def organize_by_team(players: dict) -> dict:
             'allDef1': p.get('allDef1', 0),
             'allDef2': p.get('allDef2', 0),
             'undrafted': p.get('undrafted', False),
+            'firstSeason': p.get('firstSeason', 0),
             'lastSeason': p.get('lastSeason', 0),
             'seasons20ppg': p.get('seasons20ppg', 0),
         }
@@ -594,6 +598,7 @@ def export_to_datajs(teams: dict, filename: str = 'data.js'):
                 f'"allNBA1": {p["allNBA1"]}, "allNBA2": {p["allNBA2"]}, "allNBA3": {p["allNBA3"]}, '
                 f'"allDef1": {p["allDef1"]}, "allDef2": {p["allDef2"]}, '
                 f'"undrafted": {"true" if p["undrafted"] else "false"}, '
+                f'"firstSeason": {p["firstSeason"]}, '
                 f'"lastSeason": {p["lastSeason"]}, '
                 f'"seasons20ppg": {p.get("seasons20ppg", 0)}'
                 f'}}{comma}'
