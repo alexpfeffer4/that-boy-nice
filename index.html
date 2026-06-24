@@ -2971,30 +2971,36 @@
       const tier = getScoreTier(score);
       const initials = getInitials(name);
       const badges = getPlayerTierBadges(playerName || name);
-      const playerObj = players.find(p => p.name === (playerName || name));
+      const playerObj = allPlayers.find(function(p) { return p.name === (playerName || name); });
       const era = playerObj ? getPlayerEra(playerObj.lastSeason) : '';
-      const pos = playerObj ? (playerObj.positions || []).join('/') : '';
-      const eraLine = [era, pos].filter(Boolean).join(' · ');
+      const playerPos = playerObj ? (playerObj.positions || []).join('/') : '';
+      const eraLine = [era, playerPos].filter(Boolean).join(' · ');
+
+      const badgesHTML = badges.length
+        ? '<div class="end-player-badges">' + badges.map(function(b) {
+            return '<span class="ep-badge badge-' + b.type + '">' + b.label + '</span>';
+          }).join('') + '</div>'
+        : '';
+      const eraHTML = eraLine ? '<span class="end-player-era">' + eraLine + '</span>' : '';
 
       const card = document.createElement('div');
-      card.className = `end-player-card ${tier}`;
-      card.innerHTML = `
-        <div class="end-player-top">
-          <div class="end-player-avatar ${tier}">
-            <span class="av-initials">${initials}</span>
-            <span class="av-pos">${posLabel}</span>
-          </div>
-          <div class="end-player-info">
-            <span class="end-player-name">${name}</span>
-            ${eraLine ? `<span class="end-player-era">${eraLine}</span>` : ''}
-          </div>
-          <span class="end-player-score ${tier}">${score}</span>
-        </div>
-        ${badges.length ? `<div class="end-player-badges">${badges.map(b => `<span class="ep-badge badge-${b.type}">${b.label}</span>`).join('')}</div>` : ''}
-        <div class="end-player-bar-track">
-          <div class="end-player-bar ${tier}" style="width:0%" data-width="${score}%"></div>
-        </div>
-      `;
+      card.className = 'end-player-card ' + tier;
+      card.innerHTML =
+        '<div class="end-player-top">' +
+          '<div class="end-player-avatar ' + tier + '">' +
+            '<span class="av-initials">' + initials + '</span>' +
+            '<span class="av-pos">' + posLabel + '</span>' +
+          '</div>' +
+          '<div class="end-player-info">' +
+            '<span class="end-player-name">' + name + '</span>' +
+            eraHTML +
+          '</div>' +
+          '<span class="end-player-score ' + tier + '">' + score + '</span>' +
+        '</div>' +
+        badgesHTML +
+        '<div class="end-player-bar-track">' +
+          '<div class="end-player-bar ' + tier + '" style="width:0%" data-width="' + score + '%"></div>' +
+        '</div>';
       return card;
     }
 
