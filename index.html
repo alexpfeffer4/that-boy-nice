@@ -2319,13 +2319,6 @@
       score -= s.smoy * 5;
       score -= s.mip * 5;
 
-      // Career VORP (value over replacement player — captures all-around impact)
-      if (s.vorp >= 100) score -= 20;
-      else if (s.vorp >= 60) score -= 12;
-      else if (s.vorp >= 35) score -= 8;
-      else if (s.vorp >= 20) score -= 5;
-      else if (s.vorp >= 8) score -= 2;
-
       // Scoring seasons (20+ PPG in 41+ games)
       if (s.seasons20ppg >= 4) score -= 15;
       else if (s.seasons20ppg >= 2) score -= 10;
@@ -2388,10 +2381,6 @@
       if (s.roy > 0) breakdown.push({ label: `ROY`, value: -8 });
       if (s.smoy > 0) breakdown.push({ label: `SMOY ×${s.smoy}`, value: -5 * s.smoy });
       if (s.mip > 0) breakdown.push({ label: `MIP ×${s.mip}`, value: -5 * s.mip });
-      if (s.vorp >= 8) {
-        const vorpPenalty = s.vorp >= 100 ? -20 : s.vorp >= 60 ? -12 : s.vorp >= 35 ? -8 : s.vorp >= 20 ? -5 : -2;
-        breakdown.push({ label: `Career VORP (${s.vorp.toFixed(1)})`, value: vorpPenalty });
-      }
       if (s.seasons20ppg >= 1) {
         const ppgPenalty = s.seasons20ppg >= 4 ? -15 : s.seasons20ppg >= 2 ? -10 : -5;
         const ppgRange = s.seasons20ppg >= 4 ? '4+' : s.seasons20ppg >= 2 ? '2-3' : '1';
