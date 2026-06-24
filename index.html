@@ -1926,6 +1926,17 @@
     // --- Mode start functions ---
     function startDailyChallenge() {
       const dateStr = getTodayString();
+      const saved = JSON.parse(localStorage.getItem(`tbn_daily_${dateStr}`) || 'null');
+
+      // Already played — show results screen directly
+      if (saved && saved.lineup) {
+        document.getElementById('startScreen').style.display = 'none';
+        document.getElementById('gameSection').style.display = 'block';
+        gameState.isDailyChallenge = true;
+        gameState.totalScore = saved.score;
+        showDailyResults(saved);
+        return;
+      }
 
       gameState.isDailyChallenge = true;
       gameState.dailyTeams = getDailyTeams(gameState.teams, dateStr);
@@ -1942,6 +1953,60 @@
 
       // Show Oldhead explanation modal before starting
       document.getElementById('oldheadModal').style.display = 'flex';
+    }
+
+    function showDailyResults(saved) {
+      const label = saved.label;
+      const totalTier = getScoreTier(Math.round(saved.score / 5));
+      const dateStr = getTodayString();
+
+      document.getElementById('gameSection').innerHTML = `
+        <div class="end-screen">
+          <div class="end-hero">
+            <div class="end-meta-tag">📅 Daily Challenge · ${dateStr}</div>
+            <div class="end-score-num ${totalTier}">${saved.score}</div>
+            <div class="end-tier-pill ${totalTier}">${label}</div>
+          </div>
+          <div class="end-players" id="resultPlayers"></div>
+          <div class="end-btns">
+            <button class="end-btn-primary" onclick="challengeRival()">⚔️ Challenge a Rival</button>
+            <div class="end-btn-row">
+              <button class="end-btn-secondary" onclick="downloadShareCard()">🖼️ Share Card</button>
+              <button class="end-btn-secondary" onclick="shareResult()">📋 Copy Result</button>
+            </div>
+            <button class="end-btn-ghost" onclick="location.href=location.pathname">← Back</button>
+          </div>
+        </div>
+      `;
+
+      const container = document.getElementById('resultPlayers');
+      saved.lineup.forEach(entry => {
+        const tier = getScoreTier(entry.score);
+        const card = document.createElement('div');
+        card.className = `end-player-card ${tier}`;
+        card.innerHTML = `
+          <div class="end-player-top">
+            <span class="end-player-pos">${entry.team}</span>
+            <div class="end-player-info">
+              <span class="end-player-name">${entry.name}</span>
+              <span class="end-player-team">${entry.team}</span>
+            </div>
+            <span class="end-player-score ${tier}">${entry.score}</span>
+          </div>
+          <div class="end-player-bar-track">
+            <div class="end-player-bar ${tier}" style="width:0%" data-width="${entry.score}%"></div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        container.querySelectorAll('.end-player-bar').forEach(bar => {
+          bar.style.width = bar.dataset.width;
+        });
+      }));
+
+      buildShareCard();
     }
 
     function confirmDailyChallenge() {
@@ -2790,7 +2855,11 @@
       const totalTier = getScoreTier(Math.round(gameState.totalScore / 5));
 
       if (gameState.isDailyChallenge) {
-        localStorage.setItem(`tbn_daily_${getTodayString()}`, JSON.stringify({ score: gameState.totalScore, label }));
+        const lineupArr = gameState.dailyTeams.slice(0, 5).map(team => {
+          const p = gameState.lineup[team];
+          return p ? { team, name: p.name, score: p.score } : null;
+        }).filter(Boolean);
+        localStorage.setItem(`tbn_daily_${getTodayString()}`, JSON.stringify({ score: gameState.totalScore, label, lineup: lineupArr }));
       }
 
       const rivalHTML = gameState.rivalData ? buildRivalComparison() : '';
