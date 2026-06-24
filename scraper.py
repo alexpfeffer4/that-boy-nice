@@ -123,6 +123,47 @@ def fetch(url: str, max_retries: int = 5, timeout: int = 30):
     return None
 
 
+def scrape_season_ppg(year: int) -> dict:
+    """Fetch per-game page for a season; return {pid: ppg} for TOT or first row."""
+    url = f'{BASE}/leagues/NBA_{year}_per_game.html'
+    html = fetch(url)
+    if not html:
+        return {}
+    soup = BeautifulSoup(html, 'html.parser')
+    table = find_table(soup, 'per_game_stats', 'per_game')
+    if not table:
+        return {}
+    rows_by_pid: dict = {}
+    for row in table.select('tbody tr'):
+        name_td = row.find('td', {'data-stat': 'name_display'})
+        if not name_td:
+            continue
+        link = name_td.find('a')
+        if not link or not link.get('href'):
+            continue
+        pid = link['href'].split('/')[-1].replace('.html', '')
+        team_td = row.find('td', {'data-stat': 'team_name_abbr'})
+        team = team_td.get_text(strip=True) if team_td else ''
+        g_td = row.find('td', {'data-stat': 'games'})
+        pts_td = row.find('td', {'data-stat': 'pts_per_g'})
+        try:
+            g = int(g_td.get_text(strip=True) or 0)
+        except (ValueError, TypeError):
+            g = 0
+        try:
+            pts = float(pts_td.get_text(strip=True) or 0) if pts_td else 0.0
+        except (ValueError, TypeError):
+            pts = 0.0
+        rows_by_pid.setdefault(pid, []).append({'team': team, 'g': g, 'pts': pts})
+
+    result = {}
+    for pid, rows in rows_by_pid.items():
+        tot = next((r for r in rows if NTM_RE.match(r['team'])), None)
+        r = tot if tot else rows[0]
+        result[pid] = (r['pts'], r['g'])
+    return result
+
+
 def scrape_season(year: int, players: dict) -> int:
     """Parse one season's advanced page; aggregate into the players dict."""
     url = f'{BASE}/leagues/NBA_{year}_advanced.html'
@@ -136,6 +177,8 @@ def scrape_season(year: int, players: dict) -> int:
     if not table:
         logger.warning(f'{year}: no advanced table')
         return 0
+
+    ppg_lookup = scrape_season_ppg(year)
 
     season_rows: dict = {}
     for row in table.select('tbody tr'):
@@ -171,14 +214,8 @@ def scrape_season(year: int, players: dict) -> int:
         except (ValueError, TypeError):
             vorp = 0.0
 
-        pts_td = row.find('td', {'data-stat': 'pts_per_g'})
-        try:
-            pts = float(pts_td.get_text(strip=True) or 0) if pts_td else 0.0
-        except (ValueError, TypeError):
-            pts = 0.0
-
         season_rows.setdefault(pid, []).append({
-            'name': name, 'team': team, 'pos': pos, 'g': g, 'gs': gs, 'vorp': vorp, 'pts': pts
+            'name': name, 'team': team, 'pos': pos, 'g': g, 'gs': gs, 'vorp': vorp
         })
 
     count = 0
@@ -209,15 +246,16 @@ def scrape_season(year: int, players: dict) -> int:
                 'gamesStarted': 0, 'seasons20ppg': 0
             }
 
-        # Count season PPG using TOT row for traded players, else first row
-        season_pts = combined['pts'] if combined else rows[0]['pts']
-
         p = players[pid]
         p['games'] += season_g
         p['gamesStarted'] += season_gs
         p['vorp'] += season_vorp
-        if season_pts >= 20.0 and season_g >= 41:  # min 41 games to count a season
-            p['seasons20ppg'] += 1
+
+        # Count 20+ PPG seasons using per-game page lookup
+        if pid in ppg_lookup:
+            season_pts, ppg_g = ppg_lookup[pid]
+            if season_pts >= 20.0 and ppg_g >= 41:
+                p['seasons20ppg'] += 1
         p['name'] = name
         p['lastSeason'] = max(p['lastSeason'], year)
         p['positions'][pos] = p['positions'].get(pos, 0) + 1
