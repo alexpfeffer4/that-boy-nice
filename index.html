@@ -3189,6 +3189,8 @@
         tierLabel = 'Star'; tierType = 'badge-tier-star';
       } else if (s.allStarApps >= 2 || s.allNBA2 >= 1 || s.allNBA3 >= 1) {
         tierLabel = 'All-Star'; tierType = 'badge-tier-allstar';
+      } else if (s.allStarApps === 1 && s.games < 300) {
+        tierLabel = 'Rising Star'; tierType = 'badge-tier-great';
       } else if (!s.undrafted && s.draftPick <= 5 && s.allStarApps === 0 && s.games < 500) {
         tierLabel = 'Lottery Bust'; tierType = 'badge-tier-role';
       } else if ((s.undrafted || s.draftPick > 30) && s.games >= 400) {
