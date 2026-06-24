@@ -653,6 +653,61 @@
     .end-player-bar.tier-mid    { background: #667eea; }
     .end-player-bar.tier-casual { background: rgba(255,255,255,0.3); }
 
+    .end-player-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+    .end-player-avatar .av-initials {
+      font-size: 0.85rem;
+      line-height: 1;
+    }
+    .end-player-avatar .av-pos {
+      font-size: 0.55rem;
+      opacity: 0.75;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+    .end-player-avatar.tier-god    { background: rgba(255,215,0,0.18);  color: #FFD700; }
+    .end-player-avatar.tier-great  { background: rgba(78,205,196,0.18); color: #4ECDC4; }
+    .end-player-avatar.tier-good   { background: rgba(168,237,234,0.14);color: #a8edea; }
+    .end-player-avatar.tier-mid    { background: rgba(102,126,234,0.18);color: #667eea; }
+    .end-player-avatar.tier-casual { background: rgba(255,255,255,0.08);color: rgba(255,255,255,0.5); }
+
+    .end-player-era {
+      display: block;
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.38);
+      margin-top: 2px;
+    }
+
+    .end-player-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      padding: 0 16px 12px;
+    }
+
+    .ep-badge {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 3px 8px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+    .ep-badge.badge-longevity { background: rgba(255,165,0,0.12);  color: #FFA500; border: 1px solid rgba(255,165,0,0.25); }
+    .ep-badge.badge-draft     { background: rgba(147,112,219,0.12); color: #9370DB; border: 1px solid rgba(147,112,219,0.25); }
+    .ep-badge.badge-accolades { background: rgba(255,99,132,0.12);  color: #FF6384; border: 1px solid rgba(255,99,132,0.25); }
+    .ep-badge.badge-ppg       { background: rgba(54,162,235,0.12);  color: #36A2EB; border: 1px solid rgba(54,162,235,0.25); }
+
     .end-btn-primary {
       width: 100%;
       padding: 14px;
@@ -1554,21 +1609,33 @@
         padding: 10px 12px 6px;
       }
 
-      .end-player-pos {
-        font-size: 0.65rem;
-        width: 24px;
+      .end-player-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
       }
+      .end-player-avatar .av-initials { font-size: 0.75rem; }
 
       .end-player-name {
         font-size: 0.85rem;
       }
 
-      .end-player-team {
-        font-size: 0.65rem;
+      .end-player-era {
+        font-size: 0.63rem;
       }
 
       .end-player-score {
         font-size: 1rem;
+      }
+
+      .end-player-badges {
+        padding: 0 12px 10px;
+        gap: 4px;
+      }
+
+      .ep-badge {
+        font-size: 0.58rem;
+        padding: 2px 6px;
       }
 
       .end-player-bar-track {
@@ -1981,23 +2048,7 @@
 
       const container = document.getElementById('resultPlayers');
       saved.lineup.forEach(entry => {
-        const tier = getScoreTier(entry.score);
-        const card = document.createElement('div');
-        card.className = `end-player-card ${tier}`;
-        card.innerHTML = `
-          <div class="end-player-top">
-            <span class="end-player-pos">${entry.team}</span>
-            <div class="end-player-info">
-              <span class="end-player-name">${entry.name}</span>
-              <span class="end-player-team">${entry.team}</span>
-            </div>
-            <span class="end-player-score ${tier}">${entry.score}</span>
-          </div>
-          <div class="end-player-bar-track">
-            <div class="end-player-bar ${tier}" style="width:0%" data-width="${entry.score}%"></div>
-          </div>
-        `;
-        container.appendChild(card);
+        container.appendChild(buildPlayerCard(entry.name, entry.team, entry.score));
       });
 
       requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -2297,9 +2348,9 @@
         const multiplierPercent = Math.round(s.recencyMultiplier * 100);
         const yearsAgo = 2026 - s.lastSeason;
         let bucket = '';
-        if (yearsAgo <= 1) bucket = '0 yrs ago';
-        else if (yearsAgo <= 3) bucket = '2-3 yrs ago';
-        else if (yearsAgo <= 5) bucket = '4-5 yrs ago';
+        if (yearsAgo <= 0) bucket = 'Active';
+        else if (yearsAgo <= 2) bucket = '1-2 yrs retired';
+        else if (yearsAgo <= 4) bucket = '3-4 yrs retired';
 
         const recencyAdjust = Math.round(subtotal * s.recencyMultiplier) - subtotal;
         breakdown.push({ label: `Recency ×${multiplierPercent}% (${s.lastSeason}, ${bucket})`, value: recencyAdjust, isMultiplier: true });
@@ -2851,6 +2902,101 @@
       return 'tier-god';
     }
 
+    function getInitials(name) {
+      const parts = name.trim().split(' ');
+      if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      return name.slice(0, 2).toUpperCase();
+    }
+
+    function getPlayerEra(lastSeason) {
+      if (!lastSeason) return '';
+      if (lastSeason >= 2020) return '2020s';
+      if (lastSeason >= 2010) return '2010s';
+      if (lastSeason >= 2000) return '2000s';
+      if (lastSeason >= 1990) return '1990s';
+      return 'Classic';
+    }
+
+    function getPlayerTierBadges(playerName) {
+      const playerObj = players.find(p => p.name === playerName);
+      if (!playerObj) return [];
+      const s = getPlayerStats(playerObj);
+      const badges = [];
+
+      // Longevity
+      if (s.games >= 1400)      badges.push({ label: 'Marathon Man', type: 'longevity' });
+      else if (s.games >= 1200) badges.push({ label: 'Iron Man', type: 'longevity' });
+      else if (s.games >= 800)  badges.push({ label: '10yr Vet', type: 'longevity' });
+      else if (s.games >= 500)  badges.push({ label: 'Solid Pro', type: 'longevity' });
+      else if (s.games >= 330)  badges.push({ label: 'Role Player', type: 'longevity' });
+      else if (s.games >= 164)  badges.push({ label: 'Fringe', type: 'longevity' });
+      else                       badges.push({ label: 'Cup of Coffee', type: 'longevity' });
+
+      // Draft
+      if (s.undrafted)              badges.push({ label: 'Undrafted', type: 'draft' });
+      else if (s.draftPick === 1)   badges.push({ label: '#1 Pick', type: 'draft' });
+      else if (s.draftPick <= 3)    badges.push({ label: 'Top 3 Pick', type: 'draft' });
+      else if (s.draftPick <= 5)    badges.push({ label: 'Lottery Pick', type: 'draft' });
+      else if (s.draftPick <= 14)   badges.push({ label: 'Late Lottery', type: 'draft' });
+      else if (s.draftPick <= 30)   badges.push({ label: '1st Round', type: 'draft' });
+      else                           badges.push({ label: '2nd Round', type: 'draft' });
+
+      // Accolades (show the most notable one)
+      const allNBACount = s.allNBA1 + s.allNBA2 + s.allNBA3;
+      const excessAllStars = Math.max(0, s.allStarApps - allNBACount);
+      if (s.mvp >= 2)           badges.push({ label: `${s.mvp}× MVP`, type: 'accolades' });
+      else if (s.mvp === 1)     badges.push({ label: 'MVP', type: 'accolades' });
+      else if (s.fmvp >= 2)     badges.push({ label: `${s.fmvp}× Champion`, type: 'accolades' });
+      else if (s.fmvp === 1)    badges.push({ label: 'Champion', type: 'accolades' });
+      else if (s.allNBA1 >= 1)  badges.push({ label: `${s.allNBA1}× All-NBA 1st`, type: 'accolades' });
+      else if (s.allNBA2 >= 1)  badges.push({ label: `${s.allNBA2}× All-NBA 2nd`, type: 'accolades' });
+      else if (s.allNBA3 >= 1)  badges.push({ label: `${s.allNBA3}× All-NBA 3rd`, type: 'accolades' });
+      else if (excessAllStars >= 3) badges.push({ label: `${s.allStarApps}× All-Star`, type: 'accolades' });
+      else if (excessAllStars >= 1) badges.push({ label: `${s.allStarApps}× All-Star`, type: 'accolades' });
+      else if (s.dpoy >= 1)     badges.push({ label: s.dpoy > 1 ? `${s.dpoy}× DPOY` : 'DPOY', type: 'accolades' });
+      else if (s.roy)           badges.push({ label: 'ROY', type: 'accolades' });
+      else if (s.smoy >= 1 || s.mip >= 1) badges.push({ label: 'Award Winner', type: 'accolades' });
+      else                       badges.push({ label: 'No Accolades', type: 'accolades' });
+
+      // PPG
+      if (s.seasons20ppg >= 4)      badges.push({ label: 'Volume Scorer', type: 'ppg' });
+      else if (s.seasons20ppg >= 2) badges.push({ label: '20+ PPG Club', type: 'ppg' });
+      else if (s.seasons20ppg >= 1) badges.push({ label: 'One Big Year', type: 'ppg' });
+
+      return badges;
+    }
+
+    function buildPlayerCard(name, posLabel, score, playerName) {
+      const tier = getScoreTier(score);
+      const initials = getInitials(name);
+      const badges = getPlayerTierBadges(playerName || name);
+      const playerObj = players.find(p => p.name === (playerName || name));
+      const era = playerObj ? getPlayerEra(playerObj.lastSeason) : '';
+      const pos = playerObj ? (playerObj.positions || []).join('/') : '';
+      const eraLine = [era, pos].filter(Boolean).join(' · ');
+
+      const card = document.createElement('div');
+      card.className = `end-player-card ${tier}`;
+      card.innerHTML = `
+        <div class="end-player-top">
+          <div class="end-player-avatar ${tier}">
+            <span class="av-initials">${initials}</span>
+            <span class="av-pos">${posLabel}</span>
+          </div>
+          <div class="end-player-info">
+            <span class="end-player-name">${name}</span>
+            ${eraLine ? `<span class="end-player-era">${eraLine}</span>` : ''}
+          </div>
+          <span class="end-player-score ${tier}">${score}</span>
+        </div>
+        ${badges.length ? `<div class="end-player-badges">${badges.map(b => `<span class="ep-badge badge-${b.type}">${b.label}</span>`).join('')}</div>` : ''}
+        <div class="end-player-bar-track">
+          <div class="end-player-bar ${tier}" style="width:0%" data-width="${score}%"></div>
+        </div>
+      `;
+      return card;
+    }
+
     function endGame() {
       const label = getScoreLabel(gameState.totalScore);
       const totalTier = getScoreTier(Math.round(gameState.totalScore / 5));
@@ -2896,27 +3042,19 @@
       buildShareCard();
 
       const container = document.getElementById('resultPlayers');
-      positions.forEach(pos => {
-        const player = gameState.lineup[pos];
-        if (!player) return;
-        const tier = getScoreTier(player.score);
-        const card = document.createElement('div');
-        card.className = `end-player-card ${tier}`;
-        card.innerHTML = `
-          <div class="end-player-top">
-            <span class="end-player-pos">${pos}</span>
-            <div class="end-player-info">
-              <span class="end-player-name">${player.name}</span>
-              ${player.team ? `<span class="end-player-team">${player.team}</span>` : ''}
-            </div>
-            <span class="end-player-score ${tier}">${player.score}</span>
-          </div>
-          <div class="end-player-bar-track">
-            <div class="end-player-bar ${tier}" style="width:0%" data-width="${player.score}%"></div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
+      if (gameState.isDailyChallenge) {
+        gameState.dailyTeams.slice(0, 5).forEach(team => {
+          const player = gameState.lineup[team];
+          if (!player) return;
+          container.appendChild(buildPlayerCard(player.name, team, player.score));
+        });
+      } else {
+        positions.forEach(pos => {
+          const player = gameState.lineup[pos];
+          if (!player) return;
+          container.appendChild(buildPlayerCard(player.name, pos, player.score));
+        });
+      }
 
       requestAnimationFrame(() => requestAnimationFrame(() => {
         container.querySelectorAll('.end-player-bar').forEach(bar => {
