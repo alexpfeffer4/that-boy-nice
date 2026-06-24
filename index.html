@@ -810,10 +810,13 @@
       border-radius: 20px;
       text-transform: uppercase;
     }
-    .ep-badge.badge-longevity { background: rgba(255,165,0,0.12);  color: #FFA500; border: 1px solid rgba(255,165,0,0.25); }
-    .ep-badge.badge-draft     { background: rgba(147,112,219,0.12); color: #9370DB; border: 1px solid rgba(147,112,219,0.25); }
-    .ep-badge.badge-accolades { background: rgba(255,99,132,0.12);  color: #FF6384; border: 1px solid rgba(255,99,132,0.25); }
-    .ep-badge.badge-ppg       { background: rgba(54,162,235,0.12);  color: #36A2EB; border: 1px solid rgba(54,162,235,0.25); }
+    .ep-badge.badge-tier-legend    { background: rgba(255,215,0,0.14);  color: #FFD700; border: 1px solid rgba(255,215,0,0.3); }
+    .ep-badge.badge-tier-star      { background: rgba(255,107,53,0.14); color: #FF6B35; border: 1px solid rgba(255,107,53,0.3); }
+    .ep-badge.badge-tier-allstar   { background: rgba(67,197,158,0.14); color: #43C59E; border: 1px solid rgba(67,197,158,0.3); }
+    .ep-badge.badge-tier-solid     { background: rgba(91,127,181,0.14); color: #5B7FB5; border: 1px solid rgba(91,127,181,0.3); }
+    .ep-badge.badge-tier-role      { background: rgba(156,163,175,0.14);color: #9CA3AF; border: 1px solid rgba(156,163,175,0.3); }
+    .ep-badge.badge-tier-cup       { background: rgba(156,163,175,0.08);color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.12); }
+    .ep-badge.badge-claim          { background: rgba(255,255,255,0.06);color: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.15); }
 
     .end-btn-primary {
       width: 100%;
@@ -3092,49 +3095,55 @@
       const playerObj = allPlayers.find(p => p.name === playerName);
       if (!playerObj) return [];
       const s = getPlayerStats(playerObj);
-      const badges = [];
+      const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
 
-      // Longevity
-      if (s.games >= 1400)      badges.push({ label: 'Marathon Man', type: 'longevity' });
-      else if (s.games >= 1200) badges.push({ label: 'Iron Man', type: 'longevity' });
-      else if (s.games >= 800)  badges.push({ label: '10yr Vet', type: 'longevity' });
-      else if (s.games >= 500)  badges.push({ label: 'Solid Pro', type: 'longevity' });
-      else if (s.games >= 330)  badges.push({ label: 'Role Player', type: 'longevity' });
-      else if (s.games >= 164)  badges.push({ label: 'Fringe', type: 'longevity' });
-      else                       badges.push({ label: 'Cup of Coffee', type: 'longevity' });
+      // Badge 1: Career Tier — where they sit in NBA history
+      let tierLabel, tierType;
+      if (s.mvp >= 1 || s.allNBA1 >= 2 || (s.allNBA1 >= 1 && s.allStarApps >= 6)) {
+        tierLabel = 'Legend'; tierType = 'badge-tier-legend';
+      } else if (s.allStarApps >= 3 || s.allNBA1 >= 1) {
+        tierLabel = 'Star'; tierType = 'badge-tier-star';
+      } else if (s.allStarApps >= 2 || s.allNBA2 >= 1 || s.allNBA3 >= 1) {
+        tierLabel = 'All-Star'; tierType = 'badge-tier-allstar';
+      } else if (!s.undrafted && s.draftPick <= 5 && s.allStarApps === 0 && s.games < 500) {
+        tierLabel = 'Lottery Bust'; tierType = 'badge-tier-role';
+      } else if ((s.undrafted || s.draftPick > 30) && s.games >= 400) {
+        tierLabel = 'Hidden Gem'; tierType = 'badge-tier-solid';
+      } else if (s.games >= 500 && gsRatio >= 0.55) {
+        tierLabel = 'Solid Starter'; tierType = 'badge-tier-solid';
+      } else if (s.games >= 330) {
+        tierLabel = 'Role Player'; tierType = 'badge-tier-role';
+      } else if (s.games >= 164) {
+        tierLabel = 'Journeyman'; tierType = 'badge-tier-role';
+      } else {
+        tierLabel = 'Cup of Coffee'; tierType = 'badge-tier-cup';
+      }
 
-      // Draft
-      if (s.undrafted)              badges.push({ label: 'Undrafted', type: 'draft' });
-      else if (s.draftPick === 1)   badges.push({ label: '#1 Pick', type: 'draft' });
-      else if (s.draftPick <= 3)    badges.push({ label: 'Top 3 Pick', type: 'draft' });
-      else if (s.draftPick <= 5)    badges.push({ label: 'Lottery Pick', type: 'draft' });
-      else if (s.draftPick <= 14)   badges.push({ label: 'Late Lottery', type: 'draft' });
-      else if (s.draftPick <= 30)   badges.push({ label: '1st Round', type: 'draft' });
-      else                           badges.push({ label: '2nd Round', type: 'draft' });
+      // Badge 2: Best Claim — their single most notable trait
+      let claimLabel;
+      if (s.mvp >= 2)                          claimLabel = `${s.mvp}× MVP`;
+      else if (s.mvp === 1)                    claimLabel = 'MVP';
+      else if (s.fmvp >= 1)                    claimLabel = s.fmvp > 1 ? `${s.fmvp}× Finals MVP` : 'Finals MVP';
+      else if (s.dpoy >= 2)                    claimLabel = `${s.dpoy}× DPOY`;
+      else if (s.dpoy === 1)                   claimLabel = 'DPOY';
+      else if (s.allNBA1 >= 1)                 claimLabel = `${s.allNBA1}× All-NBA 1st`;
+      else if (s.allNBA2 >= 1)                 claimLabel = `${s.allNBA2}× All-NBA 2nd`;
+      else if (s.allNBA3 >= 1)                 claimLabel = `${s.allNBA3}× All-NBA 3rd`;
+      else if (s.allStarApps >= 1)             claimLabel = `${s.allStarApps}× All-Star`;
+      else if (s.roy)                           claimLabel = 'ROY';
+      else if (s.smoy >= 1)                    claimLabel = 'SMOY';
+      else if (s.mip >= 1)                     claimLabel = 'MIP';
+      else if (s.undrafted && s.games >= 200)  claimLabel = 'Went Undrafted';
+      else if (s.draftPick > 30 && s.games >= 500) claimLabel = '2nd Round Steal';
+      else if (s.seasons20ppg >= 3)            claimLabel = 'Volume Scorer';
+      else if (s.seasons20ppg === 1)           claimLabel = 'One Big Year';
+      else if (s.allDef1 >= 1)                 claimLabel = 'All-Defensive';
+      else                                      claimLabel = 'No Hardware';
 
-      // Accolades (show the most notable one)
-      const allNBACount = s.allNBA1 + s.allNBA2 + s.allNBA3;
-      const excessAllStars = Math.max(0, s.allStarApps - allNBACount);
-      if (s.mvp >= 2)           badges.push({ label: `${s.mvp}× MVP`, type: 'accolades' });
-      else if (s.mvp === 1)     badges.push({ label: 'MVP', type: 'accolades' });
-      else if (s.fmvp >= 2)     badges.push({ label: `${s.fmvp}× Champion`, type: 'accolades' });
-      else if (s.fmvp === 1)    badges.push({ label: 'Champion', type: 'accolades' });
-      else if (s.allNBA1 >= 1)  badges.push({ label: `${s.allNBA1}× All-NBA 1st`, type: 'accolades' });
-      else if (s.allNBA2 >= 1)  badges.push({ label: `${s.allNBA2}× All-NBA 2nd`, type: 'accolades' });
-      else if (s.allNBA3 >= 1)  badges.push({ label: `${s.allNBA3}× All-NBA 3rd`, type: 'accolades' });
-      else if (excessAllStars >= 3) badges.push({ label: `${s.allStarApps}× All-Star`, type: 'accolades' });
-      else if (excessAllStars >= 1) badges.push({ label: `${s.allStarApps}× All-Star`, type: 'accolades' });
-      else if (s.dpoy >= 1)     badges.push({ label: s.dpoy > 1 ? `${s.dpoy}× DPOY` : 'DPOY', type: 'accolades' });
-      else if (s.roy)           badges.push({ label: 'ROY', type: 'accolades' });
-      else if (s.smoy >= 1 || s.mip >= 1) badges.push({ label: 'Award Winner', type: 'accolades' });
-      else                       badges.push({ label: 'No Accolades', type: 'accolades' });
-
-      // PPG
-      if (s.seasons20ppg >= 4)      badges.push({ label: 'Volume Scorer', type: 'ppg' });
-      else if (s.seasons20ppg >= 2) badges.push({ label: '20+ PPG Club', type: 'ppg' });
-      else if (s.seasons20ppg >= 1) badges.push({ label: 'One Big Year', type: 'ppg' });
-
-      return badges;
+      return [
+        { label: tierLabel, type: tierType },
+        { label: claimLabel, type: 'badge-claim' },
+      ];
     }
 
     function buildPlayerCard(name, posLabel, score, playerName) {
@@ -3148,7 +3157,7 @@
 
       const badgesHTML = badges.length
         ? '<div class="end-player-badges">' + badges.map(function(b) {
-            return '<span class="ep-badge badge-' + b.type + '">' + b.label + '</span>';
+            return '<span class="ep-badge ' + b.type + '">' + b.label + '</span>';
           }).join('') + '</div>'
         : '';
       const eraHTML = eraLine ? '<span class="end-player-era">' + eraLine + '</span>' : '';
