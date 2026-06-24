@@ -2559,11 +2559,18 @@
       return result;
     }
 
+    let autocompleteState = { selectedIndex: -1, currentMatches: [], keyHandler: null };
+
     function showAutocomplete(input) {
       const dropdown = document.getElementById('autocompleteDropdown');
+      const inputEl = document.getElementById('playerInput');
 
       if (!input || input.length < 1) {
         dropdown.classList.remove('show');
+        if (autocompleteState.keyHandler) {
+          inputEl.removeEventListener('keydown', autocompleteState.keyHandler);
+          autocompleteState.keyHandler = null;
+        }
         return;
       }
 
@@ -2583,6 +2590,10 @@
 
       if (matches.length === 0) {
         dropdown.classList.remove('show');
+        if (autocompleteState.keyHandler) {
+          inputEl.removeEventListener('keydown', autocompleteState.keyHandler);
+          autocompleteState.keyHandler = null;
+        }
         return;
       }
 
@@ -2596,46 +2607,50 @@
       }).join('');
 
       dropdown.classList.add('show');
-
-      let selectedIndex = -1;
+      autocompleteState.selectedIndex = -1;
+      autocompleteState.currentMatches = matches;
 
       document.querySelectorAll('.autocomplete-item').forEach(item => {
         item.addEventListener('mousedown', (e) => {
-          // mousedown fires before blur, so we can set the value before dropdown hides
           e.preventDefault();
           const idx = parseInt(item.dataset.index);
-          document.getElementById('playerInput').value = matches[idx].name;
+          inputEl.value = matches[idx].name;
           dropdown.classList.remove('show');
-          document.getElementById('playerInput').focus();
-          selectedIndex = -1;
+          inputEl.focus();
+          autocompleteState.selectedIndex = -1;
         });
       });
 
-      // Arrow key + Enter navigation
-      const inputEl = document.getElementById('playerInput');
-      const keyHandler = (e) => {
+      // Remove old keydown listener if it exists
+      if (autocompleteState.keyHandler) {
+        inputEl.removeEventListener('keydown', autocompleteState.keyHandler);
+      }
+
+      // Create and attach new keydown listener
+      autocompleteState.keyHandler = (e) => {
         const items = dropdown.querySelectorAll('.autocomplete-item');
         if (!items.length) return;
         if (e.key === 'ArrowDown') {
           e.preventDefault();
-          selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+          autocompleteState.selectedIndex = Math.min(autocompleteState.selectedIndex + 1, items.length - 1);
         } else if (e.key === 'ArrowUp') {
           e.preventDefault();
-          selectedIndex = Math.max(selectedIndex - 1, 0);
-        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+          autocompleteState.selectedIndex = Math.max(autocompleteState.selectedIndex - 1, 0);
+        } else if (e.key === 'Enter' && autocompleteState.selectedIndex >= 0) {
           e.preventDefault();
           e.stopImmediatePropagation();
-          inputEl.value = matches[selectedIndex].name;
+          inputEl.value = autocompleteState.currentMatches[autocompleteState.selectedIndex].name;
           dropdown.classList.remove('show');
-          selectedIndex = -1;
-          inputEl.removeEventListener('keydown', keyHandler);
+          inputEl.removeEventListener('keydown', autocompleteState.keyHandler);
+          autocompleteState.keyHandler = null;
+          autocompleteState.selectedIndex = -1;
           return;
         } else {
           return;
         }
-        items.forEach((el, i) => el.classList.toggle('selected', i === selectedIndex));
+        items.forEach((el, i) => el.classList.toggle('selected', i === autocompleteState.selectedIndex));
       };
-      inputEl.addEventListener('keydown', keyHandler);
+      inputEl.addEventListener('keydown', autocompleteState.keyHandler);
     }
 
     function updateLivesDisplay() {
@@ -3346,6 +3361,10 @@
     }
 
     function buildRivalComparison() {
+      const escapeHtml = (text) => {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' };
+        return String(text).replace(/[&<>"']/g, c => map[c]);
+      };
       const rd = gameState.rivalData;
       const rivalPicks = {};
       rd.p.forEach(p => { rivalPicks[p.pos] = p; });
@@ -3365,8 +3384,8 @@
         const draw = myScore === theirScore;
         return `<div class="rival-row">
           <span>${pos}</span>
-          <span class="${iWin || draw ? 'winner' : 'loser'}">${mine ? mine.name : '—'} (${myScore})</span>
-          <span class="${!iWin || draw ? 'winner' : 'loser'}">${theirs ? theirs.name : '—'} (${theirScore})</span>
+          <span class="${iWin || draw ? 'winner' : 'loser'}">${mine ? escapeHtml(mine.name) : '—'} (${myScore})</span>
+          <span class="${!iWin || draw ? 'winner' : 'loser'}">${theirs ? escapeHtml(theirs.name) : '—'} (${theirScore})</span>
           <span>${iWin ? '✅' : draw ? '➖' : '❌'}</span>
         </div>`;
       }).join('');
