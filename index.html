@@ -1906,7 +1906,7 @@
         <span class="htp-icon">📖</span>
         <h2 class="modal-title" style="margin-bottom:4px">How to Score High</h2>
         <p class="htp-sub">Name the most obscure player from each team</p>
-        <p class="htp-era">⚠️ Only players active in 2000 or later count</p>
+        <p class="htp-era">Players from 1976–present</p>
       </div>
       <div class="htp-list">
         <div class="htp-item bad"><span class="htp-icon-sm">📅</span><div><strong>Draft position</strong><span>Top picks get big deductions — undrafted is ideal</span></div></div>
@@ -1951,7 +1951,7 @@
     <header>
       <h1>that boy nice</h1>
       <p class="tagline" id="tagline">NBA Obscurity Lineup Challenge</p>
-      <p class="era-note">Players active 2000–present only</p>
+      <p class="era-note">Players from 1976–present</p>
     </header>
 
     <div id="startScreen" class="game-section start-screen">
@@ -2397,7 +2397,7 @@
       const lastSeason = player.lastSeason || 0;
       const seasons20ppg = player.seasons20ppg || 0;
       const yearsAgo = 2026 - lastSeason;
-      const recencyPenalty = yearsAgo <= 0 ? -18 : yearsAgo <= 2 ? -10 : yearsAgo <= 4 ? -4 : 0;
+      const recencyPenalty = yearsAgo <= 0 ? -15 : yearsAgo <= 2 ? -10 : yearsAgo <= 4 ? -5 : 0;
       // GS data not tracked by BBRef before 1982 — flag players who started before then
       const hasReliableGS = firstSeason >= 1982;
       return { games, vorp, draftPick, undrafted, mvp, fmvp, dpoy, allStarApps, roy, smoy, mip,
