@@ -2345,17 +2345,29 @@
                allNBA1, allNBA2, allNBA3, allDef1, allDef2, gamesStarted, lastSeason, seasons20ppg, recencyMultiplier };
     }
 
+    // Single source of truth for the career-games penalty.
+    // Both calculateObscurityScore and getScoreBreakdown read from this so
+    // the displayed line items always sum to the actual score.
+    const GAMES_PENALTY_TABLE = [
+      { min: 1400, penalty: -35, range: '17+' },
+      { min: 1200, penalty: -26, range: '14-17' },
+      { min: 800,  penalty: -20, range: '10-14' },
+      { min: 500,  penalty: -12, range: '6-10' },
+      { min: 330,  penalty: -8,  range: '4-6' },
+      { min: 164,  penalty: -3,  range: '2-4' },
+    ];
+
+    function getGamesPenalty(games) {
+      return GAMES_PENALTY_TABLE.find(t => games >= t.min) || null;
+    }
+
     function calculateObscurityScore(player) {
       let score = 100;
       const s = getPlayerStats(player);
 
       // Career games
-      if (s.games >= 1400) score -= 35;
-      else if (s.games >= 1200) score -= 26;
-      else if (s.games >= 800) score -= 20;
-      else if (s.games >= 500) score -= 12;
-      else if (s.games >= 330) score -= 8;
-      else if (s.games >= 164) score -= 3;
+      const gamesPenalty = getGamesPenalty(s.games);
+      if (gamesPenalty) score += gamesPenalty.penalty;
 
       // Individual awards
       score -= s.mvp * 25;
@@ -2408,10 +2420,9 @@
       const breakdown = [];
       breakdown.push({ label: 'Base', value: 100 });
 
-      if (s.games >= 164) {
-        const p = s.games >= 1400 ? -28 : s.games >= 1200 ? -23 : s.games >= 800 ? -18 : s.games >= 500 ? -12 : s.games >= 330 ? -8 : -3;
-        const range = s.games >= 1400 ? '17+' : s.games >= 1200 ? '14-17' : s.games >= 800 ? '10-14' : s.games >= 500 ? '6-10' : s.games >= 330 ? '4-6' : '2-4';
-        breakdown.push({ label: `Seasons played (${range})`, value: p, group: 'Longevity' });
+      const gamesPenalty = getGamesPenalty(s.games);
+      if (gamesPenalty) {
+        breakdown.push({ label: `Seasons played (${gamesPenalty.range})`, value: gamesPenalty.penalty, group: 'Longevity' });
       }
 
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
