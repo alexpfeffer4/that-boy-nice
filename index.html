@@ -2988,15 +2988,10 @@
       const saved = JSON.parse(localStorage.getItem(alreadyKey) || 'null');
       const rivalParam = getRivalParam();
 
-      // Show already-played banner
+      // Update daily challenge button if already played
       if (saved) {
-        document.getElementById('alreadyPlayedBanner').innerHTML = `
-          <div class="already-played">
-            <h3>📅 Already played today!</h3>
-            <div class="prev-score">${saved.score}</div>
-            <div style="font-size:0.85rem;opacity:0.7;margin-top:4px">${saved.label}</div>
-          </div>
-        `;
+        const dailyBtn = document.querySelector('.daily-btn');
+        dailyBtn.querySelector('.start-desc').textContent = `✓ Played today · ${saved.score} pts · ${saved.label}`;
       }
 
       // Show rival banner if URL has rival param
