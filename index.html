@@ -1956,6 +1956,16 @@
       indicator.textContent = '🧓 Oldhead Mode';
       indicator.className = 'mode-indicator mode-oldhead';
 
+      // Hide spin wheel for daily challenge
+      document.getElementById('spinBtn').style.display = 'none';
+      document.getElementById('respinBtn').style.display = 'none';
+
+      // Initialize daily challenge: load first team
+      gameState.hasSpun = true;
+      gameState.currentTeam = gameState.dailyTeams[gameState.dailyTeamIndex];
+      updateDailyProgress();
+      updateDisplay();
+
       showHowToPlay('oldhead');
     }
 
@@ -2012,14 +2022,22 @@
     }
 
     function initGame() {
-      buildReel();
-      gameState.currentTeam = null;
-      document.getElementById('currentTeam').textContent = '';
-      document.getElementById('reelDisplay').src = '';
-      document.getElementById('positionLabel').textContent = 'Spin the wheel to start';
-      document.getElementById('spinBtn').disabled = false;
-      document.getElementById('playerInput').disabled = true;
-      document.getElementById('submitBtn').disabled = true;
+      if (gameState.isDailyChallenge) {
+        // Daily challenge: first team already loaded, ready for input
+        document.getElementById('playerInput').disabled = false;
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('playerInput').focus();
+      } else {
+        // Free play: show reel and wait for spin
+        buildReel();
+        gameState.currentTeam = null;
+        document.getElementById('currentTeam').textContent = '';
+        document.getElementById('reelDisplay').src = '';
+        document.getElementById('positionLabel').textContent = 'Spin the wheel to start';
+        document.getElementById('spinBtn').disabled = false;
+        document.getElementById('playerInput').disabled = true;
+        document.getElementById('submitBtn').disabled = true;
+      }
       updateLivesDisplay();
     }
 
@@ -2330,7 +2348,9 @@
     function addPlayerToLineup(player, position) {
       const score = calculateObscurityScore(player);
       const breakdown = getScoreBreakdown(player);
-      gameState.lineup[position] = {
+
+      const key = gameState.isDailyChallenge ? gameState.currentTeam : position;
+      gameState.lineup[key] = {
         name: player.name,
         positions: player.positions,
         team: gameState.currentTeam,
@@ -2358,7 +2378,22 @@
       document.getElementById('playerInput').value = '';
       document.getElementById('autocompleteDropdown').classList.remove('show');
 
-      if (Object.keys(gameState.lineup).length === 5) {
+      if (gameState.isDailyChallenge) {
+        // Auto-advance to next team in daily challenge
+        gameState.dailyTeamIndex++;
+        if (gameState.dailyTeamIndex >= 5) {
+          setTimeout(endGame, 2000);
+        } else {
+          setTimeout(() => {
+            gameState.currentTeam = gameState.dailyTeams[gameState.dailyTeamIndex];
+            updateDailyProgress();
+            updateDisplay();
+            document.getElementById('playerInput').disabled = false;
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('playerInput').focus();
+          }, 1500);
+        }
+      } else if (Object.keys(gameState.lineup).length === 5) {
         setTimeout(endGame, 2000);
       } else {
         document.getElementById('spinBtn').disabled = false;
@@ -2672,8 +2707,12 @@
 
     function updateDisplay() {
       document.getElementById('currentTeam').textContent = gameState.currentTeam;
-      document.getElementById('positionLabel').textContent = `Name any player`;
       document.getElementById('reelDisplay').src = getTeamLogo(gameState.currentTeam);
+    }
+
+    function updateDailyProgress() {
+      const progress = `${gameState.dailyTeamIndex + 1} of 5`;
+      document.getElementById('positionLabel').textContent = progress;
     }
 
     function updateLineup() {
