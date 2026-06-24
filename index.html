@@ -6,6 +6,14 @@
   <title>that boy nice</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
+    :root {
+      --tier-god-base:    #FFD700;
+      --tier-great-base:  #FF6B35;
+      --tier-good-base:   #43C59E;
+      --tier-mid-base:    #5B7FB5;
+      --tier-casual-base: #9CA3AF;
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -624,10 +632,10 @@
       margin-bottom: 12px;
     }
 
-    .end-score-num.tier-god    { color: #FFD700; text-shadow: 0 0 30px rgba(255,215,0,0.5); }
-    .end-score-num.tier-great  { color: #4ECDC4; text-shadow: 0 0 30px rgba(78,205,196,0.4); }
-    .end-score-num.tier-good   { color: #a8edea; }
-    .end-score-num.tier-mid    { color: #667eea; }
+    .end-score-num.tier-god    { color: var(--tier-god-base); text-shadow: 0 0 30px color-mix(in srgb, var(--tier-god-base) 50%, transparent); }
+    .end-score-num.tier-great  { color: var(--tier-great-base); text-shadow: 0 0 30px color-mix(in srgb, var(--tier-great-base) 40%, transparent); }
+    .end-score-num.tier-good   { color: var(--tier-good-base); }
+    .end-score-num.tier-mid    { color: var(--tier-mid-base); }
     .end-score-num.tier-casual { color: rgba(255,255,255,0.6); }
 
     .end-tier-pill {
@@ -640,11 +648,11 @@
       text-transform: uppercase;
     }
 
-    .end-tier-pill.tier-god    { background: rgba(255,215,0,0.15);  color: #FFD700; border: 1px solid rgba(255,215,0,0.35); }
-    .end-tier-pill.tier-great  { background: rgba(78,205,196,0.15); color: #4ECDC4; border: 1px solid rgba(78,205,196,0.35); }
-    .end-tier-pill.tier-good   { background: rgba(168,237,234,0.1); color: #a8edea; border: 1px solid rgba(168,237,234,0.3); }
-    .end-tier-pill.tier-mid    { background: rgba(102,126,234,0.15);color: #667eea; border: 1px solid rgba(102,126,234,0.35); }
-    .end-tier-pill.tier-casual { background: rgba(255,255,255,0.07);color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.2); }
+    .end-tier-pill.tier-god    { background: color-mix(in srgb, var(--tier-god-base) 15%, transparent); color: var(--tier-god-base); border: 1px solid color-mix(in srgb, var(--tier-god-base) 35%, transparent); }
+    .end-tier-pill.tier-great  { background: color-mix(in srgb, var(--tier-great-base) 15%, transparent); color: var(--tier-great-base); border: 1px solid color-mix(in srgb, var(--tier-great-base) 35%, transparent); }
+    .end-tier-pill.tier-good   { background: color-mix(in srgb, var(--tier-good-base) 15%, transparent); color: var(--tier-good-base); border: 1px solid color-mix(in srgb, var(--tier-good-base) 35%, transparent); }
+    .end-tier-pill.tier-mid    { background: color-mix(in srgb, var(--tier-mid-base) 15%, transparent); color: var(--tier-mid-base); border: 1px solid color-mix(in srgb, var(--tier-mid-base) 35%, transparent); }
+    .end-tier-pill.tier-casual { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.2); }
 
     .end-players {
       display: flex;
@@ -660,10 +668,10 @@
       border: 1px solid rgba(255,255,255,0.07);
     }
 
-    .end-player-card.tier-god    { border-left: 3px solid #FFD700; }
-    .end-player-card.tier-great  { border-left: 3px solid #4ECDC4; }
-    .end-player-card.tier-good   { border-left: 3px solid #a8edea; }
-    .end-player-card.tier-mid    { border-left: 3px solid #667eea; }
+    .end-player-card.tier-god    { border-left: 3px solid var(--tier-god-base); }
+    .end-player-card.tier-great  { border-left: 3px solid var(--tier-great-base); }
+    .end-player-card.tier-good   { border-left: 3px solid var(--tier-good-base); }
+    .end-player-card.tier-mid    { border-left: 3px solid var(--tier-mid-base); }
     .end-player-card.tier-casual { border-left: 3px solid rgba(255,255,255,0.3); }
 
     .end-player-top {
@@ -713,10 +721,10 @@
       flex-shrink: 0;
     }
 
-    .end-player-score.tier-god    { color: #FFD700; }
-    .end-player-score.tier-great  { color: #4ECDC4; }
-    .end-player-score.tier-good   { color: #a8edea; }
-    .end-player-score.tier-mid    { color: #667eea; }
+    .end-player-score.tier-god    { color: var(--tier-god-base); }
+    .end-player-score.tier-great  { color: var(--tier-great-base); }
+    .end-player-score.tier-good   { color: var(--tier-good-base); }
+    .end-player-score.tier-mid    { color: var(--tier-mid-base); }
     .end-player-score.tier-casual { color: rgba(255,255,255,0.55); }
 
     .end-player-bar-track {
@@ -733,10 +741,10 @@
       transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    .end-player-bar.tier-god    { background: #FFD700; }
-    .end-player-bar.tier-great  { background: #4ECDC4; }
-    .end-player-bar.tier-good   { background: #a8edea; }
-    .end-player-bar.tier-mid    { background: #667eea; }
+    .end-player-bar.tier-god    { background: var(--tier-god-base); }
+    .end-player-bar.tier-great  { background: var(--tier-great-base); }
+    .end-player-bar.tier-good   { background: var(--tier-good-base); }
+    .end-player-bar.tier-mid    { background: var(--tier-mid-base); }
     .end-player-bar.tier-casual { background: rgba(255,255,255,0.3); }
 
     .end-player-avatar {
@@ -761,11 +769,11 @@
       letter-spacing: 0.05em;
       margin-top: 2px;
     }
-    .end-player-avatar.tier-god    { background: rgba(255,215,0,0.18);  color: #FFD700; }
-    .end-player-avatar.tier-great  { background: rgba(78,205,196,0.18); color: #4ECDC4; }
-    .end-player-avatar.tier-good   { background: rgba(168,237,234,0.14);color: #a8edea; }
-    .end-player-avatar.tier-mid    { background: rgba(102,126,234,0.18);color: #667eea; }
-    .end-player-avatar.tier-casual { background: rgba(255,255,255,0.08);color: rgba(255,255,255,0.5); }
+    .end-player-avatar.tier-god    { background: color-mix(in srgb, var(--tier-god-base) 18%, transparent); color: var(--tier-god-base); }
+    .end-player-avatar.tier-great  { background: color-mix(in srgb, var(--tier-great-base) 18%, transparent); color: var(--tier-great-base); }
+    .end-player-avatar.tier-good   { background: color-mix(in srgb, var(--tier-good-base) 18%, transparent); color: var(--tier-good-base); }
+    .end-player-avatar.tier-mid    { background: color-mix(in srgb, var(--tier-mid-base) 18%, transparent); color: var(--tier-mid-base); }
+    .end-player-avatar.tier-casual { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
 
     .end-player-era {
       display: block;
@@ -871,10 +879,10 @@
       margin-bottom: 8px;
     }
 
-    .result-score.tier-god    { color: #FFD700; text-shadow: 0 0 20px rgba(255,215,0,0.4); }
-    .result-score.tier-great  { color: #4ECDC4; text-shadow: 0 0 20px rgba(78,205,196,0.3); }
-    .result-score.tier-good   { color: #a8edea; }
-    .result-score.tier-mid    { color: #667eea; }
+    .result-score.tier-god    { color: var(--tier-god-base); text-shadow: 0 0 20px color-mix(in srgb, var(--tier-god-base) 40%, transparent); }
+    .result-score.tier-great  { color: var(--tier-great-base); text-shadow: 0 0 20px color-mix(in srgb, var(--tier-great-base) 30%, transparent); }
+    .result-score.tier-good   { color: var(--tier-good-base); }
+    .result-score.tier-mid    { color: var(--tier-mid-base); }
     .result-score.tier-casual { color: rgba(255,255,255,0.7); }
 
     .result-tier-label {
@@ -929,10 +937,10 @@
       transition: width 0.6s ease-out;
     }
 
-    .result-bar.tier-god    { background: #FFD700; }
-    .result-bar.tier-great  { background: #4ECDC4; }
-    .result-bar.tier-good   { background: #a8edea; }
-    .result-bar.tier-mid    { background: #667eea; }
+    .result-bar.tier-god    { background: var(--tier-god-base); }
+    .result-bar.tier-great  { background: var(--tier-great-base); }
+    .result-bar.tier-good   { background: var(--tier-good-base); }
+    .result-bar.tier-mid    { background: var(--tier-mid-base); }
     .result-bar.tier-casual { background: rgba(255,255,255,0.4); }
 
     .result-pts {
