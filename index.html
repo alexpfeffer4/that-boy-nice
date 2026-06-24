@@ -1048,6 +1048,23 @@
       font-size: 0.95rem;
     }
 
+    .breakdown-group-header {
+      font-weight: 700;
+      color: rgba(255,255,255,0.8);
+      margin-top: 10px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255,255,255,0.2);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .breakdown-group-item {
+      padding-left: 16px;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.85rem;
+    }
+
     .center {
       grid-column: span 2;
     }
@@ -2370,46 +2387,46 @@
       if (s.games >= 164) {
         const p = s.games >= 1400 ? -28 : s.games >= 1200 ? -23 : s.games >= 800 ? -18 : s.games >= 500 ? -12 : s.games >= 330 ? -8 : -3;
         const range = s.games >= 1400 ? '17+' : s.games >= 1200 ? '14-17' : s.games >= 800 ? '10-14' : s.games >= 500 ? '6-10' : s.games >= 330 ? '4-6' : '2-4';
-        breakdown.push({ label: `Seasons played (${range})`, value: p });
+        breakdown.push({ label: `Seasons played (${range})`, value: p, group: 'Longevity' });
       }
 
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
       if (gsRatio >= 0.40) {
         const p = gsRatio >= 0.75 ? -10 : gsRatio >= 0.60 ? -6 : -3;
         const range = gsRatio >= 0.75 ? '75%+' : gsRatio >= 0.60 ? '60-74%' : '40-59%';
-        breakdown.push({ label: `Starter Ratio (${range})`, value: p });
+        breakdown.push({ label: `Starter Ratio (${range})`, value: p, group: 'Longevity' });
       }
 
-      if (s.mvp > 0) breakdown.push({ label: `MVP ×${s.mvp}`, value: -25 * s.mvp });
-      if (s.fmvp > 0) breakdown.push({ label: `Finals MVP ×${s.fmvp}`, value: -10 * s.fmvp });
-      if (s.dpoy > 0) breakdown.push({ label: `DPOY ×${s.dpoy}`, value: -15 * s.dpoy });
+      if (s.mvp > 0) breakdown.push({ label: `MVP ×${s.mvp}`, value: -25 * s.mvp, group: 'Accolades' });
+      if (s.fmvp > 0) breakdown.push({ label: `Finals MVP ×${s.fmvp}`, value: -10 * s.fmvp, group: 'Accolades' });
+      if (s.dpoy > 0) breakdown.push({ label: `DPOY ×${s.dpoy}`, value: -15 * s.dpoy, group: 'Accolades' });
       const allNBACount = s.allNBA1 + s.allNBA2 + s.allNBA3;
       const excessAllStars = Math.max(0, s.allStarApps - allNBACount);
-      if (excessAllStars > 0) breakdown.push({ label: `All-Star (excl. All-NBA seasons) ×${excessAllStars}`, value: -(excessAllStars * 5) });
-      if (s.roy > 0) breakdown.push({ label: `ROY`, value: -8 });
-      if (s.smoy > 0) breakdown.push({ label: `SMOY ×${s.smoy}`, value: -5 * s.smoy });
-      if (s.mip > 0) breakdown.push({ label: `MIP ×${s.mip}`, value: -5 * s.mip });
+      if (excessAllStars > 0) breakdown.push({ label: `All-Star (excl. All-NBA seasons) ×${excessAllStars}`, value: -(excessAllStars * 5), group: 'Accolades' });
+      if (s.roy > 0) breakdown.push({ label: `ROY`, value: -8, group: 'Accolades' });
+      if (s.smoy > 0) breakdown.push({ label: `SMOY ×${s.smoy}`, value: -5 * s.smoy, group: 'Accolades' });
+      if (s.mip > 0) breakdown.push({ label: `MIP ×${s.mip}`, value: -5 * s.mip, group: 'Accolades' });
       if (s.seasons20ppg >= 1) {
         const ppgPenalty = s.seasons20ppg >= 4 ? -15 : s.seasons20ppg >= 2 ? -10 : -5;
         const ppgRange = s.seasons20ppg >= 4 ? '4+' : s.seasons20ppg >= 2 ? '2-3' : '1';
-        breakdown.push({ label: `20+ PPG seasons (${ppgRange})`, value: ppgPenalty });
+        breakdown.push({ label: `20+ PPG seasons (${ppgRange})`, value: ppgPenalty, group: 'Accolades' });
       }
-      if (s.allNBA1 > 0) breakdown.push({ label: `All-NBA 1st ×${s.allNBA1}`, value: -15 * s.allNBA1 });
-      if (s.allNBA2 > 0) breakdown.push({ label: `All-NBA 2nd ×${s.allNBA2}`, value: -10 * s.allNBA2 });
-      if (s.allNBA3 > 0) breakdown.push({ label: `All-NBA 3rd ×${s.allNBA3}`, value: -7 * s.allNBA3 });
-      if (s.allDef1 > 0) breakdown.push({ label: `All-Defensive 1st ×${s.allDef1}`, value: -8 * s.allDef1 });
-      if (s.allDef2 > 0) breakdown.push({ label: `All-Defensive 2nd ×${s.allDef2}`, value: -4 * s.allDef2 });
+      if (s.allNBA1 > 0) breakdown.push({ label: `All-NBA 1st ×${s.allNBA1}`, value: -15 * s.allNBA1, group: 'Accolades' });
+      if (s.allNBA2 > 0) breakdown.push({ label: `All-NBA 2nd ×${s.allNBA2}`, value: -10 * s.allNBA2, group: 'Accolades' });
+      if (s.allNBA3 > 0) breakdown.push({ label: `All-NBA 3rd ×${s.allNBA3}`, value: -7 * s.allNBA3, group: 'Accolades' });
+      if (s.allDef1 > 0) breakdown.push({ label: `All-Defensive 1st ×${s.allDef1}`, value: -8 * s.allDef1, group: 'Accolades' });
+      if (s.allDef2 > 0) breakdown.push({ label: `All-Defensive 2nd ×${s.allDef2}`, value: -4 * s.allDef2, group: 'Accolades' });
 
       if (s.draftPick > 0) {
-        if (s.draftPick === 1) breakdown.push({ label: 'Draft: #1 overall', value: -25 });
-        else if (s.draftPick === 2) breakdown.push({ label: 'Draft: #2 overall', value: -15 });
-        else if (s.draftPick === 3) breakdown.push({ label: 'Draft: #3 overall', value: -10 });
-        else if (s.draftPick <= 5) breakdown.push({ label: `Draft: #4-5`, value: -8 });
-        else if (s.draftPick <= 14) breakdown.push({ label: `Draft: #6-14`, value: -5 });
-        else if (s.draftPick <= 30) breakdown.push({ label: `Draft: #15-30`, value: -3 });
-        else if (s.draftPick <= 60) breakdown.push({ label: `Draft: #31-60`, value: -1 });
+        if (s.draftPick === 1) breakdown.push({ label: 'Draft: #1 overall', value: -25, group: 'Pedigree' });
+        else if (s.draftPick === 2) breakdown.push({ label: 'Draft: #2 overall', value: -15, group: 'Pedigree' });
+        else if (s.draftPick === 3) breakdown.push({ label: 'Draft: #3 overall', value: -10, group: 'Pedigree' });
+        else if (s.draftPick <= 5) breakdown.push({ label: `Draft: #4-5`, value: -8, group: 'Pedigree' });
+        else if (s.draftPick <= 14) breakdown.push({ label: `Draft: #6-14`, value: -5, group: 'Pedigree' });
+        else if (s.draftPick <= 30) breakdown.push({ label: `Draft: #15-30`, value: -3, group: 'Pedigree' });
+        else if (s.draftPick <= 60) breakdown.push({ label: `Draft: #31-60`, value: -1, group: 'Pedigree' });
       } else {
-        breakdown.push({ label: 'Undrafted', value: 0 });
+        breakdown.push({ label: 'Undrafted', value: 0, group: 'Pedigree' });
       }
 
       const subtotal = breakdown.reduce((sum, b) => sum + b.value, 0);
@@ -2436,6 +2453,35 @@
       breakdown.push({ label: `Total`, value: displayFinal, isTotal: true });
 
       return breakdown;
+    }
+
+    function groupBreakdown(rows) {
+      const groupOrder = ['Longevity', 'Pedigree', 'Accolades'];
+      const groups = {};
+      const special = [];
+
+      rows.forEach(r => {
+        if (!r.group) {
+          special.push(r);
+        } else {
+          (groups[r.group] ??= []).push(r);
+        }
+      });
+
+      const result = [];
+      result.push(special.find(s => s.label === 'Base'));
+
+      groupOrder.forEach(g => {
+        if (groups[g] && groups[g].length > 0) {
+          const items = groups[g];
+          const subtotal = items.reduce((sum, item) => sum + item.value, 0);
+          result.push({ isGroupHeader: true, label: g, subtotal: subtotal });
+          result.push(...items);
+        }
+      });
+
+      result.push(...special.filter(s => s.label !== 'Base'));
+      return result;
     }
 
     function showAutocomplete(input) {
@@ -2562,13 +2608,19 @@
       updateLineup();
       updateScore();
 
-      let breakdownHTML = breakdown.map(b => {
-        if (b.isSeparator) {
+      const grouped = groupBreakdown(breakdown);
+      let breakdownHTML = grouped.map(b => {
+        if (b.isGroupHeader) {
+          return `<div class="breakdown-item breakdown-group-header"><span>${b.label}</span><span>${b.subtotal > 0 ? '+' : ''}${b.subtotal}</span></div>`;
+        } else if (b.isSeparator) {
           return `<div class="breakdown-item breakdown-separator"><span>${b.label}</span><span>${b.value > 0 ? '+' : ''}${b.value}</span></div>`;
         } else if (b.isTotal) {
           return `<div class="breakdown-item breakdown-total"><span>${b.label}</span><span>${b.value > 0 ? '+' : ''}${b.value}</span></div>`;
+        } else if (b.isMultiplier) {
+          return `<div class="breakdown-item"><span>${b.label}</span><span>${b.value > 0 ? '+' : ''}${b.value}</span></div>`;
         }
-        return `<div class="breakdown-item"><span>${b.label}</span><span>${b.value > 0 ? '+' : ''}${b.value}</span></div>`;
+        const itemClass = b.group ? 'breakdown-group-item' : '';
+        return `<div class="breakdown-item ${itemClass}"><span>${b.label}</span><span>${b.value > 0 ? '+' : ''}${b.value}</span></div>`;
       }).join('');
 
       document.getElementById('message').innerHTML = `
