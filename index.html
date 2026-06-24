@@ -3194,7 +3194,8 @@
     });
     document.addEventListener('click', (e) => {
       if (e.target.id !== 'playerInput') {
-        document.getElementById('autocompleteDropdown').classList.remove('show');
+        const dd = document.getElementById('autocompleteDropdown');
+        if (dd) dd.classList.remove('show');
       }
     });
 
