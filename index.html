@@ -2133,7 +2133,7 @@
       score -= s.dpoy * 15;
       const allNBACount = s.allNBA1 + s.allNBA2 + s.allNBA3;
       const excessAllStars = Math.max(0, s.allStarApps - allNBACount);
-      score -= excessAllStars * 4; // uncapped, only excess All-Stars beyond All-NBA count
+      score -= excessAllStars * 5; // uncapped, only excess All-Stars beyond All-NBA count
       score -= s.roy * 8;
       score -= s.smoy * 5;
       score -= s.mip * 5;
@@ -2196,7 +2196,7 @@
       if (s.dpoy > 0) breakdown.push({ label: `DPOY ×${s.dpoy}`, value: -15 * s.dpoy });
       const allNBACount = s.allNBA1 + s.allNBA2 + s.allNBA3;
       const excessAllStars = Math.max(0, s.allStarApps - allNBACount);
-      if (excessAllStars > 0) breakdown.push({ label: `All-Star (excl. All-NBA seasons) ×${excessAllStars}`, value: -(excessAllStars * 4) });
+      if (excessAllStars > 0) breakdown.push({ label: `All-Star (excl. All-NBA seasons) ×${excessAllStars}`, value: -(excessAllStars * 5) });
       if (s.roy > 0) breakdown.push({ label: `ROY`, value: -8 });
       if (s.smoy > 0) breakdown.push({ label: `SMOY ×${s.smoy}`, value: -5 * s.smoy });
       if (s.mip > 0) breakdown.push({ label: `MIP ×${s.mip}`, value: -5 * s.mip });
