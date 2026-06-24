@@ -2089,7 +2089,7 @@
       const gamesStarted = player.careerGS || 0;
       const lastSeason = player.lastSeason || 0;
       const yearsAgo = 2026 - lastSeason;
-      const recencyMultiplier = yearsAgo <= 1 ? 0.80 : yearsAgo <= 3 ? 0.88 : yearsAgo <= 5 ? 0.95 : 1.0;
+      const recencyMultiplier = yearsAgo <= 1 ? 0.80 : yearsAgo <= 3 ? 0.95 : 1.0;
       return { games, vorp, draftPick, undrafted, mvp, fmvp, dpoy, allStarApps, roy, smoy, mip,
                allNBA1, allNBA2, allNBA3, allDef1, allDef2, gamesStarted, lastSeason, recencyMultiplier };
     }
