@@ -1482,6 +1482,14 @@
         padding: 12px;
       }
 
+      .help-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 1.4rem;
+        bottom: 16px;
+        right: 16px;
+      }
+
       h1 {
         font-size: 2.2rem;
         margin-bottom: 4px;
@@ -3308,6 +3316,10 @@
     }
 
     function endGame() {
+      // Hide help button on end screen
+      const helpBtn = document.getElementById('helpBtn');
+      if (helpBtn) helpBtn.style.display = 'none';
+
       const label = getScoreLabel(gameState.totalScore);
       const totalTier = getScoreTier(Math.round(gameState.totalScore / 5));
 
