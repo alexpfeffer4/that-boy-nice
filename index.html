@@ -603,6 +603,10 @@
       border-top: 1px solid rgba(255,255,255,0.1);
     }
 
+    .formation-total.hidden {
+      display: none;
+    }
+
     .score-label {
       font-size: 0.7rem;
       color: rgba(255,255,255,0.5);
@@ -2292,6 +2296,10 @@
     }
 
     function initGame() {
+      // Hide total score during gameplay (suspense mode)
+      const totalEl = document.querySelector('.formation-total');
+      if (totalEl) totalEl.classList.add('hidden');
+
       if (gameState.isDailyChallenge) {
         // Daily challenge: first team already loaded, ready for input
         document.getElementById('playerInput').disabled = false;
