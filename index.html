@@ -76,7 +76,7 @@
 
     .help-btn {
       position: fixed;
-      bottom: 20px;
+      bottom: calc(20px + env(safe-area-inset-bottom));
       right: 20px;
       width: 40px;
       height: 40px;
@@ -1815,7 +1815,7 @@
         width: 48px;
         height: 48px;
         font-size: 1.4rem;
-        bottom: 16px;
+        bottom: calc(16px + env(safe-area-inset-bottom));
         right: 16px;
       }
 
