@@ -3265,8 +3265,8 @@
     }
 
     function getPlayerEra(firstSeason, lastSeason) {
-      if (!firstSeason || !lastSeason) return '';
-      const mid = Math.round((firstSeason + lastSeason) / 2);
+      if (!lastSeason) return '';
+      const mid = firstSeason ? Math.round((firstSeason + lastSeason) / 2) : lastSeason;
       if (mid >= 2020) return '2020s';
       if (mid >= 2010) return '2010s';
       if (mid >= 2000) return '2000s';
