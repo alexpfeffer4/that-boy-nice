@@ -1482,27 +1482,31 @@
     }
 
     .share-card-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
-    .share-card-date { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-bottom: 20px; }
+    .share-card-date { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-bottom: 16px; }
     .share-card-score { font-size: 3rem; font-weight: 900; margin-bottom: 4px; }
-    .share-card-label { font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 20px; }
+    .share-card-label { font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 16px; }
 
     .share-card-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
       font-size: 0.85rem;
     }
 
-    .share-card-pos { width: 30px; font-weight: 700; opacity: 0.6; }
-    .share-card-name { flex: 1; }
-    .share-card-pts { font-weight: 700; }
+    .share-card-pos { width: 28px; font-size: 0.7rem; font-weight: 800; opacity: 0.5; letter-spacing: 0.05em; flex-shrink: 0; }
+    .share-card-player { flex: 1; min-width: 0; }
+    .share-card-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .share-card-team { font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .share-card-badges { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
+    .share-card-badge { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 20px; text-transform: uppercase; }
+    .share-card-pts { font-weight: 900; font-size: 1.1rem; flex-shrink: 0; }
 
     .share-card-bar {
-      height: 4px;
+      height: 3px;
       border-radius: 2px;
-      margin-top: 4px;
+      margin-top: 5px;
     }
 
     .share-card-footer {
@@ -3488,16 +3492,36 @@
 
     function buildShareCard() {
       const label = getScoreLabel(gameState.totalScore);
-      const tierColors = { 'tier-god': '#a78bfa', 'tier-great': '#34d399', 'tier-good': '#fbbf24', 'tier-mid': '#fb923c', 'tier-casual': '#f87171' };
+      const tierColors = { 'tier-god': '#FFD700', 'tier-great': '#FF6B35', 'tier-good': '#43C59E', 'tier-mid': '#5B7FB5', 'tier-casual': '#9CA3AF', 'tier-archival': '#6366F1' };
+      const badgeColors = {
+        'badge-tier-legend':  { bg: 'rgba(255,215,0,0.18)',   color: '#FFD700',  border: 'rgba(255,215,0,0.4)' },
+        'badge-tier-star':    { bg: 'rgba(255,107,53,0.18)',  color: '#FF6B35',  border: 'rgba(255,107,53,0.4)' },
+        'badge-tier-allstar': { bg: 'rgba(67,197,158,0.18)',  color: '#43C59E',  border: 'rgba(67,197,158,0.4)' },
+        'badge-tier-great':   { bg: 'rgba(255,107,53,0.18)',  color: '#FF6B35',  border: 'rgba(255,107,53,0.4)' },
+        'badge-tier-solid':   { bg: 'rgba(91,127,181,0.18)',  color: '#5B7FB5',  border: 'rgba(91,127,181,0.4)' },
+        'badge-tier-role':    { bg: 'rgba(156,163,175,0.18)', color: '#9CA3AF',  border: 'rgba(156,163,175,0.4)' },
+        'badge-tier-cup':     { bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)', border: 'rgba(255,255,255,0.15)' },
+        'badge-claim':        { bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.65)', border: 'rgba(255,255,255,0.15)' },
+      };
       const rows = positions.filter(pos => gameState.lineup[pos]).map(pos => {
         const p = gameState.lineup[pos];
         const tier = getScoreTier(p.score);
-        const color = tierColors[tier];
+        const color = tierColors[tier] || '#fff';
         const barW = Math.round((p.score / 100) * 200);
+        const badges = getPlayerTierBadges(p.name);
+        const badgeHTML = badges.map(b => {
+          const bc = badgeColors[b.type] || badgeColors['badge-claim'];
+          return `<span class="share-card-badge" style="background:${bc.bg};color:${bc.color};border:1px solid ${bc.border}">${b.label}</span>`;
+        }).join('');
+        const teamStr = p.team || '';
         return `<div class="share-card-row">
           <span class="share-card-pos">${pos}</span>
-          <div style="flex:1"><div class="share-card-name">${p.name}</div>
-          <div class="share-card-bar" style="width:${barW}px;background:${color}"></div></div>
+          <div class="share-card-player">
+            <div class="share-card-name">${p.name}</div>
+            <div class="share-card-team">${teamStr}</div>
+            <div class="share-card-badges">${badgeHTML}</div>
+            <div class="share-card-bar" style="width:${barW}px;background:${color}"></div>
+          </div>
           <span class="share-card-pts" style="color:${color}">${p.score}</span>
         </div>`;
       }).join('');
