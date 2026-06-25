@@ -3539,6 +3539,8 @@
 
       if (!franchisePlayers) {
         messageEl.innerHTML = `<div class="error">❌ Team not found: ${gameState.currentTeam}</div>`;
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('playerInput').disabled = false;
         return;
       }
 
@@ -3548,6 +3550,8 @@
         gameState.lives--;
         updateLivesDisplay();
         messageEl.innerHTML = `<div class="error">❌ Not found on ${gameState.currentTeam} (${gameState.lives} lives left)</div>`;
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('playerInput').disabled = false;
 
         // Shake animation for wrong answer
         if (!REDUCE) {
@@ -3583,6 +3587,8 @@
         gameState.lives--;
         updateLivesDisplay();
         messageEl.innerHTML = `<div class="error">❌ No available position slots (${gameState.lives} lives left)</div>`;
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('playerInput').disabled = false;
 
         // Shake animation for wrong answer
         if (!REDUCE) {
