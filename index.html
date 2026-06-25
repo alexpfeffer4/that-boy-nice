@@ -2259,6 +2259,24 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="dailyChallengesModal" style="display:none;" onclick="closeDailyChallengesModal(event)">
+    <div class="modal-box">
+      <h2 class="modal-title">Daily Challenges</h2>
+      <p class="modal-body" style="margin-bottom:20px;">Choose your daily challenge mode.</p>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <button class="start-btn daily-btn" onclick="startDailyChallengeMode('highscore')" style="background:#3d3a2a;border:2px solid #FFD700;color:#FFD700;padding:14px;border-radius:8px;font-weight:700;">
+          📊 High Score Mode
+          <span style="display:block;font-size:0.85rem;color:rgba(255,215,0,0.7);font-weight:400;margin-top:4px;">Same 5 teams for everyone. Beat your best score.</span>
+        </button>
+        <button class="start-btn" onclick="startDailyChallengeMode('target')" style="background:#2a3a2a;border:2px solid #4ade80;color:#4ade80;padding:14px;border-radius:8px;font-weight:700;">
+          🎯 Target Mode
+          <span style="display:block;font-size:0.85rem;color:rgba(74,222,128,0.7);font-weight:400;margin-top:4px;">Hit the daily target score with any 5 players.</span>
+        </button>
+      </div>
+      <button class="end-btn-ghost" onclick="closeDailyChallengesModal()" style="width:100%;margin-top:16px;">Cancel</button>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="oldheadModal" style="display:none;" onclick="closeOldheadModal(event)">
     <div class="modal-box">
       <div class="modal-icon">📅</div>
@@ -2290,7 +2308,7 @@
       <div id="alreadyPlayedBanner"></div>
       <div id="rivalBanner"></div>
       <div class="start-options" id="startOptions">
-        <button class="start-btn daily-btn" onclick="startDailyChallenge()">
+        <button class="start-btn daily-btn" id="dailyChallengeBtn" onclick="handleDailyChallengeClick()">
           📅 Daily Challenge
           <span class="start-desc">Same 5 teams for everyone today</span>
           <span class="start-mode-tag">📅 Classic Mode</span>
@@ -2431,6 +2449,9 @@
       dailyTeamIndex: 0,
       rivalData: null,
     };
+
+    // Feature flag for Target Mode
+    const ENABLE_TARGET_MODE = false;
 
     // --- Seeded PRNG (mulberry32) ---
     function mulberry32(seed) {
@@ -2599,6 +2620,123 @@
       if (e.target === document.getElementById('oldheadModal')) {
         document.getElementById('oldheadModal').style.display = 'none';
       }
+    }
+
+    // --- TARGET MODE FUNCTIONS ---
+
+    function handleDailyChallengeClick() {
+      if (ENABLE_TARGET_MODE) {
+        document.getElementById('dailyChallengesModal').style.display = 'flex';
+      } else {
+        startDailyChallenge();
+      }
+    }
+
+    function closeDailyChallengesModal(e) {
+      if (e && e.target && e.target !== document.getElementById('dailyChallengesModal')) return;
+      document.getElementById('dailyChallengesModal').style.display = 'none';
+    }
+
+    function startDailyChallengeMode(mode) {
+      document.getElementById('dailyChallengesModal').style.display = 'none';
+      if (mode === 'highscore') {
+        startDailyChallenge();
+      } else if (mode === 'target') {
+        startTargetMode();
+      }
+    }
+
+    function getDailyTargetScore() {
+      const dateStr = getTodayString();
+      const seed = getDailySeed(dateStr);
+      const rng = mulberry32(seed);
+      const target = Math.round(25 + rng() * (450 - 25));
+      return target;
+    }
+
+    function startTargetMode() {
+      const dateStr = getTodayString();
+      const saved = JSON.parse(localStorage.getItem(`tbn_target_${dateStr}`) || 'null');
+
+      // Already played — show results screen directly
+      if (saved && saved.lineup) {
+        document.getElementById('startScreen').style.display = 'none';
+        document.getElementById('gameSection').style.display = 'block';
+        gameState.isDailyChallenge = true;
+        gameState.targetMode = true;
+        gameState.totalScore = saved.score;
+        gameState.targetScore = saved.targetScore;
+        showTargetResults(saved);
+        return;
+      }
+
+      gameState.isDailyChallenge = true;
+      gameState.targetMode = true;
+      gameState.targetScore = getDailyTargetScore();
+      gameState.gameMode = 'oldhead';
+      gameState.hasSpun = true;
+
+      document.getElementById('startScreen').style.display = 'none';
+      document.getElementById('gameSection').style.display = 'block';
+      const indicator = document.getElementById('modeIndicator');
+      indicator.textContent = '🎯 Target Mode';
+      indicator.className = 'mode-indicator mode-oldhead';
+      document.getElementById('tagline').textContent = `🎯 Hit the target: ${gameState.targetScore}`;
+
+      // Show formation panel for target mode
+      document.getElementById('spinBtn').style.display = 'none';
+      document.getElementById('respinBtn').style.display = 'none';
+      document.getElementById('playerInput').disabled = false;
+      document.getElementById('submitBtn').disabled = false;
+      document.getElementById('playerInput').focus();
+
+      showHowToPlay('oldhead');
+    }
+
+    function showTargetResults(saved) {
+      const dateStr = getTodayString();
+      const diff = saved.score - saved.targetScore;
+      const tierLabel = Math.abs(diff) <= 5 ? 'Perfect' : Math.abs(diff) <= 10 ? 'Close' : Math.abs(diff) <= 20 ? 'Near' : Math.abs(diff) <= 30 ? 'Off' : 'Way Off';
+      const totalTier = getScoreTier(Math.round(saved.score / 5));
+
+      document.getElementById('gameSection').innerHTML = `
+        <div class="end-screen">
+          <div class="end-hero">
+            <div class="end-meta-tag">🎯 Target Mode · ${dateStr}</div>
+            <div class="end-score-num ${totalTier}" data-target="${saved.score}">0</div>
+            <div class="end-tier-pill ${totalTier}">${tierLabel}</div>
+            <div class="end-best-score">Target: ${saved.targetScore} · Off by: ${Math.abs(diff)}</div>
+          </div>
+          <div class="end-players" id="resultPlayers"></div>
+          <div class="end-btns">
+            <button class="end-btn-secondary" onclick="downloadShareCard()" style="width:100%;">🖼️ Share Card</button>
+            <button class="end-btn-secondary" onclick="showLeaderboardModal()" style="width:100%;">📊 Pick History</button>
+            <button class="end-btn-ghost" onclick="location.href=location.pathname">Play Again</button>
+          </div>
+        </div>
+      `;
+
+      const container = document.getElementById('resultPlayers');
+      const entries = positions.map(pos => ({ label: pos, player: gameState.lineup[pos] }));
+      const verdicts = getGameVerdicts(gameState.lineup);
+
+      // Render verdict block
+      if (verdicts) {
+        const verdictBlock = document.getElementById('verdictBlock') || document.createElement('div');
+        verdictBlock.innerHTML = `
+          <div class="end-verdict">
+            <div class="end-verdict-best">🔥 ${verdicts.best.name} ${verdicts.best.score}</div>
+            ${verdicts.worst ? `<div class="end-verdict-worst">😬 ${verdicts.worst.name} ${verdicts.worst.score}</div>` : ''}
+          </div>
+        `;
+        if (!document.getElementById('verdictBlock')) {
+          container.parentElement.insertBefore(verdictBlock, container);
+        }
+      }
+
+      // Render player cards
+      container.innerHTML = entries.map(e => e.player ? buildPlayerCard(e.player.name, e.player.team, e.player.score, e.label) : '').join('');
+      animateCountUp(document.querySelector('.end-score-num'), parseInt(document.querySelector('.end-score-num').dataset.target || '0'), 600);
     }
 
     function startPractice() {
@@ -3543,7 +3681,7 @@
     }
 
     function submitPlayer() {
-      if (!gameState.hasSpun || gameState.lives <= 0) return;
+      if (!gameState.hasSpun || (gameState.lives <= 0 && !gameState.targetMode)) return;
 
       const input = document.getElementById('playerInput').value;
       const messageEl = document.getElementById('message');
@@ -3553,16 +3691,43 @@
         return;
       }
 
-      const franchisePlayers = players[gameState.currentTeam];
+      let matched = null;
 
-      if (!franchisePlayers) {
-        messageEl.innerHTML = `<div class="error">❌ Team not found: ${gameState.currentTeam}</div>`;
-        document.getElementById('submitBtn').disabled = false;
-        document.getElementById('playerInput').disabled = false;
-        return;
+      // Target Mode: search all players
+      if (gameState.targetMode) {
+        matched = allPlayers.find(p => p.name.toLowerCase() === input.toLowerCase());
+        if (!matched) {
+          // Fuzzy search across all players
+          let bestDistance = Infinity;
+          allPlayers.forEach(p => {
+            const distance = fuzzyDistance(input.toLowerCase(), p.name.toLowerCase());
+            if (distance < bestDistance) {
+              bestDistance = distance;
+              matched = p;
+            }
+          });
+          if (bestDistance > 3) matched = null;
+        }
+
+        if (!matched) {
+          messageEl.innerHTML = `<div class="error">❌ Player not found (try another name)</div>`;
+          document.getElementById('submitBtn').disabled = false;
+          document.getElementById('playerInput').disabled = false;
+          return;
+        }
+      } else {
+        // Regular modes: search team players
+        const franchisePlayers = players[gameState.currentTeam];
+
+        if (!franchisePlayers) {
+          messageEl.innerHTML = `<div class="error">❌ Team not found: ${gameState.currentTeam}</div>`;
+          document.getElementById('submitBtn').disabled = false;
+          document.getElementById('playerInput').disabled = false;
+          return;
+        }
+
+        matched = fuzzyMatchPlayer(input, franchisePlayers);
       }
-
-      const matched = fuzzyMatchPlayer(input, franchisePlayers);
 
       if (!matched) {
         gameState.lives--;
@@ -3860,26 +4025,51 @@
           const p = gameState.lineup[pos];
           return p ? { pos: pos, team: p.team, name: p.name, score: p.score } : null;
         }).filter(Boolean);
-        localStorage.setItem(`tbn_daily_${getTodayString()}`, JSON.stringify({ score: gameState.totalScore, label, lineup: lineupArr }));
-
-        // Update streak and personal best
-        const streakKey = 'tbn_streak';
-        const bestKey = 'tbn_best_daily';
-        const lastPlayKey = 'tbn_last_play';
         const todayStr = getTodayString();
 
-        const lastPlay = localStorage.getItem(lastPlayKey);
-        const currentStreak = Math.max(0, JSON.parse(localStorage.getItem(streakKey) || '0'));
-        const personalBest = Math.max(0, JSON.parse(localStorage.getItem(bestKey) || '0'));
+        if (gameState.targetMode) {
+          // Target Mode: save separately
+          localStorage.setItem(`tbn_target_${todayStr}`, JSON.stringify({ score: gameState.totalScore, targetScore: gameState.targetScore, label, lineup: lineupArr }));
 
-        let newStreak = currentStreak;
-        if (!lastPlay || lastPlay === todayStr) {
-          newStreak = currentStreak + 1;
+          // Update target mode streak and best
+          const streakKey = 'tbn_target_streak';
+          const bestKey = 'tbn_target_best';
+          const lastPlayKey = 'tbn_target_last_play';
+
+          const lastPlay = localStorage.getItem(lastPlayKey);
+          const currentStreak = Math.max(0, JSON.parse(localStorage.getItem(streakKey) || '0'));
+          const personalBest = Math.max(0, JSON.parse(localStorage.getItem(bestKey) || '0'));
+
+          let newStreak = currentStreak;
+          if (!lastPlay || lastPlay === todayStr) {
+            newStreak = currentStreak + 1;
+          }
+
+          localStorage.setItem(lastPlayKey, todayStr);
+          localStorage.setItem(streakKey, newStreak);
+          localStorage.setItem(bestKey, Math.max(personalBest, gameState.totalScore));
+        } else {
+          // High Score Mode: existing logic
+          localStorage.setItem(`tbn_daily_${todayStr}`, JSON.stringify({ score: gameState.totalScore, label, lineup: lineupArr }));
+
+          // Update streak and personal best
+          const streakKey = 'tbn_streak';
+          const bestKey = 'tbn_best_daily';
+          const lastPlayKey = 'tbn_last_play';
+
+          const lastPlay = localStorage.getItem(lastPlayKey);
+          const currentStreak = Math.max(0, JSON.parse(localStorage.getItem(streakKey) || '0'));
+          const personalBest = Math.max(0, JSON.parse(localStorage.getItem(bestKey) || '0'));
+
+          let newStreak = currentStreak;
+          if (!lastPlay || lastPlay === todayStr) {
+            newStreak = currentStreak + 1;
+          }
+
+          localStorage.setItem(lastPlayKey, todayStr);
+          localStorage.setItem(streakKey, newStreak);
+          localStorage.setItem(bestKey, Math.max(personalBest, gameState.totalScore));
         }
-
-        localStorage.setItem(lastPlayKey, todayStr);
-        localStorage.setItem(streakKey, newStreak);
-        localStorage.setItem(bestKey, Math.max(personalBest, gameState.totalScore));
       }
 
       const rivalHTML = gameState.rivalData ? buildRivalComparison() : '';
@@ -3889,13 +4079,21 @@
       ` : '';
 
       let modeLabel = gameState.isDailyChallenge
-        ? `📅 Daily Challenge · ${getTodayString()}`
+        ? gameState.targetMode
+          ? `🎯 Target Mode · ${getTodayString()}`
+          : `📅 Daily Challenge · ${getTodayString()}`
         : `🏀 Free Play · ${gameState.gameMode === 'oldhead' ? 'Classic Mode' : 'Timeless Mode'}`;
 
       if (gameState.isDailyChallenge) {
-        const streak = JSON.parse(localStorage.getItem('tbn_streak') || '0');
-        const best = JSON.parse(localStorage.getItem('tbn_best_daily') || '0');
-        modeLabel += ` · 🔥 ${streak} day${streak !== 1 ? 's' : ''} · 🏆 ${best}`;
+        if (gameState.targetMode) {
+          const streak = JSON.parse(localStorage.getItem('tbn_target_streak') || '0');
+          const best = JSON.parse(localStorage.getItem('tbn_target_best') || '0');
+          modeLabel += ` · 🔥 ${streak} day${streak !== 1 ? 's' : ''} · 🏆 ${best}`;
+        } else {
+          const streak = JSON.parse(localStorage.getItem('tbn_streak') || '0');
+          const best = JSON.parse(localStorage.getItem('tbn_best_daily') || '0');
+          modeLabel += ` · 🔥 ${streak} day${streak !== 1 ? 's' : ''} · 🏆 ${best}`;
+        }
       }
 
       const bestScoreDisplay = gameState.teamChallenge
