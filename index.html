@@ -929,6 +929,7 @@
     .ep-badge.badge-tier-role      { background: rgba(156,163,175,0.14);color: #9CA3AF; border: 1px solid rgba(156,163,175,0.3); }
     .ep-badge.badge-tier-cup       { background: rgba(156,163,175,0.08);color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.12); }
     .ep-badge.badge-claim          { background: rgba(255,255,255,0.06);color: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.15); }
+    .ep-badge.badge-era            { background: rgba(167,139,250,0.1); color: #A78BFA; border: 1px solid rgba(167,139,250,0.22); }
 
     .end-btn-primary {
       width: 100%;
@@ -3380,6 +3381,12 @@
       const era = playerObj ? getPlayerEra(playerObj.firstSeason, playerObj.lastSeason) : '';
       const playerPos = playerObj ? (playerObj.positions || []).join('/') : '';
       const eraLine = [era, playerPos].filter(Boolean).join(' · ');
+
+      if (gameState.gameMode === 'oldhead' && playerObj && playerObj.lastSeason) {
+        const yearsAgo = 2026 - playerObj.lastSeason;
+        const eraLabel = yearsAgo <= 0 ? 'Active' : yearsAgo <= 2 ? 'Just Retired' : yearsAgo <= 4 ? 'New School' : 'Old School';
+        badges.push({ label: eraLabel, type: 'badge-era' });
+      }
 
       const badgesHTML = badges.length
         ? '<div class="end-player-badges">' + badges.map(function(b) {
