@@ -2581,71 +2581,71 @@
 
       const gamesPenalty = getGamesPenalty(s.games);
       if (gamesPenalty) {
-        breakdown.push({ label: `Seasons played (${gamesPenalty.range})`, value: gamesPenalty.penalty, group: 'Longevity' });
+        breakdown.push({ label: `Seasons (${gamesPenalty.range})`, value: gamesPenalty.penalty, group: 'Longevity' });
       }
 
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
       if (s.hasReliableGS && gsRatio >= 0.40) {
         const p = gsRatio >= 0.75 ? -10 : gsRatio >= 0.60 ? -6 : -3;
         const range = gsRatio >= 0.75 ? '75%+' : gsRatio >= 0.60 ? '60-74%' : '40-59%';
-        breakdown.push({ label: `Starter Ratio (${range})`, value: p, group: 'Longevity' });
+        breakdown.push({ label: `Starter % (${range})`, value: p, group: 'Longevity' });
       }
 
-      if (s.mvp > 0) breakdown.push({ label: `MVP ×${s.mvp}`, value: -25 * s.mvp, group: 'Accolades' });
-      if (s.fmvp > 0) breakdown.push({ label: `Finals MVP ×${s.fmvp}`, value: -10 * s.fmvp, group: 'Accolades' });
-      if (s.dpoy > 0) breakdown.push({ label: `DPOY ×${s.dpoy}`, value: -15 * s.dpoy, group: 'Accolades' });
+      if (gameState.gameMode === 'oldhead') {
+        const yearsAgo = 2026 - s.lastSeason;
+        const bucket = yearsAgo <= 0 ? 'Active' : yearsAgo <= 2 ? '1-2 yrs retired' : yearsAgo <= 4 ? '3-4 yrs retired' : '5+ yrs retired';
+        breakdown.push({ label: bucket, value: s.recencyPenalty, group: 'Longevity' });
+      }
+
+      if (s.mvp > 0) breakdown.push({ label: `MVP`, value: -25 * s.mvp, group: 'Accolades' });
+      if (s.fmvp > 0) breakdown.push({ label: `Finals MVP`, value: -10 * s.fmvp, group: 'Accolades' });
+      if (s.dpoy > 0) breakdown.push({ label: `DPOY`, value: -15 * s.dpoy, group: 'Accolades' });
       if (s.roy > 0) breakdown.push({ label: `ROY`, value: -8, group: 'Accolades' });
-      if (s.smoy > 0) breakdown.push({ label: `SMOY ×${s.smoy}`, value: -5 * s.smoy, group: 'Accolades' });
-      if (s.mip > 0) breakdown.push({ label: `MIP ×${s.mip}`, value: -5 * s.mip, group: 'Accolades' });
+      if (s.smoy > 0) breakdown.push({ label: `6th Man`, value: -5 * s.smoy, group: 'Accolades' });
+      if (s.mip > 0) breakdown.push({ label: `MIP`, value: -5 * s.mip, group: 'Accolades' });
       if (s.seasons20ppg >= 1) {
         const ppgPenalty = s.seasons20ppg >= 4 ? -15 : s.seasons20ppg >= 2 ? -10 : -5;
         const ppgRange = s.seasons20ppg >= 4 ? '4+' : s.seasons20ppg >= 2 ? '2-3' : '1';
-        breakdown.push({ label: `20+ PPG seasons (${ppgRange})`, value: ppgPenalty, group: 'Accolades' });
+        breakdown.push({ label: `20+ PPG (${ppgRange})`, value: ppgPenalty, group: 'Accolades' });
       }
       if (s.allStarApps >= 1) {
         const p = s.allStarApps >= 7 ? -20 : s.allStarApps >= 4 ? -15 : s.allStarApps >= 2 ? -10 : -5;
         const r = s.allStarApps >= 7 ? '7+' : s.allStarApps >= 4 ? '4-6' : s.allStarApps >= 2 ? '2-3' : '1';
-        breakdown.push({ label: `All-Star ×${s.allStarApps} (${r})`, value: p, group: 'Accolades' });
+        breakdown.push({ label: `All-Star (${r})`, value: p, group: 'Accolades' });
       }
       if (s.allNBA1 >= 1) {
         const p = s.allNBA1 >= 4 ? -22 : s.allNBA1 >= 2 ? -18 : -12;
         const r = s.allNBA1 >= 4 ? '4+' : s.allNBA1 >= 2 ? '2-3' : '1';
-        breakdown.push({ label: `All-NBA 1st ×${s.allNBA1} (${r})`, value: p, group: 'Accolades' });
+        breakdown.push({ label: `All-NBA 1st (${r})`, value: p, group: 'Accolades' });
       }
       if (s.allNBA2 >= 1) {
         const p = s.allNBA2 >= 2 ? -12 : -8;
-        breakdown.push({ label: `All-NBA 2nd ×${s.allNBA2}`, value: p, group: 'Accolades' });
+        breakdown.push({ label: `All-NBA 2nd (${s.allNBA2 >= 2 ? '2+' : '1'})`, value: p, group: 'Accolades' });
       }
       if (s.allNBA3 >= 1) {
         const p = s.allNBA3 >= 2 ? -8 : -5;
-        breakdown.push({ label: `All-NBA 3rd ×${s.allNBA3}`, value: p, group: 'Accolades' });
+        breakdown.push({ label: `All-NBA 3rd (${s.allNBA3 >= 2 ? '2+' : '1'})`, value: p, group: 'Accolades' });
       }
       if (s.allDef1 >= 1) {
         const p = s.allDef1 >= 4 ? -12 : s.allDef1 >= 2 ? -8 : -5;
         const r = s.allDef1 >= 4 ? '4+' : s.allDef1 >= 2 ? '2-3' : '1';
-        breakdown.push({ label: `All-Defensive 1st ×${s.allDef1} (${r})`, value: p, group: 'Accolades' });
+        breakdown.push({ label: `All-Def 1st (${r})`, value: p, group: 'Accolades' });
       }
       if (s.allDef2 >= 1) {
         const p = s.allDef2 >= 2 ? -5 : -3;
-        breakdown.push({ label: `All-Defensive 2nd ×${s.allDef2}`, value: p, group: 'Accolades' });
+        breakdown.push({ label: `All-Def 2nd (${s.allDef2 >= 2 ? '2+' : '1'})`, value: p, group: 'Accolades' });
       }
 
       if (s.draftPick > 0) {
-        if (s.draftPick === 1) breakdown.push({ label: 'Draft: #1 overall', value: -25, group: 'Pedigree' });
-        else if (s.draftPick === 2) breakdown.push({ label: 'Draft: #2 overall', value: -15, group: 'Pedigree' });
-        else if (s.draftPick === 3) breakdown.push({ label: 'Draft: #3 overall', value: -10, group: 'Pedigree' });
-        else if (s.draftPick <= 5) breakdown.push({ label: `Draft: #4-5`, value: -8, group: 'Pedigree' });
-        else if (s.draftPick <= 14) breakdown.push({ label: `Draft: #6-14`, value: -5, group: 'Pedigree' });
-        else if (s.draftPick <= 30) breakdown.push({ label: `Draft: #15-30`, value: -3, group: 'Pedigree' });
-        else if (s.draftPick <= 60) breakdown.push({ label: `Draft: #31-60`, value: -1, group: 'Pedigree' });
+        if (s.draftPick === 1) breakdown.push({ label: 'Draft (#1)', value: -25, group: 'Pedigree' });
+        else if (s.draftPick === 2) breakdown.push({ label: 'Draft (#2)', value: -15, group: 'Pedigree' });
+        else if (s.draftPick === 3) breakdown.push({ label: 'Draft (#3)', value: -10, group: 'Pedigree' });
+        else if (s.draftPick <= 5) breakdown.push({ label: 'Draft (#4-5)', value: -8, group: 'Pedigree' });
+        else if (s.draftPick <= 14) breakdown.push({ label: 'Draft (#6-14)', value: -5, group: 'Pedigree' });
+        else if (s.draftPick <= 30) breakdown.push({ label: 'Draft (#15-30)', value: -3, group: 'Pedigree' });
+        else if (s.draftPick <= 60) breakdown.push({ label: 'Draft (#31-60)', value: -1, group: 'Pedigree' });
       } else {
         breakdown.push({ label: 'Undrafted', value: 0, group: 'Pedigree' });
-      }
-
-      if (gameState.gameMode === 'oldhead' && s.recencyPenalty < 0) {
-        const yearsAgo = 2026 - s.lastSeason;
-        const bucket = yearsAgo <= 0 ? 'Active' : yearsAgo <= 2 ? '1-2 yrs retired' : '3-4 yrs retired';
-        breakdown.push({ label: bucket, value: s.recencyPenalty, group: 'Era' });
       }
 
       const subtotal = breakdown.reduce((sum, b) => sum + b.value, 0);
@@ -2658,7 +2658,7 @@
     }
 
     function groupBreakdown(rows) {
-      const groupOrder = ['Longevity', 'Pedigree', 'Accolades', 'Era'];
+      const groupOrder = ['Longevity', 'Pedigree', 'Accolades'];
       const groups = {};
       const special = [];
 
