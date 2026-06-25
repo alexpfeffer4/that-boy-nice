@@ -616,6 +616,12 @@
       color: rgba(255,255,255,0.9);
       line-height: 1;
     }
+    .formation-player-score.tier-god     { color: var(--tier-god-base); }
+    .formation-player-score.tier-great   { color: var(--tier-great-base); }
+    .formation-player-score.tier-good    { color: var(--tier-good-base); }
+    .formation-player-score.tier-mid     { color: var(--tier-mid-base); }
+    .formation-player-score.tier-casual  { color: rgba(255,255,255,0.55); }
+    .formation-player-score.tier-archival{ color: var(--tier-archival-base); }
 
     .formation-total {
       text-align: center;
@@ -675,8 +681,8 @@
     .end-hero {
       text-align: center;
       padding: 32px 20px 24px;
-      background: rgba(0,0,0,0.35);
-      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
       border-radius: 16px;
       margin-bottom: 16px;
       position: relative;
@@ -764,12 +770,12 @@
       position: absolute;
       top: 10px;
       right: 12px;
-      font-size: 0.6rem;
+      font-size: 0.72rem;
       font-weight: 800;
       color: #FFD700;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      opacity: 0.8;
+      opacity: 0.9;
     }
 
     .end-player-card.worst-pick {
@@ -782,10 +788,10 @@
       position: absolute;
       top: 10px;
       right: 12px;
-      font-size: 0.6rem;
+      font-size: 0.72rem;
       font-weight: 800;
-      color: rgba(255,255,255,0.4);
-      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.04em;
       text-transform: uppercase;
     }
 
@@ -1106,8 +1112,8 @@
       top: 100%;
       left: 0;
       right: 0;
-      background: rgba(0,0,0,0.9);
-      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(12, 18, 42, 0.97);
+      border: 1px solid rgba(255,255,255,0.15);
       border-top: none;
       border-radius: 0 0 8px 8px;
       max-height: 200px;
@@ -1138,55 +1144,56 @@
     }
 
     .score-breakdown {
-      background: rgba(255,255,255,0.08);
-      border-left: 3px solid #4ECDC4;
-      padding: 12px;
+      background: rgba(255,255,255,0.06);
+      border-left: 3px solid rgba(255,255,255,0.2);
+      padding: 12px 14px;
       margin-top: 8px;
-      border-radius: 4px;
+      border-radius: 6px;
       font-size: 0.85rem;
       color: rgba(255,255,255,0.85);
       line-height: 1.5;
     }
 
-    .breakdown-item {
-      display: flex;
-      justify-content: space-between;
-      margin: 4px 0;
-    }
+    .score-breakdown.tier-god     { border-left-color: var(--tier-god-base); }
+    .score-breakdown.tier-great   { border-left-color: var(--tier-great-base); }
+    .score-breakdown.tier-good    { border-left-color: var(--tier-good-base); }
+    .score-breakdown.tier-mid     { border-left-color: var(--tier-mid-base); }
+    .score-breakdown.tier-casual  { border-left-color: rgba(255,255,255,0.25); }
+    .score-breakdown.tier-archival{ border-left-color: var(--tier-archival-base); }
 
-    .breakdown-separator {
-      border-top: 1px solid rgba(255,255,255,0.3);
-      padding-top: 8px;
-      margin-top: 8px;
-      font-weight: 600;
-      color: rgba(255,255,255,0.9);
-    }
-
-    .breakdown-total {
-      border-top: 2px solid rgba(255,255,255,0.5);
-      padding-top: 8px;
-      margin-top: 8px;
+    .bd-group-label {
+      font-size: 0.62rem;
       font-weight: 700;
-      color: #4ECDC4;
-      font-size: 0.95rem;
-    }
-
-    .breakdown-group-header {
-      font-weight: 700;
-      color: rgba(255,255,255,0.8);
-      margin-top: 10px;
-      padding-top: 6px;
-      border-top: 1px solid rgba(255,255,255,0.2);
-      font-size: 0.85rem;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.3);
+      margin: 10px 0 5px;
+    }
+    .bd-group-label:first-child { margin-top: 0; }
+
+    .bd-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
     }
 
-    .breakdown-group-item {
-      padding-left: 16px;
-      color: rgba(255,255,255,0.7);
-      font-size: 0.85rem;
+    .bd-chip {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.75);
+      white-space: nowrap;
     }
+
+    /* kept for any legacy usage */
+    .breakdown-item { display: flex; justify-content: space-between; margin: 4px 0; }
+    .breakdown-group-header { font-size: 0.62rem; font-weight: 700; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 10px; }
+    .breakdown-group-item { padding-left: 16px; color: rgba(255,255,255,0.7); font-size: 0.85rem; }
+    .breakdown-separator { border-top: 1px solid rgba(255,255,255,0.2); padding-top: 8px; margin-top: 8px; }
+    .breakdown-total { border-top: 2px solid rgba(255,255,255,0.4); padding-top: 8px; margin-top: 8px; font-weight: 700; font-size: 0.95rem; }
 
     .center {
       grid-column: span 2;
@@ -1394,9 +1401,9 @@
     }
 
     .mode-classic {
-      background: rgba(86, 171, 47, 0.2);
-      color: #a8e063;
-      border: 1px solid rgba(86, 171, 47, 0.4);
+      background: rgba(125, 211, 252, 0.12);
+      color: #7dd3fc;
+      border: 1px solid rgba(125, 211, 252, 0.3);
     }
 
     #gameSection {
@@ -2593,7 +2600,7 @@
 
       if (gameState.gameMode === 'oldhead') {
         const yearsAgo = 2026 - s.lastSeason;
-        const bucket = yearsAgo <= 0 ? 'Active' : yearsAgo <= 2 ? '1-2 yrs retired' : yearsAgo <= 4 ? '3-4 yrs retired' : '5+ yrs retired';
+        const bucket = yearsAgo <= 0 ? 'Active player' : yearsAgo <= 2 ? '1-2 yrs retired' : yearsAgo <= 4 ? '3-4 yrs retired' : '5+ yrs retired';
         breakdown.push({ label: bucket, value: s.recencyPenalty, group: 'Longevity' });
       }
 
@@ -2833,20 +2840,24 @@
       updateLineup();
       updateScore();
 
+      const tier = getScoreTier(score);
       const grouped = groupBreakdown(breakdown);
-      let breakdownHTML = grouped.map(b => {
+      let breakdownHTML = '';
+      let inChips = false;
+      grouped.forEach(b => {
         if (b.isGroupHeader) {
-          return `<div class="breakdown-item breakdown-group-header"><span>${b.label}</span></div>`;
-        } else if (b.isSeparator || b.isTotal || b.isMultiplier) {
-          return '';
+          if (inChips) breakdownHTML += '</div>';
+          breakdownHTML += `<div class="bd-group-label">${b.label}</div><div class="bd-chips">`;
+          inChips = true;
+        } else if (!b.isSeparator && !b.isTotal && !b.isMultiplier && b.group) {
+          breakdownHTML += `<span class="bd-chip">${b.label}</span>`;
         }
-        const itemClass = b.group ? 'breakdown-group-item' : '';
-        return `<div class="breakdown-item ${itemClass}"><span>${b.label}</span></div>`;
-      }).filter(h => h).join('');
+      });
+      if (inChips) breakdownHTML += '</div>';
 
       document.getElementById('message').innerHTML = `
         <div class="success">✓ ${player.name} added to ${position}!</div>
-        <div class="score-breakdown">${breakdownHTML}</div>
+        <div class="score-breakdown ${tier}">${breakdownHTML}</div>
       `;
       document.getElementById('playerInput').value = '';
       document.getElementById('autocompleteDropdown').classList.remove('show');
@@ -3231,13 +3242,15 @@
         const player = gameState.lineup[pos];
         slot.className = 'formation-slot' + (player ? ' filled' : '');
         if (player) {
-          const hasOtherPositions = !gameState.isDailyChallenge && player.positions && player.positions.length > 1;
+          const hasOtherPositions = player.positions && player.positions.length > 1;
           const moveBtn = hasOtherPositions
             ? '<button class="move-btn" onclick="movePlayer(\'' + pos + '\')" style="margin-top:4px;font-size:0.6rem;padding:2px 5px;">Move</button>'
             : '';
+          const slotTier = getScoreTier(player.score);
           slot.innerHTML =
             '<div class="formation-pos-label">' + pos + '</div>' +
             '<div class="formation-player-name">' + player.name + '</div>' +
+            '<div class="formation-player-score ' + slotTier + '">' + player.score + '</div>' +
             moveBtn;
         } else {
           slot.innerHTML = '<div class="formation-pos-label">' + pos + '</div>';
