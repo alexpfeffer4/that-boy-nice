@@ -883,8 +883,9 @@
       letter-spacing: 0.02em;
     }
     .end-player-avatar .av-initials {
-      font-size: 0.85rem;
+      font-size: 0.72rem;
       line-height: 1;
+      letter-spacing: 0.04em;
     }
     .end-player-avatar .av-pos {
       font-size: 0.55rem;
@@ -2299,7 +2300,7 @@
       const lineupObj = {};
       saved.lineup.forEach(entry => {
         lineupObj[entry.team] = entry;
-        container.appendChild(buildPlayerCard(entry.name, entry.team, entry.score));
+        container.appendChild(buildPlayerCard(entry.name, entry.pos || '', entry.score, null, entry.team));
       });
 
       const verdicts = getGameVerdicts(lineupObj);
@@ -3232,7 +3233,35 @@
 
     function shortTeamName(name) {
       const parts = name.split(' ');
-      return parts[parts.length - 1]; // "Los Angeles Lakers" → "Lakers"
+      return parts[parts.length - 1];
+    }
+
+    const TEAM_ABBREVS = {
+      'Atlanta Hawks': 'ATL', 'Boston Celtics': 'BOS',
+      'Brooklyn Nets': 'BKN', 'New Jersey Nets': 'NJN',
+      'Charlotte Hornets': 'CHA', 'Charlotte Bobcats': 'CHA',
+      'Chicago Bulls': 'CHI', 'Cleveland Cavaliers': 'CLE',
+      'Dallas Mavericks': 'DAL', 'Denver Nuggets': 'DEN',
+      'Detroit Pistons': 'DET', 'Golden State Warriors': 'GSW',
+      'Houston Rockets': 'HOU', 'Indiana Pacers': 'IND',
+      'Los Angeles Clippers': 'LAC', 'Los Angeles Lakers': 'LAL',
+      'Memphis Grizzlies': 'MEM', 'Vancouver Grizzlies': 'VAN',
+      'Miami Heat': 'MIA', 'Milwaukee Bucks': 'MIL',
+      'Minnesota Timberwolves': 'MIN',
+      'New Orleans Pelicans': 'NOP', 'New Orleans Hornets': 'NOH',
+      'New Orleans/Oklahoma City Hornets': 'NOK',
+      'New York Knicks': 'NYK', 'Oklahoma City Thunder': 'OKC',
+      'Seattle SuperSonics': 'SEA', 'Orlando Magic': 'ORL',
+      'Philadelphia 76ers': 'PHI', 'Phoenix Suns': 'PHX',
+      'Portland Trail Blazers': 'POR', 'Sacramento Kings': 'SAC',
+      'San Antonio Spurs': 'SAS', 'Toronto Raptors': 'TOR',
+      'Utah Jazz': 'UTA', 'Washington Wizards': 'WAS',
+      'Washington Bullets': 'WSB',
+    };
+
+    function getTeamAbbrev(name) {
+      if (!name) return '';
+      return TEAM_ABBREVS[name] || shortTeamName(name).slice(0, 3).toUpperCase();
     }
 
     function updateLineup() {
@@ -3343,9 +3372,9 @@
       ];
     }
 
-    function buildPlayerCard(name, posLabel, score, playerName) {
+    function buildPlayerCard(name, posLabel, score, playerName, teamName) {
       const tier = getScoreTier(score);
-      const initials = getInitials(name);
+      const avatarLabel = teamName ? getTeamAbbrev(teamName) : getInitials(name);
       const badges = getPlayerTierBadges(playerName || name);
       const playerObj = allPlayers.find(function(p) { return p.name === (playerName || name); });
       const era = playerObj ? getPlayerEra(playerObj.firstSeason, playerObj.lastSeason) : '';
@@ -3364,7 +3393,7 @@
       card.innerHTML =
         '<div class="end-player-top">' +
           '<div class="end-player-avatar ' + tier + '">' +
-            '<span class="av-initials">' + initials + '</span>' +
+            '<span class="av-initials">' + avatarLabel + '</span>' +
             '<span class="av-pos">' + posLabel + '</span>' +
           '</div>' +
           '<div class="end-player-info">' +
@@ -3391,7 +3420,7 @@
       if (gameState.isDailyChallenge) {
         const lineupArr = positions.map(pos => {
           const p = gameState.lineup[pos];
-          return p ? { team: p.team, name: p.name, score: p.score } : null;
+          return p ? { pos: pos, team: p.team, name: p.name, score: p.score } : null;
         }).filter(Boolean);
         localStorage.setItem(`tbn_daily_${getTodayString()}`, JSON.stringify({ score: gameState.totalScore, label, lineup: lineupArr }));
 
@@ -3458,7 +3487,7 @@
       entries.forEach(({ label, player }) => {
         if (!player) return;
         try {
-          const card = buildPlayerCard(player.name, label, player.score);
+          const card = buildPlayerCard(player.name, label, player.score, null, player.team);
           if (verdicts && player.name === verdicts.best.name) card.classList.add('best-pick');
           if (verdicts && player.name === verdicts.worst.name) card.classList.add('worst-pick');
           container.appendChild(card);
