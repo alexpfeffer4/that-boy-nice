@@ -4041,7 +4041,7 @@
           <div class="share-card-score">${gameState.totalScore}</div>
           <div class="share-card-label">${label}</div>
           ${rows}
-          <div class="share-card-footer">ballknower.vercel.app</div>
+          <div class="share-card-footer">ballknower.me</div>
         </div>
       `;
     }
@@ -4111,7 +4111,7 @@
       const verdictLine = verdicts && verdicts.worst
         ? `\n🔥 ${verdicts.best.name} ${verdicts.best.score} · 😬 ${verdicts.worst.name} ${verdicts.worst.score}`
         : verdicts ? `\n🔥 ${verdicts.best.name} ${verdicts.best.score}` : '';
-      const shareText = `ball knower 🏀${dateTag} [${modeTag}]\n${label}\nScore: ${gameState.totalScore}\n\n${emojiGrid}${verdictLine}\n\nballknower.vercel.app`;
+      const shareText = `ball knower 🏀${dateTag} [${modeTag}]\n${label}\nScore: ${gameState.totalScore}\n\n${emojiGrid}${verdictLine}\n\nballknower.me`;
 
       if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
         navigator.share({ title: 'ball knower 🏀', text: shareText }).catch(() => {
