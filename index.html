@@ -3397,7 +3397,7 @@
           <div class="end-btns">
             ${gameState.isDailyChallenge ? `<button class="end-btn-primary" onclick="challengeRival()">⚔️ Challenge a Rival</button>` : ''}
             <div class="end-btn-row">
-              ${gameState.isDailyChallenge ? `<button class="end-btn-secondary" onclick="downloadShareCard()">🖼️ Share Card</button>` : ''}
+              <button class="end-btn-secondary" onclick="downloadShareCard()">🖼️ Share Card</button>
               <button class="end-btn-secondary" onclick="shareResult()">📋 Copy Result</button>
             </div>
             <button class="end-btn-ghost" onclick="location.href=location.pathname">Play Again</button>
