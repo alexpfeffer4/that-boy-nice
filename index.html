@@ -3249,6 +3249,10 @@
         }
       } else if (Object.keys(gameState.lineup).length === 5) {
         setTimeout(endGame, 2000);
+      } else if (gameState.teamChallenge) {
+        document.getElementById('playerInput').disabled = false;
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('playerInput').focus();
       } else {
         document.getElementById('spinBtn').disabled = false;
         document.getElementById('respinBtn').disabled = true;
