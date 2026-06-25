@@ -797,6 +797,14 @@
     .end-tier-pill.tier-casual { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.2); }
     .end-tier-pill.tier-archival { background: color-mix(in srgb, var(--tier-archival-base) 15%, transparent); color: var(--tier-archival-base); border: 1px solid color-mix(in srgb, var(--tier-archival-base) 35%, transparent); }
 
+    .end-best-score {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.6);
+      margin-top: 8px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
     .end-verdict-hero {
       display: flex;
       gap: 10px;
@@ -1475,6 +1483,45 @@
       background: #2a5266;
       border-color: #A8E6FF;
       box-shadow: 0 4px 20px rgba(125,211,252,0.3);
+    }
+
+    .team-challenge-btn {
+      background: #3a3535;
+      border: 2px solid rgba(200,200,200,0.6);
+      color: #E0E0E0;
+    }
+
+    .team-challenge-btn:hover {
+      background: #474242;
+      border-color: rgba(220,220,220,0.85);
+      box-shadow: 0 4px 20px rgba(200,200,200,0.25);
+    }
+
+    .team-select-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      max-width: 420px;
+      margin: 0 auto;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .team-select-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.15s ease-out;
+    }
+
+    .team-select-btn:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.4);
     }
 
     .mode-select-title {
@@ -2241,6 +2288,11 @@
           🏀 Free Play
           <span class="start-desc">Random teams, choose your mode</span>
         </button>
+        <button class="start-btn team-challenge-btn" onclick="showTeamSelector()">
+          🏢 Team Challenge
+          <span class="start-desc">Perfect a single team's lineup</span>
+          <span class="start-mode-tag">🏢 Classic Mode</span>
+        </button>
       </div>
       <div id="modeSelectScreen" style="display:none;">
         <button class="mode-back-btn" onclick="showStartOptions()">← Back</button>
@@ -2255,6 +2307,12 @@
             <span class="start-desc">Pure stats only — scoring based on career numbers with no time adjustment. All eras treated equally.</span>
           </button>
         </div>
+      </div>
+
+      <div id="teamSelectScreen" style="display:none;">
+        <button class="mode-back-btn" onclick="showStartOptions()">← Back</button>
+        <h2 class="mode-select-title">Choose a Team</h2>
+        <div class="team-select-grid" id="teamSelectGrid"></div>
       </div>
     </div>
 
@@ -2287,7 +2345,7 @@
 
           <div class="input-group">
             <div class="autocomplete-wrapper">
-              <input type="text" id="playerInput" placeholder="Enter player name" disabled>
+              <input type="text" id="playerInput" placeholder="Enter player name" disabled autocomplete="off">
               <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
             </div>
             <button class="submit-btn" id="submitBtn" disabled>SUBMIT</button>
@@ -2542,7 +2600,49 @@
 
     function showStartOptions() {
       document.getElementById('modeSelectScreen').style.display = 'none';
+      document.getElementById('teamSelectScreen').style.display = 'none';
       document.getElementById('startOptions').style.display = 'flex';
+    }
+
+    function showTeamSelector() {
+      document.getElementById('startOptions').style.display = 'none';
+      document.getElementById('teamSelectScreen').style.display = 'block';
+      updateTeamSelectorGrid();
+    }
+
+    function updateTeamSelectorGrid() {
+      const grid = document.getElementById('teamSelectGrid');
+      const teams = Object.keys(players).sort();
+      grid.innerHTML = teams.map(function(teamName) {
+        const bestScore = getBestTeamScore(teamName);
+        const bestText = bestScore ? ' • ' + bestScore : '';
+        return '<button class="team-select-btn" onclick="startTeamChallenge(\'' + teamName.replace(/'/g, "\\'") + '\')">' +
+          teamName + bestText +
+          '</button>';
+      }).join('');
+    }
+
+    function startTeamChallenge(teamName) {
+      gameState.isDailyChallenge = false;
+      gameState.gameMode = 'oldhead';
+      gameState.teamChallenge = true;
+      gameState.selectedTeam = teamName;
+      document.getElementById('startScreen').style.display = 'none';
+      document.getElementById('gameSection').style.display = 'block';
+      const indicator = document.getElementById('modeIndicator');
+      indicator.textContent = '🏢 ' + teamName + ' Challenge';
+      indicator.className = 'mode-indicator mode-oldhead';
+      showHowToPlay('oldhead');
+    }
+
+    function getBestTeamScore(teamName) {
+      const key = 'tbn_team_best_' + teamName;
+      const best = localStorage.getItem(key);
+      return best ? 'Best: ' + best : '';
+    }
+
+    function getTeamPlayerPool(teamName) {
+      return players[teamName] || [];
     }
 
     function startWithMode(mode) {
@@ -3339,7 +3439,9 @@
 
       const display = document.getElementById('reelDisplay');
       const window_ = document.getElementById('reelWindow');
-      gameState.currentTeam = gameState.isDailyChallenge
+      gameState.currentTeam = gameState.teamChallenge
+        ? gameState.selectedTeam
+        : gameState.isDailyChallenge
         ? gameState.dailyTeams[gameState.dailyTeamIndex++]
         : getRandomTeam();
 
@@ -3704,6 +3806,14 @@
       const label = getScoreLabel(gameState.totalScore);
       const totalTier = getScoreTier(Math.round(gameState.totalScore / 5));
 
+      if (gameState.teamChallenge) {
+        const teamBestKey = 'tbn_team_best_' + gameState.selectedTeam;
+        const currentBest = Math.max(0, JSON.parse(localStorage.getItem(teamBestKey) || '0'));
+        if (gameState.totalScore > currentBest) {
+          localStorage.setItem(teamBestKey, String(gameState.totalScore));
+        }
+      }
+
       if (gameState.isDailyChallenge) {
         const lineupArr = positions.map(pos => {
           const p = gameState.lineup[pos];
@@ -3747,12 +3857,17 @@
         modeLabel += ` · 🔥 ${streak} day${streak !== 1 ? 's' : ''} · 🏆 ${best}`;
       }
 
+      const bestScoreDisplay = gameState.teamChallenge
+        ? `<div class="end-best-score">Best: ${Math.max(0, JSON.parse(localStorage.getItem('tbn_team_best_' + gameState.selectedTeam) || '0'))}</div>`
+        : '';
+
       document.getElementById('gameSection').innerHTML = `
         <div class="end-screen">
           <div class="end-hero">
             <div class="end-meta-tag">${modeLabel}</div>
             <div class="end-score-num ${totalTier}" data-target="${gameState.totalScore}">0</div>
             <div class="end-tier-pill ${totalTier}">${label}</div>
+            ${bestScoreDisplay}
           </div>
           <div id="verdictBlock"></div>
           <div class="end-players" id="resultPlayers"></div>
