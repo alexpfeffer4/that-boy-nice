@@ -3228,13 +3228,14 @@
       return name.slice(0, 2).toUpperCase();
     }
 
-    function getPlayerEra(firstSeason) {
-      if (!firstSeason) return '';
-      if (firstSeason >= 2020) return '2020s';
-      if (firstSeason >= 2010) return '2010s';
-      if (firstSeason >= 2000) return '2000s';
-      if (firstSeason >= 1990) return '1990s';
-      if (firstSeason >= 1980) return '1980s';
+    function getPlayerEra(firstSeason, lastSeason) {
+      if (!firstSeason || !lastSeason) return '';
+      const mid = Math.round((firstSeason + lastSeason) / 2);
+      if (mid >= 2020) return '2020s';
+      if (mid >= 2010) return '2010s';
+      if (mid >= 2000) return '2000s';
+      if (mid >= 1990) return '1990s';
+      if (mid >= 1980) return '1980s';
       return '1970s';
     }
 
@@ -3300,7 +3301,7 @@
       const initials = getInitials(name);
       const badges = getPlayerTierBadges(playerName || name);
       const playerObj = allPlayers.find(function(p) { return p.name === (playerName || name); });
-      const era = playerObj ? getPlayerEra(playerObj.firstSeason) : '';
+      const era = playerObj ? getPlayerEra(playerObj.firstSeason, playerObj.lastSeason) : '';
       const playerPos = playerObj ? (playerObj.positions || []).join('/') : '';
       const eraLine = [era, playerPos].filter(Boolean).join(' · ');
 
