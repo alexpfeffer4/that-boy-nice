@@ -1360,7 +1360,7 @@
       justify-content: space-between;
     }
 
-    .leaderboard-row.top-10 {
+    .leaderboard-row.frequent {
       background: rgba(168,77,255,0.08);
       border-left: 3px solid rgba(168,77,255,0.5);
     }
@@ -3028,9 +3028,9 @@
         let html = '<div class="leaderboard-list">';
         sorted.forEach(function(entry, idx) {
           const [name, count] = entry;
-          const isTop10 = idx < 10;
-          const badge = isTop10 ? '<span class="leaderboard-badge">Top 10</span>' : '';
-          html += '<div class="leaderboard-row ' + (isTop10 ? 'top-10' : '') + '">' +
+          const isFrequent = count >= 10;
+          const badge = isFrequent ? '<span class="leaderboard-badge">Frequent</span>' : '';
+          html += '<div class="leaderboard-row ' + (isFrequent ? 'frequent' : '') + '">' +
             '<span class="leaderboard-rank">' + (idx + 1) + '.</span>' +
             '<span class="leaderboard-name">' + name + '</span>' +
             badge +
@@ -3069,8 +3069,8 @@
     }
 
     function isFrequentPlayer(playerName) {
-      const topPlayers = getTopPlayersUsed(10);
-      return topPlayers.includes(playerName);
+      const picks = getPlayerPickCounts();
+      return picks[playerName] && picks[playerName] >= 10;
     }
 
     function addPlayerToLineup(player, position) {
