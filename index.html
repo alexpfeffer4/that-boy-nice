@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>that boy nice</title>
+  <title>ball knower</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -2270,7 +2270,7 @@
 
   <div class="container">
     <header>
-      <h1>that boy nice</h1>
+      <h1>ball knower</h1>
       <p class="tagline" id="tagline">The deeper the cut, the higher the score</p>
       <p class="era-note">Players from 1976–present</p>
     </header>
@@ -4034,12 +4034,12 @@
       const modeTag = gameState.isDailyChallenge ? `📅 Daily · ${getTodayString()}` : gameState.teamChallenge ? '🏢 Team Challenge' : '🏀 Practice';
       document.getElementById('shareCardWrap').innerHTML = `
         <div class="share-card" id="shareCard">
-          <div class="share-card-title">that boy nice</div>
+          <div class="share-card-title">ball knower</div>
           <div class="share-card-date">${modeTag} · ${gameState.gameMode === 'oldhead' ? 'Classic Mode' : 'Timeless Mode'}</div>
           <div class="share-card-score">${gameState.totalScore}</div>
           <div class="share-card-label">${label}</div>
           ${rows}
-          <div class="share-card-footer">thatboynice.vercel.app</div>
+          <div class="share-card-footer">ballknower.vercel.app</div>
         </div>
       `;
     }
@@ -4066,7 +4066,7 @@
           const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
           // Try native share sheet first (mobile) — lets user send via iMessage, etc.
           if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
-            navigator.share({ files: [file], title: 'that boy nice 🏀' })
+            navigator.share({ files: [file], title: 'ball knower 🏀' })
               .catch(() => tryCopyThenDownload(blob, canvas, filename, btns))
               .finally(() => btns.forEach(b => b.textContent = '🖼️ Share Card'));
           } else {
@@ -4109,10 +4109,10 @@
       const verdictLine = verdicts && verdicts.worst
         ? `\n🔥 ${verdicts.best.name} ${verdicts.best.score} · 😬 ${verdicts.worst.name} ${verdicts.worst.score}`
         : verdicts ? `\n🔥 ${verdicts.best.name} ${verdicts.best.score}` : '';
-      const shareText = `that boy nice 🏀${dateTag} [${modeTag}]\n${label}\nScore: ${gameState.totalScore}\n\n${emojiGrid}${verdictLine}\n\nthatboynice.vercel.app`;
+      const shareText = `ball knower 🏀${dateTag} [${modeTag}]\n${label}\nScore: ${gameState.totalScore}\n\n${emojiGrid}${verdictLine}\n\nballknower.vercel.app`;
 
       if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
-        navigator.share({ title: 'that boy nice 🏀', text: shareText }).catch(() => {
+        navigator.share({ title: 'ball knower 🏀', text: shareText }).catch(() => {
           navigator.clipboard.writeText(shareText).then(() => updateShareBtn()).catch(() => prompt('Copy your result:', shareText));
         });
       } else {
