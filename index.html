@@ -3246,11 +3246,9 @@
           const moveBtn = hasOtherPositions
             ? '<button class="move-btn" onclick="movePlayer(\'' + pos + '\')" style="margin-top:4px;font-size:0.6rem;padding:2px 5px;">Move</button>'
             : '';
-          const slotTier = getScoreTier(player.score);
           slot.innerHTML =
             '<div class="formation-pos-label">' + pos + '</div>' +
             '<div class="formation-player-name">' + player.name + '</div>' +
-            '<div class="formation-player-score ' + slotTier + '">' + player.score + '</div>' +
             moveBtn;
         } else {
           slot.innerHTML = '<div class="formation-pos-label">' + pos + '</div>';
