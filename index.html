@@ -3151,35 +3151,43 @@
         return;
       }
 
-      const playerPositions = matched.positions || ['G'];
-      const availablePositions = playerPositions.filter(pos => !gameState.lineup[pos]);
-
-      if (availablePositions.length === 0) {
-        gameState.lives--;
-        updateLivesDisplay();
-        messageEl.innerHTML = `<div class="error">❌ No available position slots (${gameState.lives} lives left)</div>`;
-
-        if (gameState.lives <= 0) {
-          setTimeout(() => {
-            document.getElementById('gameSection').innerHTML = `
-              <div class="end-screen">
-                <div class="end-hero">
-                  <div class="end-meta-tag">💔 Game Over</div>
-                  <div class="end-score-num tier-casual">${gameState.totalScore}</div>
-                  <div class="end-tier-pill tier-casual">${Object.keys(gameState.lineup).length}/5 positions filled</div>
-                </div>
-                <button class="end-btn-ghost" style="margin-top:16px" onclick="location.href=location.pathname">Play Again</button>
-              </div>
-            `;
-          }, 1500);
-        }
-        return;
-      }
-
-      if (availablePositions.length === 1) {
-        addPlayerToLineup(matched, availablePositions[0]);
+      if (gameState.isDailyChallenge) {
+        // In daily challenge, position is always determined by dailyTeamIndex
+        const dailyPositions = ['PG', 'SG', 'SF', 'PF', 'C'];
+        const position = dailyPositions[gameState.dailyTeamIndex];
+        addPlayerToLineup(matched, position);
       } else {
-        showPositionModal(matched);
+        // In free play, let player choose if multiple positions available
+        const playerPositions = matched.positions || ['G'];
+        const availablePositions = playerPositions.filter(pos => !gameState.lineup[pos]);
+
+        if (availablePositions.length === 0) {
+          gameState.lives--;
+          updateLivesDisplay();
+          messageEl.innerHTML = `<div class="error">❌ No available position slots (${gameState.lives} lives left)</div>`;
+
+          if (gameState.lives <= 0) {
+            setTimeout(() => {
+              document.getElementById('gameSection').innerHTML = `
+                <div class="end-screen">
+                  <div class="end-hero">
+                    <div class="end-meta-tag">💔 Game Over</div>
+                    <div class="end-score-num tier-casual">${gameState.totalScore}</div>
+                    <div class="end-tier-pill tier-casual">${Object.keys(gameState.lineup).length}/5 positions filled</div>
+                  </div>
+                  <button class="end-btn-ghost" style="margin-top:16px" onclick="location.href=location.pathname">Play Again</button>
+                </div>
+              `;
+            }, 1500);
+          }
+          return;
+        }
+
+        if (availablePositions.length === 1) {
+          addPlayerToLineup(matched, availablePositions[0]);
+        } else {
+          showPositionModal(matched);
+        }
       }
     }
 
