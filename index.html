@@ -3967,14 +3967,13 @@
       const avatarLabel = teamName ? getTeamAbbrev(teamName) : getInitials(name);
       const badges = getPlayerTierBadges(playerName || name);
       const playerObj = allPlayers.find(function(p) { return p.name === (playerName || name); });
-      const playerPos = playerObj ? (playerObj.positions || []).join('/') : '';
-      const eraLine = playerPos || '';
+      let eraLine = '';
 
-      if (playerObj && playerObj.lastSeason) {
-        const first = playerObj.firstSeason || playerObj.lastSeason;
+      if (playerObj && playerObj.firstSeason && playerObj.lastSeason) {
+        const first = playerObj.firstSeason;
         const mid = Math.round((first + playerObj.lastSeason) / 2);
-        const eraLabel = mid >= 2020 ? 'Recency Bias' : mid >= 2010 ? 'Still Fresh' : mid >= 2000 ? 'Throwback' : mid >= 1990 ? 'Old Head' : mid >= 1980 ? 'Showtime Era' : 'Ancient History';
-        badges.push({ label: eraLabel, type: 'badge-era' });
+        const decade = mid >= 2020 ? '2020s' : mid >= 2010 ? '2010s' : mid >= 2000 ? '2000s' : mid >= 1990 ? '1990s' : mid >= 1980 ? '1980s' : '1970s';
+        eraLine = decade;
       }
 
       if (isFrequentPlayer(playerName || name)) {
