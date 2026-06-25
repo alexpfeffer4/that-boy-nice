@@ -4371,9 +4371,14 @@
       const rivalParam = getRivalParam();
 
       // Update daily challenge button if already played
-      if (saved) {
+      if (saved && saved.score) {
         const dailyBtn = document.querySelector('.daily-btn');
-        dailyBtn.querySelector('.start-desc').textContent = `✓ Played today · ${saved.score} pts · ${saved.label}`;
+        if (dailyBtn) {
+          const desc = dailyBtn.querySelector('.start-desc');
+          if (desc) {
+            desc.textContent = `✓ Played today · ${saved.score} pts · ${saved.label || 'Complete'}`;
+          }
+        }
       }
 
       // Show rival banner if URL has rival param
