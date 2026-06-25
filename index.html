@@ -1018,6 +1018,7 @@
     .ep-badge.badge-tier-cup       { background: rgba(156,163,175,0.08);color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.12); }
     .ep-badge.badge-claim          { background: rgba(255,255,255,0.06);color: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.15); }
     .ep-badge.badge-era            { background: rgba(125,211,252,0.12); color: #7DD3FC; border: 1px solid rgba(125,211,252,0.3); }
+    .ep-badge.badge-frequent       { background: rgba(168,77,255,0.14); color: #A84DFF; border: 1px solid rgba(168,77,255,0.4); }
 
     .end-btn-primary {
       width: 100%;
@@ -1343,6 +1344,55 @@
     .position-btn:hover {
       background: rgba(102,126,234,0.5);
       border-color: rgba(102,126,234,0.8);
+    }
+
+    .leaderboard-list {
+      max-height: 400px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+
+    .leaderboard-row {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      justify-content: space-between;
+    }
+
+    .leaderboard-row.top-10 {
+      background: rgba(168,77,255,0.08);
+      border-left: 3px solid rgba(168,77,255,0.5);
+    }
+
+    .leaderboard-rank {
+      font-weight: 700;
+      color: rgba(255,255,255,0.6);
+      min-width: 30px;
+    }
+
+    .leaderboard-name {
+      flex: 1;
+      margin-left: 12px;
+      text-align: left;
+    }
+
+    .leaderboard-badge {
+      font-size: 0.68rem;
+      background: rgba(168,77,255,0.3);
+      color: #A84DFF;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin: 0 8px;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .leaderboard-count {
+      font-weight: 600;
+      color: #7DD3FC;
+      min-width: 40px;
+      text-align: right;
     }
 
     .position-btn:disabled {
@@ -2294,6 +2344,14 @@
         <button class="submit-btn" onclick="closePositionModal()">Cancel</button>
       </div>
     </div>
+
+    <div class="modal" id="leaderboardModal">
+      <div class="modal-content">
+        <h3>Your Pick History</h3>
+        <div id="leaderboardContent"></div>
+        <button class="submit-btn" onclick="closeLeaderboardModal()">Close</button>
+      </div>
+    </div>
   </div>
 
   <script src="data.js"></script>
@@ -2957,6 +3015,64 @@
       pendingPlayer = null;
     }
 
+    function showLeaderboardModal() {
+      const modal = document.getElementById('leaderboardModal');
+      const content = document.getElementById('leaderboardContent');
+      const picks = getPlayerPickCounts();
+      const sorted = Object.entries(picks)
+        .sort(function(a, b) { return b[1] - a[1]; });
+
+      if (sorted.length === 0) {
+        content.innerHTML = '<p style="color:rgba(255,255,255,0.6);margin:20px 0;">No picks yet. Start a game to track your favorite players!</p>';
+      } else {
+        let html = '<div class="leaderboard-list">';
+        sorted.forEach(function(entry, idx) {
+          const [name, count] = entry;
+          const isTop10 = idx < 10;
+          const badge = isTop10 ? '<span class="leaderboard-badge">Top 10</span>' : '';
+          html += '<div class="leaderboard-row ' + (isTop10 ? 'top-10' : '') + '">' +
+            '<span class="leaderboard-rank">' + (idx + 1) + '.</span>' +
+            '<span class="leaderboard-name">' + name + '</span>' +
+            badge +
+            '<span class="leaderboard-count">' + count + 'x</span>' +
+            '</div>';
+        });
+        html += '</div>';
+        content.innerHTML = html;
+      }
+      modal.classList.add('show');
+    }
+
+    function closeLeaderboardModal() {
+      document.getElementById('leaderboardModal').classList.remove('show');
+    }
+
+    function trackPlayerPick(playerName) {
+      const key = 'tbn_player_picks';
+      let picks = JSON.parse(localStorage.getItem(key)) || {};
+      picks[playerName] = (picks[playerName] || 0) + 1;
+      localStorage.setItem(key, JSON.stringify(picks));
+    }
+
+    function getPlayerPickCounts() {
+      const key = 'tbn_player_picks';
+      return JSON.parse(localStorage.getItem(key)) || {};
+    }
+
+    function getTopPlayersUsed(limit) {
+      if (!limit) limit = 10;
+      const picks = getPlayerPickCounts();
+      return Object.entries(picks)
+        .sort(function(a, b) { return b[1] - a[1]; })
+        .slice(0, limit)
+        .map(function(entry) { return entry[0]; });
+    }
+
+    function isFrequentPlayer(playerName) {
+      const topPlayers = getTopPlayersUsed(10);
+      return topPlayers.includes(playerName);
+    }
+
     function addPlayerToLineup(player, position) {
       // Check for duplicates
       const existingPlayers = Object.values(gameState.lineup).map(p => p.name.toLowerCase());
@@ -2978,6 +3094,7 @@
         breakdown: breakdown
       };
       gameState.totalScore += score;
+      trackPlayerPick(player.name);
 
       updateLineup();
       updateScore();
@@ -3557,6 +3674,10 @@
         badges.push({ label: eraLabel, type: 'badge-era' });
       }
 
+      if (isFrequentPlayer(playerName || name)) {
+        badges.push({ label: 'Frequent Pick', type: 'badge-frequent' });
+      }
+
       const badgesHTML = badges.length
         ? '<div class="end-player-badges">' + badges.map(function(b) {
             return '<span class="ep-badge ' + b.type + '">' + b.label + '</span>';
@@ -3652,6 +3773,7 @@
               <button class="end-btn-secondary" onclick="downloadShareCard()">🖼️ Share Card</button>
               <button class="end-btn-secondary" onclick="shareResult()">📋 Copy Result</button>
             </div>
+            <button class="end-btn-secondary" onclick="showLeaderboardModal()" style="width:100%;">📊 Pick History</button>
             <button class="end-btn-ghost" onclick="location.href=location.pathname">Play Again</button>
           </div>
         </div>
