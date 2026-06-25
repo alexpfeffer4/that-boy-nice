@@ -4037,7 +4037,7 @@
           <span class="share-card-pts" style="color:${color}">${p.score}</span>
         </div>`;
       }).join('');
-      const modeTag = gameState.isDailyChallenge ? `📅 Daily · ${getTodayString()}` : '🏀 Practice';
+      const modeTag = gameState.isDailyChallenge ? `📅 Daily · ${getTodayString()}` : gameState.teamChallenge ? `🏢 ${gameState.selectedTeam}` : '🏀 Practice';
       document.getElementById('shareCardWrap').innerHTML = `
         <div class="share-card" id="shareCard">
           <div class="share-card-title">that boy nice</div>
