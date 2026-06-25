@@ -3151,14 +3151,14 @@
         return;
       }
 
+      const playerPositions = matched.positions || ['G'];
+
       if (gameState.isDailyChallenge) {
-        // In daily challenge, position is always determined by dailyTeamIndex
-        const dailyPositions = ['PG', 'SG', 'SF', 'PF', 'C'];
-        const position = dailyPositions[gameState.dailyTeamIndex];
+        // In daily challenge, use player's primary position for display
+        const position = playerPositions[0];
         addPlayerToLineup(matched, position);
       } else {
         // In free play, let player choose if multiple positions available
-        const playerPositions = matched.positions || ['G'];
         const availablePositions = playerPositions.filter(pos => !gameState.lineup[pos]);
 
         if (availablePositions.length === 0) {
@@ -3217,8 +3217,9 @@
           const isActive = idx === gameState.dailyTeamIndex && !player;
           slot.className = 'formation-slot' + (player ? ' filled' : '') + (isActive ? ' active' : '');
           if (player) {
+            const playerPos = (player.positions && player.positions[0]) || pos;
             slot.innerHTML =
-              '<div class="formation-pos-label">' + pos + '</div>' +
+              '<div class="formation-pos-label">' + playerPos + '</div>' +
               '<div class="formation-player-name">' + player.name + '</div>';
           } else {
             slot.innerHTML = '<div class="formation-pos-label">' + pos + '</div>';
