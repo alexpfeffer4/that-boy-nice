@@ -4028,8 +4028,18 @@
 
       if (gameState.teamChallenge) {
         const teamBestKey = 'tbn_team_best_' + gameState.selectedTeam;
-        const currentBest = Math.max(0, JSON.parse(localStorage.getItem(teamBestKey) || '0'));
-        if (gameState.totalScore > currentBest) {
+        const teamBestDataKey = 'tbn_team_best_data_' + gameState.selectedTeam;
+        const saved = JSON.parse(localStorage.getItem(teamBestDataKey) || 'null');
+        const currentBest = saved ? saved.score : 0;
+
+        gameState.isTeamChallengeBest = gameState.totalScore > currentBest;
+
+        if (gameState.isTeamChallengeBest) {
+          const lineupArr = positions.map(pos => {
+            const p = gameState.lineup[pos];
+            return p ? { pos, team: p.team, name: p.name, score: p.score } : null;
+          }).filter(Boolean);
+          localStorage.setItem(teamBestDataKey, JSON.stringify({ score: gameState.totalScore, lineup: lineupArr }));
           localStorage.setItem(teamBestKey, String(gameState.totalScore));
         }
       }
@@ -4128,6 +4138,7 @@
             ${gameState.isDailyChallenge ? `<button class="end-btn-primary" onclick="challengeRival()">⚔️ Challenge a Rival</button>` : ''}
             <button class="end-btn-secondary" onclick="downloadShareCard()" style="width:100%;">🖼️ Share Card</button>
             <button class="end-btn-secondary" onclick="showLeaderboardModal()" style="width:100%;">📊 Pick History</button>
+            ${gameState.teamChallenge && !gameState.isTeamChallengeBest ? `<button class="end-btn-secondary" onclick="viewTeamBestLineup('${gameState.selectedTeam}')" style="width:100%;">🏆 View Best Lineup</button>` : ''}
             <button class="end-btn-ghost" onclick="location.href=location.pathname">Play Again</button>
           </div>
         </div>
@@ -4178,6 +4189,65 @@
       });
 
       try { buildShareCard(); } catch(e) { console.error('buildShareCard error:', e); }
+    }
+
+    function viewTeamBestLineup(teamName) {
+      const teamBestDataKey = 'tbn_team_best_data_' + teamName;
+      const saved = JSON.parse(localStorage.getItem(teamBestDataKey) || 'null');
+
+      if (!saved || !saved.lineup) {
+        alert('No best lineup found for ' + teamName);
+        return;
+      }
+
+      const totalTier = getScoreTier(Math.round(saved.score / 5));
+      const label = getScoreLabel(saved.score);
+
+      document.getElementById('gameSection').innerHTML = `
+        <div class="end-screen">
+          <div class="end-hero">
+            <div class="end-meta-tag">🏆 ${teamName} Best Lineup</div>
+            <div class="end-score-num ${totalTier}" data-target="${saved.score}">0</div>
+            <div class="end-tier-pill ${totalTier}">${label}</div>
+          </div>
+          <div class="end-players" id="resultPlayers"></div>
+          <div class="end-btns">
+            <button class="end-btn-secondary" onclick="downloadShareCard()" style="width:100%;">🖼️ Share Card</button>
+            <button class="end-btn-ghost" onclick="location.href=location.pathname">Back</button>
+          </div>
+        </div>
+      `;
+
+      const container = document.getElementById('resultPlayers');
+      const entries = positions.map(pos => {
+        const p = saved.lineup.find(entry => entry.pos === pos);
+        return { label: pos, player: p };
+      });
+      const verdicts = getGameVerdicts(saved.lineup.reduce((acc, p) => {
+        acc[p.pos] = { name: p.name, team: p.team, score: p.score };
+        return acc;
+      }, {}));
+
+      entries.forEach(({ label, player }) => {
+        if (!player) return;
+        try {
+          const card = buildPlayerCard(player.name, label, player.score, null, player.team);
+          if (verdicts && player.name === verdicts.best.name) card.classList.add('best-pick');
+          if (verdicts && verdicts.worst && player.name === verdicts.worst.name) card.classList.add('worst-pick');
+          container.appendChild(card);
+        } catch(e) {
+          console.error('buildPlayerCard error:', e);
+          const fallback = document.createElement('div');
+          const tier = getScoreTier(player.score);
+          fallback.className = `end-player-card ${tier}`;
+          fallback.innerHTML = `<div class="end-player-top"><span class="end-player-pos">${label}</span><div class="end-player-info"><span class="end-player-name">${player.name}</span></div><span class="end-player-score ${tier}">${player.score}</span></div><div class="end-player-bar-track"><div class="end-player-bar ${tier}" style="width:0%" data-width="${player.score}%"></div></div>`;
+          container.appendChild(fallback);
+        }
+      });
+
+      requestAnimationFrame(() => {
+        runEndScreenReveal();
+      });
     }
 
     function buildRivalComparison() {
