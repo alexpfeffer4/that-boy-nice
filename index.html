@@ -2225,7 +2225,7 @@
   </style>
 </head>
 <body>
-  <button class="help-btn" id="helpBtn" onclick="showHowToPlay()">?</button>
+  <button class="help-btn" id="helpBtn" onclick="showHowToPlay()" style="display:none">?</button>
 
 
   <div class="share-card-wrap" id="shareCardWrap"></div>
@@ -2691,6 +2691,7 @@
     }
 
     function initGame() {
+      document.getElementById('helpBtn').style.display = 'flex';
       // Hide total score during gameplay (suspense mode)
       const totalEl = document.querySelector('.formation-total');
       if (totalEl) totalEl.classList.add('hidden');
