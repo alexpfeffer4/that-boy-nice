@@ -13,9 +13,9 @@
       --tier-god-base:    #EF4444;
       --tier-great-base:  #FF6B35;
       --tier-good-base:   #43C59E;
-      --tier-mid-base:    #5B7FB5;
+      --tier-mid-base:    #4F6D9E;
       --tier-casual-base: #9CA3AF;
-      --tier-archival-base: #6366F1;
+      --tier-archival-base: #8B5CF6;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -667,8 +667,10 @@
     }
 
     .total {
+      font-family: 'Bebas Neue', sans-serif;
       font-size: 1.8rem;
-      font-weight: 900;
+      font-weight: 400;
+      letter-spacing: 1px;
       color: #FFD700;
     }
 
@@ -730,8 +732,10 @@
     }
 
     .end-score-num {
+      font-family: 'Bebas Neue', sans-serif;
       font-size: 5rem;
-      font-weight: 900;
+      font-weight: 400;
+      letter-spacing: 1px;
       line-height: 1;
       margin-bottom: 12px;
       position: relative;
@@ -761,6 +765,50 @@
     .end-tier-pill.tier-mid    { background: color-mix(in srgb, var(--tier-mid-base) 15%, transparent); color: var(--tier-mid-base); border: 1px solid color-mix(in srgb, var(--tier-mid-base) 35%, transparent); }
     .end-tier-pill.tier-casual { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.2); }
     .end-tier-pill.tier-archival { background: color-mix(in srgb, var(--tier-archival-base) 15%, transparent); color: var(--tier-archival-base); border: 1px solid color-mix(in srgb, var(--tier-archival-base) 35%, transparent); }
+
+    .end-verdict-hero {
+      display: flex;
+      gap: 10px;
+      margin: -4px 0 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .ev-col {
+      flex: 1;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      padding: 10px 12px;
+      text-align: left;
+    }
+
+    .ev-best {
+      border-left: 3px solid #FFD700;
+    }
+
+    .ev-worst {
+      border-left: 3px solid rgba(255,255,255,0.25);
+    }
+
+    .ev-cap {
+      display: block;
+      font-size: 0.62rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .ev-name {
+      display: block;
+      font-weight: 800;
+      font-size: 0.95rem;
+      margin-top: 3px;
+    }
+
+    .ev-val {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.5);
+    }
 
     .end-players {
       display: flex;
@@ -2069,7 +2117,7 @@
   <div class="container">
     <header>
       <h1>that boy nice</h1>
-      <p class="tagline" id="tagline">NBA Obscurity Lineup Challenge</p>
+      <p class="tagline" id="tagline">The deeper the cut, the higher the score</p>
       <p class="era-note">Players from 1976–present</p>
     </header>
 
@@ -3072,6 +3120,7 @@
       if (picks.length === 0) return null;
       const best = picks.reduce((a, b) => b.score > a.score ? b : a);
       const worst = picks.reduce((a, b) => b.score < a.score ? b : a);
+      if (picks.length < 2 || best.score === worst.score) return { best, worst: null };
       return { best, worst };
     }
 
@@ -3501,6 +3550,7 @@
             <div class="end-score-num ${totalTier}" data-target="${gameState.totalScore}">0</div>
             <div class="end-tier-pill ${totalTier}">${label}</div>
           </div>
+          <div id="verdictBlock"></div>
           <div class="end-players" id="resultPlayers"></div>
           ${rivalHTML}
           <div class="end-btns">
@@ -3518,12 +3568,31 @@
       const entries = positions.map(pos => ({ label: pos, player: gameState.lineup[pos] }));
       const verdicts = getGameVerdicts(gameState.lineup);
 
+      // Render verdict block
+      if (verdicts) {
+        const verdictHTML = `
+          <div class="end-verdict-hero">
+            <div class="ev-col ev-best">
+              <span class="ev-cap">🔥 Deepest cut</span>
+              <span class="ev-name">${verdicts.best.name}</span>
+              <span class="ev-val">${verdicts.best.score}</span>
+            </div>
+            ${verdicts.worst ? `<div class="ev-col ev-worst">
+              <span class="ev-cap">😬 Most obvious</span>
+              <span class="ev-name">${verdicts.worst.name}</span>
+              <span class="ev-val">${verdicts.worst.score}</span>
+            </div>` : ''}
+          </div>
+        `;
+        document.getElementById('verdictBlock').innerHTML = verdictHTML;
+      }
+
       entries.forEach(({ label, player }) => {
         if (!player) return;
         try {
           const card = buildPlayerCard(player.name, label, player.score, null, player.team);
           if (verdicts && player.name === verdicts.best.name) card.classList.add('best-pick');
-          if (verdicts && player.name === verdicts.worst.name) card.classList.add('worst-pick');
+          if (verdicts && verdicts.worst && player.name === verdicts.worst.name) card.classList.add('worst-pick');
           container.appendChild(card);
         } catch(e) {
           console.error('buildPlayerCard error:', e);
@@ -3685,7 +3754,7 @@
     }
 
     function shareResult() {
-      const tierEmoji = { 'tier-god': '🔥', 'tier-great': '💎', 'tier-good': '🎯', 'tier-mid': '📺', 'tier-casual': '😬', 'tier-archival': '📦' };
+      const tierEmoji = { 'tier-god': '🟥', 'tier-great': '🟧', 'tier-good': '🟩', 'tier-mid': '🟦', 'tier-casual': '⬜', 'tier-archival': '🟪' };
       const emojiGrid = positions
         .filter(pos => gameState.lineup[pos])
         .map(pos => tierEmoji[getScoreTier(gameState.lineup[pos].score)])
@@ -3693,7 +3762,11 @@
       const label = getScoreLabel(gameState.totalScore);
       const dateTag = gameState.isDailyChallenge ? ` · ${getTodayString()}` : '';
       const modeTag = gameState.gameMode === 'oldhead' ? 'Classic' : 'Timeless';
-      const shareText = `that boy nice 🏀${dateTag} [${modeTag}]\n${label}\nScore: ${gameState.totalScore}\n\n${emojiGrid}\n\nthatboynice.vercel.app`;
+      const verdicts = getGameVerdicts(gameState.lineup);
+      const verdictLine = verdicts && verdicts.worst
+        ? `\n🔥 ${verdicts.best.name} ${verdicts.best.score} · 😬 ${verdicts.worst.name} ${verdicts.worst.score}`
+        : verdicts ? `\n🔥 ${verdicts.best.name} ${verdicts.best.score}` : '';
+      const shareText = `that boy nice 🏀${dateTag} [${modeTag}]\n${label}\nScore: ${gameState.totalScore}\n\n${emojiGrid}${verdictLine}\n\nthatboynice.vercel.app`;
 
       if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
         navigator.share({ title: 'that boy nice 🏀', text: shareText }).catch(() => {
