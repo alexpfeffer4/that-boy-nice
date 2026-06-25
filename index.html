@@ -3210,10 +3210,8 @@
           slot.className = 'formation-slot' + (player ? ' filled' : '') + (isActive ? ' active' : '');
           if (player) {
             slot.innerHTML =
-              '<div class="formation-pos-label">' + shortTeamName(team) + '</div>' +
+              '<div class="formation-pos-label">' + pos + '</div>' +
               '<div class="formation-player-name">' + player.name + '</div>';
-          } else if (team) {
-            slot.innerHTML = '<div class="formation-pos-label">' + shortTeamName(team) + '</div>';
           } else {
             slot.innerHTML = '<div class="formation-pos-label">' + pos + '</div>';
           }
