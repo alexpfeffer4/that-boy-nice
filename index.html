@@ -2686,7 +2686,17 @@
       const totalEl = document.querySelector('.formation-total');
       if (totalEl) totalEl.classList.add('hidden');
 
-      if (gameState.isDailyChallenge) {
+      if (gameState.teamChallenge) {
+        // Team challenge: show selected team, no spin wheel
+        buildReel();
+        document.getElementById('currentTeam').textContent = gameState.selectedTeam;
+        document.getElementById('positionLabel').textContent = 'Build your roster';
+        document.getElementById('spinBtn').style.display = 'none';
+        document.getElementById('respinBtn').style.display = 'none';
+        document.getElementById('playerInput').disabled = false;
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('playerInput').focus();
+      } else if (gameState.isDailyChallenge) {
         // Daily challenge: first team already loaded, ready for input
         document.getElementById('playerInput').disabled = false;
         document.getElementById('submitBtn').disabled = false;
