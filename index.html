@@ -3526,12 +3526,35 @@
     function downloadShareCard() {
       const card = document.getElementById('shareCard');
       if (!card || typeof html2canvas === 'undefined') return;
+      const btn = document.querySelector('[onclick="downloadShareCard()"]');
+      if (btn) btn.textContent = '⏳ Generating...';
       html2canvas(card, { backgroundColor: '#1a1a2e', scale: 2 }).then(canvas => {
-        const a = document.createElement('a');
-        a.download = `tbn-${getTodayString()}.png`;
-        a.href = canvas.toDataURL('image/png');
-        a.click();
+        const filename = `tbn-${getTodayString()}.png`;
+        const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
+        if (isMobile && navigator.canShare) {
+          canvas.toBlob(blob => {
+            const file = new File([blob], filename, { type: 'image/png' });
+            if (navigator.canShare({ files: [file] })) {
+              navigator.share({ files: [file], title: 'that boy nice 🏀' })
+                .catch(() => fallbackDownload(canvas, filename))
+                .finally(() => { if (btn) btn.textContent = '🖼️ Share Card'; });
+            } else {
+              fallbackDownload(canvas, filename);
+              if (btn) btn.textContent = '🖼️ Share Card';
+            }
+          }, 'image/png');
+        } else {
+          fallbackDownload(canvas, filename);
+          if (btn) btn.textContent = '🖼️ Share Card';
+        }
       });
+    }
+
+    function fallbackDownload(canvas, filename) {
+      const a = document.createElement('a');
+      a.download = filename;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
     }
 
     function shareResult() {
