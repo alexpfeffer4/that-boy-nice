@@ -380,6 +380,35 @@
       100% { transform: scale(1);    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
     }
 
+    @keyframes slot-stamp {
+      0%   { transform: scale(0.9); opacity: 0.4; }
+      60%  { transform: scale(1.04); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .formation-slot.just-filled {
+      animation: slot-stamp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes msg-in {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .success, .error {
+      animation: msg-in 0.2s ease-out;
+    }
+
+    @keyframes input-shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    .input-group.shake {
+      animation: input-shake 0.3s ease-out;
+    }
+
     .reel-window.active-spin {
       border-color: rgba(102,126,234,0.8);
       box-shadow: inset 0 4px 8px rgba(0,0,0,0.7), 0 0 24px rgba(102,126,234,0.4);
@@ -1001,7 +1030,7 @@
     .ep-badge.badge-tier-role      { background: rgba(156,163,175,0.14);color: #9CA3AF; border: 1px solid rgba(156,163,175,0.3); }
     .ep-badge.badge-tier-cup       { background: rgba(156,163,175,0.08);color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.12); }
     .ep-badge.badge-claim          { background: rgba(255,255,255,0.06);color: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.15); }
-    .ep-badge.badge-era            { background: rgba(167,139,250,0.1); color: #A78BFA; border: 1px solid rgba(167,139,250,0.22); }
+    .ep-badge.badge-era            { background: rgba(125,211,252,0.12); color: #7DD3FC; border: 1px solid rgba(125,211,252,0.3); }
 
     .end-btn-primary {
       width: 100%;
@@ -1642,6 +1671,34 @@
     }
 
     .rival-btn:hover { opacity: 0.88; }
+
+    @media (max-width: 680px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .formation-panel {
+        order: -1;
+      }
+
+      .game-controls-panel {
+        order: 1;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .formation-grid {
+        grid-template-areas:
+          "pg sg"
+          "sf pf"
+          "c c";
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .formation-slot {
+        min-height: 70px;
+      }
+    }
 
     @media (max-width: 480px) {
       body {
@@ -2916,6 +2973,15 @@
       updateLineup();
       updateScore();
 
+      // Trigger slot-stamp animation (skip if prefers-reduced-motion)
+      if (!REDUCE) {
+        const slot = document.getElementById('slot-' + position);
+        if (slot) {
+          slot.classList.add('just-filled');
+          setTimeout(() => slot.classList.remove('just-filled'), 300);
+        }
+      }
+
       const tier = getScoreTier(score);
       const grouped = groupBreakdown(breakdown);
       let breakdownHTML = '';
@@ -3248,6 +3314,13 @@
         updateLivesDisplay();
         messageEl.innerHTML = `<div class="error">❌ Not found on ${gameState.currentTeam} (${gameState.lives} lives left)</div>`;
 
+        // Shake animation for wrong answer
+        if (!REDUCE) {
+          const inputGroup = document.getElementById('playerInput').parentElement;
+          inputGroup.classList.add('shake');
+          setTimeout(() => inputGroup.classList.remove('shake'), 300);
+        }
+
         if (gameState.lives <= 0) {
           setTimeout(() => {
             document.getElementById('gameSection').innerHTML = `
@@ -3255,7 +3328,7 @@
                 <div class="end-hero">
                   <div class="end-meta-tag">💔 Game Over</div>
                   <div class="end-score-num tier-casual">${gameState.totalScore}</div>
-                  <div class="end-tier-pill tier-casual">${Object.keys(gameState.lineup).length}/5 positions filled</div>
+                  <div class="end-tier-pill tier-casual">${(() => { const filled = Object.keys(gameState.lineup).length; return filled === 0 ? 'Rough night, big dog' : filled <= 2 ? 'SO close — one name away' : filled === 4 ? 'So close' : 'Tough break'; })()}</div>
                 </div>
                 <button class="end-btn-ghost" style="margin-top:16px" onclick="location.href=location.pathname">Play Again</button>
               </div>
@@ -3274,6 +3347,13 @@
         updateLivesDisplay();
         messageEl.innerHTML = `<div class="error">❌ No available position slots (${gameState.lives} lives left)</div>`;
 
+        // Shake animation for wrong answer
+        if (!REDUCE) {
+          const inputGroup = document.getElementById('playerInput').parentElement;
+          inputGroup.classList.add('shake');
+          setTimeout(() => inputGroup.classList.remove('shake'), 300);
+        }
+
         if (gameState.lives <= 0) {
           setTimeout(() => {
             document.getElementById('gameSection').innerHTML = `
@@ -3281,7 +3361,7 @@
                 <div class="end-hero">
                   <div class="end-meta-tag">💔 Game Over</div>
                   <div class="end-score-num tier-casual">${gameState.totalScore}</div>
-                  <div class="end-tier-pill tier-casual">${Object.keys(gameState.lineup).length}/5 positions filled</div>
+                  <div class="end-tier-pill tier-casual">${(() => { const filled = Object.keys(gameState.lineup).length; return filled === 0 ? 'Rough night, big dog' : filled <= 2 ? 'SO close — one name away' : filled === 4 ? 'So close' : 'Tough break'; })()}</div>
                 </div>
                 <button class="end-btn-ghost" style="margin-top:16px" onclick="location.href=location.pathname">Play Again</button>
               </div>
@@ -3655,16 +3735,17 @@
 
     function buildShareCard() {
       const label = getScoreLabel(gameState.totalScore);
-      const tierColors = { 'tier-god': '#EF4444', 'tier-great': '#FF6B35', 'tier-good': '#43C59E', 'tier-mid': '#5B7FB5', 'tier-casual': '#9CA3AF', 'tier-archival': '#6366F1' };
+      const tierColors = { 'tier-god': '#EF4444', 'tier-great': '#FF6B35', 'tier-good': '#43C59E', 'tier-mid': '#4F6D9E', 'tier-casual': '#9CA3AF', 'tier-archival': '#8B5CF6' };
       const badgeColors = {
         'badge-tier-legend':  { bg: 'rgba(239,68,68,0.18)',   color: '#EF4444',  border: 'rgba(239,68,68,0.4)' },
         'badge-tier-star':    { bg: 'rgba(255,107,53,0.18)',  color: '#FF6B35',  border: 'rgba(255,107,53,0.4)' },
         'badge-tier-allstar': { bg: 'rgba(67,197,158,0.18)',  color: '#43C59E',  border: 'rgba(67,197,158,0.4)' },
         'badge-tier-great':   { bg: 'rgba(255,107,53,0.18)',  color: '#FF6B35',  border: 'rgba(255,107,53,0.4)' },
-        'badge-tier-solid':   { bg: 'rgba(91,127,181,0.18)',  color: '#5B7FB5',  border: 'rgba(91,127,181,0.4)' },
+        'badge-tier-solid':   { bg: 'rgba(79,109,158,0.18)',  color: '#4F6D9E',  border: 'rgba(79,109,158,0.4)' },
         'badge-tier-role':    { bg: 'rgba(156,163,175,0.18)', color: '#9CA3AF',  border: 'rgba(156,163,175,0.4)' },
         'badge-tier-cup':     { bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)', border: 'rgba(255,255,255,0.15)' },
         'badge-claim':        { bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.65)', border: 'rgba(255,255,255,0.15)' },
+        'badge-era':          { bg: 'rgba(125,211,252,0.12)', color: '#7DD3FC', border: 'rgba(125,211,252,0.3)' },
       };
       const rows = positions.filter(pos => gameState.lineup[pos]).map(pos => {
         const p = gameState.lineup[pos];
