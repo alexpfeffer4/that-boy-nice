@@ -3536,6 +3536,12 @@
       }
 
       const franchisePlayers = players[gameState.currentTeam];
+
+      if (!franchisePlayers) {
+        messageEl.innerHTML = `<div class="error">❌ Team not found: ${gameState.currentTeam}</div>`;
+        return;
+      }
+
       const matched = fuzzyMatchPlayer(input, franchisePlayers);
 
       if (!matched) {
