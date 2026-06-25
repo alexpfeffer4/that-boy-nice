@@ -1752,6 +1752,7 @@
     .end-btns {
       display: flex;
       flex-direction: column;
+      gap: 10px;
       margin-top: 20px;
     }
 
@@ -3116,7 +3117,8 @@
       const content = document.getElementById('leaderboardContent');
       const picks = getPlayerPickCounts();
       const sorted = Object.entries(picks)
-        .sort(function(a, b) { return b[1] - a[1]; });
+        .sort(function(a, b) { return b[1] - a[1]; })
+        .slice(0, 10);
 
       if (sorted.length === 0) {
         content.innerHTML = '<p style="color:rgba(255,255,255,0.6);margin:20px 0;">No picks yet. Start a game to track your favorite players!</p>';
@@ -3786,8 +3788,9 @@
       const eraLine = [era, playerPos].filter(Boolean).join(' · ');
 
       if (gameState.gameMode === 'oldhead' && playerObj && playerObj.lastSeason) {
-        const yearsAgo = 2026 - playerObj.lastSeason;
-        const eraLabel = yearsAgo <= 0 ? 'Active' : yearsAgo <= 2 ? 'Just Retired' : yearsAgo <= 4 ? 'New School' : 'Old School';
+        const first = playerObj.firstSeason || playerObj.lastSeason;
+        const mid = Math.round((first + playerObj.lastSeason) / 2);
+        const eraLabel = mid >= 2020 ? 'Current Era' : mid >= 2010 ? '2010s' : mid >= 2000 ? '2000s' : mid >= 1990 ? '90s' : mid >= 1980 ? '80s' : '70s';
         badges.push({ label: eraLabel, type: 'badge-era' });
       }
 
