@@ -2345,7 +2345,7 @@
 
           <div class="input-group">
             <div class="autocomplete-wrapper">
-              <input type="text" id="playerInput" placeholder="Enter player name" disabled autocomplete="off" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false">
+              <input type="text" id="playerInput" placeholder="Enter player name" disabled autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="none" data-lpignore="true">
               <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
             </div>
             <button class="submit-btn" id="submitBtn" disabled>SUBMIT</button>
@@ -3007,25 +3007,16 @@
       }
 
       const normalized = removeAccents(input.toLowerCase());
-      let searchPlayers = [];
-
-      if (gameState.teamChallenge) {
-        // In team challenge, only search the selected team's players
-        searchPlayers = players[gameState.selectedTeam] || [];
-      } else {
-        // In other modes, search all players
-        const allPlayers = {};
-        for (const team in players) {
-          players[team].forEach(p => {
-            if (!allPlayers[p.name]) {
-              allPlayers[p.name] = p;
-            }
-          });
-        }
-        searchPlayers = Object.values(allPlayers);
+      const allPlayers = {};
+      for (const team in players) {
+        players[team].forEach(p => {
+          if (!allPlayers[p.name]) {
+            allPlayers[p.name] = p;
+          }
+        });
       }
 
-      const matches = searchPlayers
+      const matches = Object.values(allPlayers)
         .filter(p => removeAccents(p.name.toLowerCase()).includes(normalized))
         .slice(0, 8);
 
