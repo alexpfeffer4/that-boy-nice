@@ -3550,28 +3550,35 @@
     function downloadShareCard() {
       const card = document.getElementById('shareCard');
       if (!card || typeof html2canvas === 'undefined') return;
-      const btn = document.querySelector('[onclick="downloadShareCard()"]');
-      if (btn) btn.textContent = '⏳ Generating...';
-      html2canvas(card, { backgroundColor: '#1a1a2e', scale: 2 }).then(canvas => {
+      const btns = document.querySelectorAll('[onclick="downloadShareCard()"]');
+      btns.forEach(b => b.textContent = '⏳ Generating...');
+      html2canvas(card, { backgroundColor: '#1a1a2e', scale: 2, useCORS: true, logging: false }).then(canvas => {
         const filename = `tbn-${getTodayString()}.png`;
-        const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
-        if (isMobile && navigator.canShare) {
-          canvas.toBlob(blob => {
-            const file = new File([blob], filename, { type: 'image/png' });
-            if (navigator.canShare({ files: [file] })) {
-              navigator.share({ files: [file], title: 'that boy nice 🏀' })
-                .catch(() => fallbackDownload(canvas, filename))
-                .finally(() => { if (btn) btn.textContent = '🖼️ Share Card'; });
-            } else {
-              fallbackDownload(canvas, filename);
-              if (btn) btn.textContent = '🖼️ Share Card';
-            }
-          }, 'image/png');
-        } else {
-          fallbackDownload(canvas, filename);
-          if (btn) btn.textContent = '🖼️ Share Card';
-        }
+        canvas.toBlob(blob => {
+          const file = new File([blob], filename, { type: 'image/png' });
+          const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
+          // Try native share sheet first (mobile) — lets user send via iMessage, etc.
+          if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file], title: 'that boy nice 🏀' })
+              .catch(() => tryCopyThenDownload(blob, canvas, filename, btns))
+              .finally(() => btns.forEach(b => b.textContent = '🖼️ Share Card'));
+          } else {
+            // Try clipboard image copy, fall back to download
+            tryCopyThenDownload(blob, canvas, filename, btns);
+          }
+        }, 'image/png');
       });
+    }
+
+    function tryCopyThenDownload(blob, canvas, filename, btns) {
+      if (navigator.clipboard && window.ClipboardItem) {
+        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+          .then(() => btns.forEach(b => { b.textContent = '✓ Image copied!'; setTimeout(() => b.textContent = '🖼️ Share Card', 2500); }))
+          .catch(() => { fallbackDownload(canvas, filename); btns.forEach(b => b.textContent = '🖼️ Share Card'); });
+      } else {
+        fallbackDownload(canvas, filename);
+        btns.forEach(b => b.textContent = '🖼️ Share Card');
+      }
     }
 
     function fallbackDownload(canvas, filename) {
