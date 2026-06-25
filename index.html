@@ -2602,17 +2602,20 @@
     function startPractice() {
       document.getElementById('startOptions').style.display = 'none';
       document.getElementById('modeSelectScreen').style.display = 'block';
+      document.getElementById('helpBtn').style.display = 'none';
     }
 
     function showStartOptions() {
       document.getElementById('modeSelectScreen').style.display = 'none';
       document.getElementById('teamSelectScreen').style.display = 'none';
       document.getElementById('startOptions').style.display = 'flex';
+      document.getElementById('helpBtn').style.display = 'flex';
     }
 
     function showTeamSelector() {
       document.getElementById('startOptions').style.display = 'none';
       document.getElementById('teamSelectScreen').style.display = 'block';
+      document.getElementById('helpBtn').style.display = 'none';
       updateTeamSelectorGrid();
     }
 
