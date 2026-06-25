@@ -1385,14 +1385,14 @@
 
     .start-screen {
       text-align: center;
-      padding: 20px 0;
+      padding: 24px;
     }
 
     .start-options {
       display: flex;
       flex-direction: column;
       gap: 14px;
-      margin-top: 40px;
+      margin-top: 0;
       max-width: 420px;
       margin-left: auto;
       margin-right: auto;
@@ -1401,41 +1401,42 @@
     .start-btn {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
       gap: 6px;
       padding: 18px 20px;
       border-radius: 10px;
-      border-left: 3px solid;
-      border: none;
-      border-left: 3px solid;
-      background: rgba(255,255,255,0.03);
       font-size: 1.15rem;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.15s ease-out;
-      color: #fff;
-      text-align: left;
+      text-align: center;
     }
 
     .start-btn:hover {
-      background: rgba(255,255,255,0.06);
-      transform: translateX(4px);
+      transform: translateY(-2px);
     }
 
     .daily-btn {
-      border-left-color: #FFD700;
+      background: rgba(255,240,180,0.09);
+      border: 2px solid rgba(255,215,0,0.55);
+      color: #FFD700;
     }
 
     .daily-btn:hover {
-      box-shadow: inset 0 0 20px rgba(255,215,0,0.1);
+      background: rgba(255,240,180,0.14);
+      border-color: rgba(255,215,0,0.85);
+      box-shadow: 0 4px 24px rgba(255,215,0,0.22);
     }
 
     .free-play-btn {
-      border-left-color: #7DD3FC;
+      background: rgba(125,211,252,0.14);
+      border: 1px solid rgba(125,211,252,0.5);
+      color: #7DD3FC;
     }
 
     .free-play-btn:hover {
-      box-shadow: inset 0 0 20px rgba(125,211,252,0.1);
+      background: rgba(125,211,252,0.22);
+      box-shadow: 0 4px 20px rgba(125,211,252,0.2);
     }
 
     .mode-select-title {
@@ -1454,31 +1455,31 @@
     }
 
     .mode-oldhead-btn {
-      background: rgba(255,210,0,0.08);
+      background: rgba(255,210,0,0.12);
       color: #ffd700;
-      border: 2px solid rgba(255,210,0,0.6);
+      border: 2px solid rgba(255,210,0,0.7);
       border-left: 4px solid #ffd700;
     }
 
     .mode-oldhead-btn:hover {
-      background: rgba(255,210,0,0.15);
-      border-color: rgba(255,210,0,0.9);
+      background: rgba(255,210,0,0.2);
+      border-color: #ffd700;
       border-left-color: #ffd700;
-      box-shadow: 0 0 24px rgba(255,210,0,0.3);
+      box-shadow: 0 0 24px rgba(255,210,0,0.4);
     }
 
     .mode-classic-btn {
-      background: rgba(125,211,252,0.08);
+      background: rgba(125,211,252,0.12);
       color: #7dd3fc;
-      border: 2px solid rgba(125,211,252,0.6);
+      border: 2px solid rgba(125,211,252,0.7);
       border-left: 4px solid #7dd3fc;
     }
 
     .mode-classic-btn:hover {
-      background: rgba(125,211,252,0.15);
-      border-color: rgba(125,211,252,0.9);
+      background: rgba(125,211,252,0.2);
+      border-color: #7dd3fc;
       border-left-color: #7dd3fc;
-      box-shadow: 0 0 24px rgba(125,211,252,0.35);
+      box-shadow: 0 0 24px rgba(125,211,252,0.4);
     }
 
     .mode-back-btn {
