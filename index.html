@@ -2688,6 +2688,7 @@
 
       if (gameState.teamChallenge) {
         // Team challenge: show selected team, no spin wheel
+        gameState.hasSpun = true;
         document.getElementById('currentTeam').textContent = gameState.selectedTeam;
         document.getElementById('reelDisplay').src = getTeamLogo(gameState.selectedTeam);
         document.getElementById('positionLabel').textContent = 'Build your roster';
