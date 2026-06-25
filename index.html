@@ -18,6 +18,17 @@
       --tier-archival-base: #6366F1;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      *,*::before,*::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+      }
+      .formation-slot.active {
+        animation: none;
+      }
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -396,6 +407,19 @@
     button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0) scale(0.97);
+      transition-duration: 0.05s;
+    }
+
+    .start-btn:active {
+      transform: scale(0.97);
+    }
+
+    .spin-btn:active:not(:disabled) {
+      transform: scale(0.96);
     }
 
     .controls {
@@ -922,7 +946,7 @@
       border-radius: 20px;
       text-transform: uppercase;
     }
-    .ep-badge.badge-tier-legend    { background: rgba(255,215,0,0.14);  color: #FFD700; border: 1px solid rgba(255,215,0,0.3); }
+    .ep-badge.badge-tier-legend    { background: rgba(239,68,68,0.14);  color: #EF4444; border: 1px solid rgba(239,68,68,0.3); }
     .ep-badge.badge-tier-star      { background: rgba(255,107,53,0.14); color: #FF6B35; border: 1px solid rgba(255,107,53,0.3); }
     .ep-badge.badge-tier-allstar   { background: rgba(67,197,158,0.14); color: #43C59E; border: 1px solid rgba(67,197,158,0.3); }
     .ep-badge.badge-tier-solid     { background: rgba(91,127,181,0.14); color: #5B7FB5; border: 1px solid rgba(91,127,181,0.3); }
@@ -1771,8 +1795,10 @@
       }
 
       .move-btn {
-        padding: 2px 5px;
-        font-size: 0.55rem;
+        padding: 6px 12px;
+        font-size: 0.7rem;
+        min-height: 32px;
+        margin-top: 4px;
       }
 
       /* Breakdown tooltip */
@@ -2985,6 +3011,7 @@
       return gameState.teams[Math.floor(Math.random() * gameState.teams.length)];
     }
 
+    const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const positions = ['PG', 'SG', 'SF', 'PF', 'C'];
     function getTeamLogo(teamName) {
       // ESPN CDN abbreviations — all verified returning 200
@@ -3274,7 +3301,7 @@
         if (player) {
           const hasOtherPositions = player.positions && player.positions.length > 1;
           const moveBtn = hasOtherPositions
-            ? '<button class="move-btn" onclick="movePlayer(\'' + pos + '\')" style="margin-top:4px;font-size:0.6rem;padding:2px 5px;">Move</button>'
+            ? '<button class="move-btn" onclick="movePlayer(\'' + pos + '\')" >Move</button>'
             : '';
           slot.innerHTML =
             '<div class="formation-pos-label">' + pos + '</div>' +
@@ -3561,7 +3588,7 @@
       const label = getScoreLabel(gameState.totalScore);
       const tierColors = { 'tier-god': '#EF4444', 'tier-great': '#FF6B35', 'tier-good': '#43C59E', 'tier-mid': '#5B7FB5', 'tier-casual': '#9CA3AF', 'tier-archival': '#6366F1' };
       const badgeColors = {
-        'badge-tier-legend':  { bg: 'rgba(255,215,0,0.18)',   color: '#FFD700',  border: 'rgba(255,215,0,0.4)' },
+        'badge-tier-legend':  { bg: 'rgba(239,68,68,0.18)',   color: '#EF4444',  border: 'rgba(239,68,68,0.4)' },
         'badge-tier-star':    { bg: 'rgba(255,107,53,0.18)',  color: '#FF6B35',  border: 'rgba(255,107,53,0.4)' },
         'badge-tier-allstar': { bg: 'rgba(67,197,158,0.18)',  color: '#43C59E',  border: 'rgba(67,197,158,0.4)' },
         'badge-tier-great':   { bg: 'rgba(255,107,53,0.18)',  color: '#FF6B35',  border: 'rgba(255,107,53,0.4)' },
