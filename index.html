@@ -2795,8 +2795,7 @@
       const score = calculateObscurityScore(player);
       const breakdown = getScoreBreakdown(player);
 
-      const key = gameState.isDailyChallenge ? gameState.currentTeam : position;
-      gameState.lineup[key] = {
+      gameState.lineup[position] = {
         name: player.name,
         positions: player.positions,
         team: gameState.currentTeam,
@@ -3153,41 +3152,34 @@
 
       const playerPositions = matched.positions || ['G'];
 
-      if (gameState.isDailyChallenge) {
-        // In daily challenge, use player's primary position for display
-        const position = playerPositions[0];
-        addPlayerToLineup(matched, position);
-      } else {
-        // In free play, let player choose if multiple positions available
-        const availablePositions = playerPositions.filter(pos => !gameState.lineup[pos]);
+      const availablePositions = playerPositions.filter(pos => !gameState.lineup[pos]);
 
-        if (availablePositions.length === 0) {
-          gameState.lives--;
-          updateLivesDisplay();
-          messageEl.innerHTML = `<div class="error">❌ No available position slots (${gameState.lives} lives left)</div>`;
+      if (availablePositions.length === 0) {
+        gameState.lives--;
+        updateLivesDisplay();
+        messageEl.innerHTML = `<div class="error">❌ No available position slots (${gameState.lives} lives left)</div>`;
 
-          if (gameState.lives <= 0) {
-            setTimeout(() => {
-              document.getElementById('gameSection').innerHTML = `
-                <div class="end-screen">
-                  <div class="end-hero">
-                    <div class="end-meta-tag">💔 Game Over</div>
-                    <div class="end-score-num tier-casual">${gameState.totalScore}</div>
-                    <div class="end-tier-pill tier-casual">${Object.keys(gameState.lineup).length}/5 positions filled</div>
-                  </div>
-                  <button class="end-btn-ghost" style="margin-top:16px" onclick="location.href=location.pathname">Play Again</button>
+        if (gameState.lives <= 0) {
+          setTimeout(() => {
+            document.getElementById('gameSection').innerHTML = `
+              <div class="end-screen">
+                <div class="end-hero">
+                  <div class="end-meta-tag">💔 Game Over</div>
+                  <div class="end-score-num tier-casual">${gameState.totalScore}</div>
+                  <div class="end-tier-pill tier-casual">${Object.keys(gameState.lineup).length}/5 positions filled</div>
                 </div>
-              `;
-            }, 1500);
-          }
-          return;
+                <button class="end-btn-ghost" style="margin-top:16px" onclick="location.href=location.pathname">Play Again</button>
+              </div>
+            `;
+          }, 1500);
         }
+        return;
+      }
 
-        if (availablePositions.length === 1) {
-          addPlayerToLineup(matched, availablePositions[0]);
-        } else {
-          showPositionModal(matched);
-        }
+      if (availablePositions.length === 1) {
+        addPlayerToLineup(matched, availablePositions[0]);
+      } else {
+        showPositionModal(matched);
       }
     }
 
@@ -3207,44 +3199,24 @@
     }
 
     function updateLineup() {
-      const formationPositions = ['PG', 'SG', 'SF', 'PF', 'C'];
-      if (gameState.isDailyChallenge) {
-        formationPositions.forEach(function(pos, idx) {
-          const slot = document.getElementById('slot-' + pos);
-          if (!slot) return;
-          const team = gameState.dailyTeams[idx];
-          const player = team ? gameState.lineup[team] : null;
-          const isActive = idx === gameState.dailyTeamIndex && !player;
-          slot.className = 'formation-slot' + (player ? ' filled' : '') + (isActive ? ' active' : '');
-          if (player) {
-            const playerPos = (player.positions && player.positions[0]) || pos;
-            slot.innerHTML =
-              '<div class="formation-pos-label">' + playerPos + '</div>' +
-              '<div class="formation-player-name">' + player.name + '</div>';
-          } else {
-            slot.innerHTML = '<div class="formation-pos-label">' + pos + '</div>';
-          }
-        });
-      } else {
-        positions.forEach(function(pos) {
-          const slot = document.getElementById('slot-' + pos);
-          if (!slot) return;
-          const player = gameState.lineup[pos];
-          slot.className = 'formation-slot' + (player ? ' filled' : '');
-          if (player) {
-            const hasOtherPositions = player.positions && player.positions.length > 1;
-            const moveBtn = hasOtherPositions
-              ? '<button class="move-btn" onclick="movePlayer(\'' + pos + '\')" style="margin-top:4px;font-size:0.6rem;padding:2px 5px;">Move</button>'
-              : '';
-            slot.innerHTML =
-              '<div class="formation-pos-label">' + pos + '</div>' +
-              '<div class="formation-player-name">' + player.name + '</div>' +
-              moveBtn;
-          } else {
-            slot.innerHTML = '<div class="formation-pos-label">' + pos + '</div>';
-          }
-        });
-      }
+      positions.forEach(function(pos) {
+        const slot = document.getElementById('slot-' + pos);
+        if (!slot) return;
+        const player = gameState.lineup[pos];
+        slot.className = 'formation-slot' + (player ? ' filled' : '');
+        if (player) {
+          const hasOtherPositions = !gameState.isDailyChallenge && player.positions && player.positions.length > 1;
+          const moveBtn = hasOtherPositions
+            ? '<button class="move-btn" onclick="movePlayer(\'' + pos + '\')" style="margin-top:4px;font-size:0.6rem;padding:2px 5px;">Move</button>'
+            : '';
+          slot.innerHTML =
+            '<div class="formation-pos-label">' + pos + '</div>' +
+            '<div class="formation-player-name">' + player.name + '</div>' +
+            moveBtn;
+        } else {
+          slot.innerHTML = '<div class="formation-pos-label">' + pos + '</div>';
+        }
+      });
     }
 
     function updateScore() {
@@ -3378,9 +3350,9 @@
       const totalTier = getScoreTier(Math.round(gameState.totalScore / 5));
 
       if (gameState.isDailyChallenge) {
-        const lineupArr = gameState.dailyTeams.slice(0, 5).map(team => {
-          const p = gameState.lineup[team];
-          return p ? { team, name: p.name, score: p.score } : null;
+        const lineupArr = positions.map(pos => {
+          const p = gameState.lineup[pos];
+          return p ? { team: p.team, name: p.name, score: p.score } : null;
         }).filter(Boolean);
         localStorage.setItem(`tbn_daily_${getTodayString()}`, JSON.stringify({ score: gameState.totalScore, label, lineup: lineupArr }));
 
@@ -3441,9 +3413,7 @@
       `;
 
       const container = document.getElementById('resultPlayers');
-      const entries = gameState.isDailyChallenge
-        ? gameState.dailyTeams.slice(0, 5).map(team => ({ label: team, player: gameState.lineup[team] }))
-        : positions.map(pos => ({ label: pos, player: gameState.lineup[pos] }));
+      const entries = positions.map(pos => ({ label: pos, player: gameState.lineup[pos] }));
 
       entries.forEach(({ label, player }) => {
         if (!player) return;
