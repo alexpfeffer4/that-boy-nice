@@ -3007,16 +3007,25 @@
       }
 
       const normalized = removeAccents(input.toLowerCase());
-      const allPlayers = {};
-      for (const team in players) {
-        players[team].forEach(p => {
-          if (!allPlayers[p.name]) {
-            allPlayers[p.name] = p;
-          }
-        });
+      let searchPlayers = [];
+
+      if (gameState.teamChallenge) {
+        // In team challenge, only search the selected team's players
+        searchPlayers = players[gameState.selectedTeam] || [];
+      } else {
+        // In other modes, search all players
+        const allPlayers = {};
+        for (const team in players) {
+          players[team].forEach(p => {
+            if (!allPlayers[p.name]) {
+              allPlayers[p.name] = p;
+            }
+          });
+        }
+        searchPlayers = Object.values(allPlayers);
       }
 
-      const matches = Object.values(allPlayers)
+      const matches = searchPlayers
         .filter(p => removeAccents(p.name.toLowerCase()).includes(normalized))
         .slice(0, 8);
 
