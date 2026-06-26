@@ -248,13 +248,21 @@ def scrape_season(year: int, players: dict) -> int:
                 'allNBA1': 0, 'allNBA2': 0, 'allNBA3': 0,
                 'allDef1': 0, 'allDef2': 0, 'undrafted': False,
                 'firstSeason': year, 'lastSeason': year,
-                'gamesStarted': 0, 'seasons20ppg': 0
+                'gamesStarted': 0, 'seasons20ppg': 0,
+                'franchise_games': {}
             }
 
         p = players[pid]
         p['games'] += season_g
         p['gamesStarted'] += season_gs
         p['vorp'] += season_vorp
+
+        # Accumulate per-franchise game counts from individual team rows
+        team_rows = [r for r in rows if not NTM_RE.match(r['team'])]
+        for r in team_rows:
+            fr = ABBR_TO_FRANCHISE.get(r['team'])
+            if fr:
+                p['franchise_games'][fr] = p['franchise_games'].get(fr, 0) + r['g']
 
         # Count 20+ PPG seasons using per-game page lookup
         if pid in ppg_lookup:
@@ -569,9 +577,12 @@ def organize_by_team(players: dict) -> dict:
             'firstSeason': p.get('firstSeason', 0),
             'lastSeason': p.get('lastSeason', 0),
             'seasons20ppg': p.get('seasons20ppg', 0),
+            'teamGames': 0,  # filled per-franchise below
         }
         for fr in p['franchises']:
-            teams[fr].append(entry)
+            entry_copy = dict(entry)
+            entry_copy['teamGames'] = p.get('franchise_games', {}).get(fr, 0)
+            teams[fr].append(entry_copy)
     return teams
 
 
@@ -600,7 +611,8 @@ def export_to_datajs(teams: dict, filename: str = 'data.js'):
                 f'"undrafted": {"true" if p["undrafted"] else "false"}, '
                 f'"firstSeason": {p["firstSeason"]}, '
                 f'"lastSeason": {p["lastSeason"]}, '
-                f'"seasons20ppg": {p.get("seasons20ppg", 0)}'
+                f'"seasons20ppg": {p.get("seasons20ppg", 0)}, '
+                f'"teamGames": {p.get("teamGames", 0)}'
                 f'}}{comma}'
             )
         team_comma = ',' if i < len(names) - 1 else ''

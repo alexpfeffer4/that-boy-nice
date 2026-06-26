@@ -3044,6 +3044,11 @@
       }
 
       if (gameState.gameMode === 'oldhead') score += s.recencyPenalty;
+
+      // Deep team cut: player played <5% of career games for this team
+      const teamGames = player.teamGames || 0;
+      if (teamGames > 0 && s.games > 0 && teamGames / s.games < 0.05) score += 5;
+
       return Math.max(0, Math.min(100, Math.round(score)));
     }
 
@@ -3119,6 +3124,11 @@
         else if (s.draftPick <= 60) breakdown.push({ label: 'Draft (#31-60)', value: -1, group: 'Pedigree' });
       } else {
         breakdown.push({ label: 'Undrafted', value: 0, group: 'Pedigree' });
+      }
+
+      const teamGames = player.teamGames || 0;
+      if (teamGames > 0 && s.games > 0 && teamGames / s.games < 0.05) {
+        breakdown.push({ label: `Deep team cut (${teamGames}g)`, value: 5, group: 'Pedigree' });
       }
 
       const subtotal = breakdown.reduce((sum, b) => sum + b.value, 0);
