@@ -3443,7 +3443,7 @@
         }
       });
       if (inChips) breakdownHTML += '</div>';
-      if (isDeepCut) breakdownHTML += `<div class="bd-deep-cut">✨ Deep team cut</div>`;
+      if (isDeepCut) breakdownHTML = `<div class="bd-deep-cut">✨ Deep team cut</div>` + breakdownHTML;
 
       document.getElementById('message').innerHTML = `
         <div class="success">✓ ${player.name} added to ${position}!</div>
