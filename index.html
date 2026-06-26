@@ -2520,6 +2520,7 @@
       teams: [],
       lives: 3,
       hasSpun: false,
+      waitingForInput: false,
       gameMode: 'oldhead',
       isDailyChallenge: false,
       dailyTeams: [],
@@ -2933,6 +2934,7 @@
         currentTeam: gameState.currentTeam,
         respinsLeft: gameState.respinsLeft,
         hasSpun: gameState.hasSpun,
+        waitingForInput: gameState.waitingForInput,
       }));
     }
 
@@ -2952,6 +2954,7 @@
       gameState.currentTeam = saved.currentTeam;
       gameState.respinsLeft = saved.respinsLeft != null ? saved.respinsLeft : 1;
       gameState.hasSpun = saved.hasSpun || false;
+      gameState.waitingForInput = saved.waitingForInput || false;
 
       if (saved.isDailyChallenge) {
         const teamNames = Object.keys(players);
@@ -2992,7 +2995,7 @@
         document.getElementById('playerInput').focus();
       } else {
         buildReel();
-        if (saved.hasSpun && saved.currentTeam) {
+        if (saved.waitingForInput && saved.hasSpun && saved.currentTeam) {
           updateDisplay();
           document.getElementById('positionLabel').textContent = 'Name a player for ' + saved.currentTeam;
           document.getElementById('playerInput').disabled = false;
@@ -3003,6 +3006,7 @@
         } else {
           document.getElementById('positionLabel').textContent = 'Spin the wheel for next team';
           document.getElementById('spinBtn').disabled = false;
+          document.getElementById('respinBtn').disabled = saved.respinsLeft > 0 ? false : true;
           document.getElementById('playerInput').disabled = true;
           document.getElementById('submitBtn').disabled = true;
         }
@@ -3600,6 +3604,7 @@
         document.getElementById('submitBtn').disabled = false;
         document.getElementById('playerInput').focus();
       } else {
+        gameState.waitingForInput = false;
         saveActiveGame();
         document.getElementById('spinBtn').disabled = false;
         document.getElementById('respinBtn').disabled = true;
@@ -3846,6 +3851,7 @@
 
             gameState.hasSpun = true;
             gameState.spinning = false;
+            gameState.waitingForInput = true;
             saveActiveGame();
             updateDisplay();
             document.getElementById('playerInput').disabled = false;
