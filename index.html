@@ -4405,7 +4405,7 @@
           const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
           // Try native share sheet first (mobile) — lets user send via iMessage, etc.
           if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
-            navigator.share({ files: [file], title: 'ball knower 🏀' })
+            navigator.share({ files: [file] })
               .catch(() => tryCopyThenDownload(blob, canvas, filename, btns))
               .finally(() => btns.forEach(b => b.textContent = '🖼️ Share Card'));
           } else {
