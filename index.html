@@ -1811,11 +1811,21 @@
       text-align: center;
     }
 
-    .end-btns {
+    .end-share-section {
       display: flex;
       flex-direction: column;
       gap: 10px;
       margin-top: 20px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .end-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 0;
     }
 
     .rival-btn {
@@ -4314,12 +4324,14 @@
             <div class="end-tier-pill ${totalTier}">${label}</div>
             ${bestScoreDisplay}
           </div>
+          <div class="end-share-section">
+            <button class="end-btn-secondary" onclick="downloadShareCard()" style="width:100%;">📤 Share Results</button>
+            <button class="end-btn-secondary" onclick="showLeaderboardModal()" style="width:100%;">📊 Pick History</button>
+          </div>
           <div id="verdictBlock"></div>
           <div class="end-players" id="resultPlayers"></div>
           ${rivalHTML}
           <div class="end-btns">
-            <button class="end-btn-secondary" onclick="downloadShareCard()" style="width:100%;">🖼️ Share Card</button>
-            <button class="end-btn-secondary" onclick="showLeaderboardModal()" style="width:100%;">📊 Pick History</button>
             ${gameState.teamChallenge && !gameState.isTeamChallengeBest ? `<button class="end-btn-secondary" onclick="viewTeamBestLineup('${gameState.selectedTeam}')" style="width:100%;">🏆 View Best Lineup</button>` : ''}
             <button class="end-btn-ghost" onclick="location.href=location.pathname">Play Again</button>
           </div>
