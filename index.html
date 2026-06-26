@@ -2650,7 +2650,7 @@
           </div>
           <div class="end-players" id="resultPlayers"></div>
           <div class="end-btns">
-            <button class="end-btn-secondary" onclick="downloadShareCard()" style="width:100%;">🖼️ Share Card</button>
+            <button class="end-btn-secondary" onclick="downloadShareCard()" style="width:100%;">📤 Share Results</button>
             <button class="end-btn-secondary" onclick="showLeaderboardModal()" style="width:100%;">📊 Pick History</button>
             <button class="end-btn-ghost" onclick="location.href=location.pathname">Play Again</button>
           </div>
@@ -2805,7 +2805,7 @@
           </div>
           <div class="end-players" id="resultPlayers"></div>
           <div class="end-btns">
-            <button class="end-btn-secondary" onclick="downloadShareCard()" style="width:100%;">🖼️ Share Card</button>
+            <button class="end-btn-secondary" onclick="downloadShareCard()" style="width:100%;">📤 Share Results</button>
             <button class="end-btn-secondary" onclick="showLeaderboardModal()" style="width:100%;">📊 Pick History</button>
             <button class="end-btn-ghost" onclick="location.href=location.pathname">Play Again</button>
           </div>
@@ -4289,7 +4289,7 @@
 
       const rivalHTML = gameState.rivalData ? buildRivalComparison() : '';
       const dailyBtns = gameState.isDailyChallenge ? `
-        <button class="share-btn" onclick="downloadShareCard()" style="margin-top:0">🖼️ SAVE SHARE CARD</button>
+        <button class="share-btn" onclick="downloadShareCard()" style="margin-top:0">📤 SHARE RESULTS</button>
       ` : '';
 
       let modeLabel = gameState.gameOver
@@ -4415,7 +4415,7 @@
           </div>
           <div class="end-players" id="resultPlayers"></div>
           <div class="end-btns">
-            <button class="end-btn-secondary" onclick="downloadShareCard()" style="width:100%;">🖼️ Share Card</button>
+            <button class="end-btn-secondary" onclick="downloadShareCard()" style="width:100%;">📤 Share Results</button>
             <button class="end-btn-ghost" onclick="location.href=location.pathname">Back</button>
           </div>
         </div>
@@ -4570,7 +4570,7 @@
           if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
             navigator.share({ files: [file] })
               .catch(() => tryCopyThenDownload(blob, canvas, filename, btns))
-              .finally(() => btns.forEach(b => b.textContent = '🖼️ Share Card'));
+              .finally(() => btns.forEach(b => b.textContent = '📤 Share Results'));
           } else {
             // Try clipboard image copy, fall back to download
             tryCopyThenDownload(blob, canvas, filename, btns);
@@ -4583,11 +4583,11 @@
     function tryCopyThenDownload(blob, canvas, filename, btns) {
       if (navigator.clipboard && window.ClipboardItem) {
         navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-          .then(() => btns.forEach(b => { b.textContent = '✓ Image copied!'; setTimeout(() => b.textContent = '🖼️ Share Card', 2500); }))
-          .catch(() => { fallbackDownload(canvas, filename); btns.forEach(b => b.textContent = '🖼️ Share Card'); });
+          .then(() => btns.forEach(b => { b.textContent = '✓ Image copied!'; setTimeout(() => b.textContent = '📤 Share Results', 2500); }))
+          .catch(() => { fallbackDownload(canvas, filename); btns.forEach(b => b.textContent = '📤 Share Results'); });
       } else {
         fallbackDownload(canvas, filename);
-        btns.forEach(b => b.textContent = '🖼️ Share Card');
+        btns.forEach(b => b.textContent = '📤 Share Results');
       }
     }
 
