@@ -4444,7 +4444,7 @@
 
       // Update daily challenge button if already played
       if (saved && saved.score) {
-        const dailyBtn = document.querySelector('.daily-btn');
+        const dailyBtn = document.getElementById('dailyChallengeBtn');
         if (dailyBtn) {
           const desc = dailyBtn.querySelector('.start-desc');
           if (desc) {
