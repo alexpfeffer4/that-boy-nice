@@ -1301,6 +1301,13 @@
       white-space: nowrap;
     }
 
+    .bd-deep-cut {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #FBBF24;
+      margin-top: 8px;
+    }
+
     /* kept for any legacy usage */
     .breakdown-item { display: flex; justify-content: space-between; margin: 4px 0; }
     .breakdown-group-header { font-size: 0.62rem; font-weight: 700; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 10px; }
@@ -3422,6 +3429,8 @@
 
       const tier = getScoreTier(score);
       const grouped = groupBreakdown(breakdown);
+      const teamGames = player.teamGames || 0;
+      const isDeepCut = teamGames > 0 && teamGames / (player.careerGames || 1) < 0.05;
       let breakdownHTML = '';
       let inChips = false;
       grouped.forEach(b => {
@@ -3429,11 +3438,12 @@
           if (inChips) breakdownHTML += '</div>';
           breakdownHTML += `<div class="bd-group-label">${b.label}</div><div class="bd-chips">`;
           inChips = true;
-        } else if (!b.isSeparator && !b.isTotal && !b.isMultiplier && b.group) {
+        } else if (!b.isSeparator && !b.isTotal && !b.isMultiplier && b.group && b.label !== `Deep team cut (${teamGames}g)`) {
           breakdownHTML += `<span class="bd-chip">${b.label}</span>`;
         }
       });
       if (inChips) breakdownHTML += '</div>';
+      if (isDeepCut) breakdownHTML += `<div class="bd-deep-cut">✨ Deep team cut</div>`;
 
       document.getElementById('message').innerHTML = `
         <div class="success">✓ ${player.name} added to ${position}!</div>
