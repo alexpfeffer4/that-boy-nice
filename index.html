@@ -3761,18 +3761,8 @@
         }
 
         if (gameState.lives <= 0) {
-          setTimeout(() => {
-            document.getElementById('gameSection').innerHTML = `
-              <div class="end-screen">
-                <div class="end-hero">
-                  <div class="end-meta-tag">💔 Game Over</div>
-                  <div class="end-score-num tier-casual">${gameState.totalScore}</div>
-                  <div class="end-tier-pill tier-casual">${(() => { const filled = Object.keys(gameState.lineup).length; return filled === 0 ? 'Rough night, big dog' : filled <= 2 ? 'SO close — one name away' : filled === 4 ? 'So close' : 'Tough break'; })()}</div>
-                </div>
-                <button class="end-btn-ghost" style="margin-top:16px" onclick="location.href=location.pathname">Play Again</button>
-              </div>
-            `;
-          }, 1500);
+          gameState.gameOver = true;
+          setTimeout(endGame, 1500);
         }
         return;
       }
@@ -3798,18 +3788,8 @@
         }
 
         if (gameState.lives <= 0) {
-          setTimeout(() => {
-            document.getElementById('gameSection').innerHTML = `
-              <div class="end-screen">
-                <div class="end-hero">
-                  <div class="end-meta-tag">💔 Game Over</div>
-                  <div class="end-score-num tier-casual">${gameState.totalScore}</div>
-                  <div class="end-tier-pill tier-casual">${(() => { const filled = Object.keys(gameState.lineup).length; return filled === 0 ? 'Rough night, big dog' : filled <= 2 ? 'SO close — one name away' : filled === 4 ? 'So close' : 'Tough break'; })()}</div>
-                </div>
-                <button class="end-btn-ghost" style="margin-top:16px" onclick="location.href=location.pathname">Play Again</button>
-              </div>
-            `;
-          }, 1500);
+          gameState.gameOver = true;
+          setTimeout(endGame, 1500);
         }
         return;
       }
@@ -4101,13 +4081,15 @@
         <button class="share-btn" onclick="downloadShareCard()" style="margin-top:0">🖼️ SAVE SHARE CARD</button>
       ` : '';
 
-      let modeLabel = gameState.isDailyChallenge
-        ? gameState.targetMode
-          ? `🎯 Target Mode · ${getTodayString()}`
-          : `📅 Daily Challenge · ${getTodayString()}`
-        : `🏀 Free Play · ${gameState.gameMode === 'oldhead' ? 'Classic Mode' : 'Timeless Mode'}`;
+      let modeLabel = gameState.gameOver
+        ? `💔 Game Over`
+        : gameState.isDailyChallenge
+          ? gameState.targetMode
+            ? `🎯 Target Mode · ${getTodayString()}`
+            : `📅 Daily Challenge · ${getTodayString()}`
+          : `🏀 Free Play · ${gameState.gameMode === 'oldhead' ? 'Classic Mode' : 'Timeless Mode'}`;
 
-      if (gameState.isDailyChallenge) {
+      if (!gameState.gameOver && gameState.isDailyChallenge) {
         if (gameState.targetMode) {
           const streak = JSON.parse(localStorage.getItem('tbn_target_streak') || '0');
           const best = JSON.parse(localStorage.getItem('tbn_target_best') || '0');
@@ -4135,7 +4117,6 @@
           <div class="end-players" id="resultPlayers"></div>
           ${rivalHTML}
           <div class="end-btns">
-            ${gameState.isDailyChallenge ? `<button class="end-btn-primary" onclick="challengeRival()">⚔️ Challenge a Rival</button>` : ''}
             <button class="end-btn-secondary" onclick="downloadShareCard()" style="width:100%;">🖼️ Share Card</button>
             <button class="end-btn-secondary" onclick="showLeaderboardModal()" style="width:100%;">📊 Pick History</button>
             ${gameState.teamChallenge && !gameState.isTeamChallengeBest ? `<button class="end-btn-secondary" onclick="viewTeamBestLineup('${gameState.selectedTeam}')" style="width:100%;">🏆 View Best Lineup</button>` : ''}
@@ -4168,7 +4149,16 @@
       }
 
       entries.forEach(({ label, player }) => {
-        if (!player) return;
+        if (!player) {
+          if (gameState.gameOver) {
+            const empty = document.createElement('div');
+            empty.className = 'end-player-card tier-casual';
+            empty.style.opacity = '0.4';
+            empty.innerHTML = `<div class="end-player-top"><span class="end-player-pos">${label}</span><div class="end-player-info"><span class="end-player-name" style="font-style:italic;color:#888">—</span></div><span class="end-player-score tier-casual">—</span></div>`;
+            container.appendChild(empty);
+          }
+          return;
+        }
         try {
           const card = buildPlayerCard(player.name, label, player.score, null, player.team);
           if (verdicts && player.name === verdicts.best.name) card.classList.add('best-pick');
