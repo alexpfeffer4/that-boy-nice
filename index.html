@@ -4366,10 +4366,12 @@
         const color = tierColors[tier] || '#fff';
         const barW = Math.round((p.score / 100) * 200);
         const badges = getPlayerTierBadges(p.name);
+        const teamEntry = p.team && players[p.team] ? players[p.team].find(e => e.name === p.name) : null;
+        const isDeepCut = teamEntry && teamEntry.teamGames > 0 && teamEntry.careerGames > 0 && teamEntry.teamGames / teamEntry.careerGames < 0.05;
         const badgeHTML = badges.map(b => {
           const bc = badgeColors[b.type] || badgeColors['badge-claim'];
           return `<span class="share-card-badge" style="background:${bc.bg};color:${bc.color};border:1px solid ${bc.border}">${b.label}</span>`;
-        }).join('');
+        }).join('') + (isDeepCut ? `<span class="share-card-badge" style="background:rgba(251,191,36,0.15);color:#FBBF24;border:1px solid rgba(251,191,36,0.4)">✨ Deep Team Cut</span>` : '');
         const teamStr = p.team || '';
         return `<div class="share-card-row">
           <span class="share-card-pos">${pos}</span>
