@@ -2403,7 +2403,7 @@
         <h2 class="mode-select-title">Choose Your Mode</h2>
         <div class="mode-select-options">
           <button class="start-btn mode-oldhead-btn" onclick="startWithMode('oldhead')">
-            📅 Classic Mode
+            🕒 Classic Mode
             <span class="start-desc">Recency bias on — recent stars score lower because everyone knows them. Dig deep into the vault.</span>
           </button>
           <button class="start-btn mode-classic-btn" onclick="startWithMode('classic')">
@@ -2686,7 +2686,7 @@
 
       gameState.gameMode = 'oldhead';
       const indicator = document.getElementById('modeIndicator');
-      indicator.textContent = '📅 Classic Mode';
+      indicator.textContent = '🕒 Classic Mode';
       indicator.className = 'mode-indicator mode-oldhead';
 
       // Hide spin wheel for daily challenge
@@ -2886,7 +2886,7 @@
       document.getElementById('startScreen').style.display = 'none';
       document.getElementById('gameSection').style.display = 'block';
       const indicator = document.getElementById('modeIndicator');
-      indicator.textContent = mode === 'oldhead' ? '📅 Classic Mode' : '⏳ Timeless Mode';
+      indicator.textContent = mode === 'oldhead' ? '🕒 Classic Mode' : '⏳ Timeless Mode';
       indicator.className = 'mode-indicator ' + (mode === 'oldhead' ? 'mode-oldhead' : 'mode-classic');
       showHowToPlay(mode);
     }
@@ -2970,7 +2970,7 @@
       if (totalEl) totalEl.classList.add('hidden');
 
       const indicator = document.getElementById('modeIndicator');
-      indicator.textContent = saved.gameMode === 'oldhead' ? '📅 Classic Mode' : '⏳ Timeless Mode';
+      indicator.textContent = saved.gameMode === 'oldhead' ? '🕒 Classic Mode' : '⏳ Timeless Mode';
       indicator.className = 'mode-indicator ' + (saved.gameMode === 'oldhead' ? 'mode-oldhead' : 'mode-classic');
 
       updateLineup();
