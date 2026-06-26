@@ -2629,6 +2629,14 @@
         runEndScreenReveal();
       });
 
+      // Restore gameState so buildShareCard works correctly
+      gameState.totalScore = saved.score;
+      gameState.isDailyChallenge = true;
+      gameState.lineup = {};
+      saved.lineup.forEach(entry => {
+        gameState.lineup[entry.pos] = { name: entry.name, team: entry.team, score: entry.score };
+      });
+
       buildShareCard();
     }
 
