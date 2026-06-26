@@ -24,6 +24,7 @@ jobs:
         run: pip install requests beautifulsoup4
 
       - name: Run scraper
+        working-directory: That Boy Nice
         run: python scraper.py
 
       - name: Commit updated data.js
@@ -32,5 +33,5 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add data.js
+          git add "That Boy Nice/data.js"
           git diff --staged --quiet || (git commit -m "Update player data from Basketball Reference" && git pull --rebase && git push)
