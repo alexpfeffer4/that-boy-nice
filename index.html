@@ -2253,18 +2253,32 @@
   <div class="modal-overlay" id="howToPlayModal" style="display:none;" onclick="closeHowToPlay(event)">
     <div class="modal-box htp-box">
       <div class="htp-header">
-        <h2 class="modal-title" style="margin-bottom:4px">How to Score High</h2>
-        <p class="htp-sub">Name the most obscure player from each team</p>
-        <p class="htp-era">Players from 1976–present</p>
+        <h2 class="modal-title" style="margin-bottom:4px">How to Play</h2>
+        <p class="htp-sub">Spin a team. Name a player. The more obscure, the more points.</p>
+        <p style="font-size:0.8rem;color:rgba(255,255,255,0.6);margin-top:12px;line-height:1.4;">Scoring is based on their entire NBA career — not just their time with that team.</p>
       </div>
       <div class="htp-list">
-        <div class="htp-item bad"><span class="htp-icon-sm">📅</span><div><strong>Draft position</strong><span>Top picks get big deductions — undrafted is ideal</span></div></div>
-        <div class="htp-item bad"><span class="htp-icon-sm">🏀</span><div><strong>Career games played</strong><span>More games = more recognizable = lower score</span></div></div>
-        <div class="htp-item bad"><span class="htp-icon-sm">⭐</span><div><strong>All-Star appearances</strong><span>Each one docks your score</span></div></div>
-        <div class="htp-item bad"><span class="htp-icon-sm">🏆</span><div><strong>Awards</strong><span>MVP, DPOY, Finals MVP, ROY... all cost points</span></div></div>
-        <div class="htp-item bad"><span class="htp-icon-sm">🥇</span><div><strong>All-NBA / All-Defensive teams</strong><span>Perennial selections hit hard</span></div></div>
-        <div class="htp-item bad"><span class="htp-icon-sm">🔄</span><div><strong>High starter ratio</strong><span>Bench players score higher than starters</span></div></div>
-        <div class="htp-item bad recency-row" id="htpRecencyRow"><span class="htp-icon-sm">🕒</span><div><strong>Played recently</strong><span>Classic Mode — recent players score lower, dig into the vault</span></div></div>
+        <div style="margin-bottom:16px;">
+          <div style="font-weight:700;color:#4ade80;font-size:0.9rem;margin-bottom:8px;">🟢 SCORE HIGH</div>
+          <div class="htp-item"><span class="htp-icon-sm">📅</span><div><strong>Short careers</strong><span>Less time in the league = less recognizable</span></div></div>
+          <div class="htp-item"><span class="htp-icon-sm">🎲</span><div><strong>Undrafted or deep picks</strong><span>Top draft picks get big deductions</span></div></div>
+          <div class="htp-item"><span class="htp-icon-sm">🪑</span><div><strong>Bench players</strong><span>Role players and backups score higher than stars</span></div></div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-weight:700;color:#FBBF24;font-size:0.9rem;margin-bottom:8px;">🎁 BONUS</div>
+          <div class="htp-item"><span class="htp-icon-sm">✨</span><div><strong>Deep team cut</strong><span>Played less than 5% of career with this team? +5 points</span></div></div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-weight:700;color:#ef4444;font-size:0.9rem;margin-bottom:8px;">🔴 COSTS POINTS</div>
+          <div class="htp-item"><span class="htp-icon-sm">🏀</span><div><strong>Long careers</strong><span>More time in the league = more recognizable</span></div></div>
+          <div class="htp-item"><span class="htp-icon-sm">⭐</span><div><strong>All-Star appearances</strong><span>Each selection docks your score</span></div></div>
+          <div class="htp-item"><span class="htp-icon-sm">🏆</span><div><strong>Awards &amp; All-NBA teams</strong><span>MVP, DPOY, Finals MVP, All-NBA... all cost points</span></div></div>
+          <div class="htp-item"><span class="htp-icon-sm">🔄</span><div><strong>High starter ratio</strong><span>Perennial starters are too recognizable</span></div></div>
+        </div>
+        <div style="font-size:0.8rem;color:rgba(255,255,255,0.6);line-height:1.5;margin-bottom:12px;">
+          <span id="htpRecencyRow" style="display:none;"><strong style="color:rgba(255,255,255,0.8)">Classic Mode:</strong> Recent players score lower — dig deep into the vault.<br></span>
+          <strong style="color:rgba(255,255,255,0.8)">Lives:</strong> You get 3. Wrong names and full positions each cost one.
+        </div>
       </div>
       <div class="htp-footer">
         <label class="htp-skip-label">
