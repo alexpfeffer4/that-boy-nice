@@ -259,10 +259,19 @@
       display: flex;
       align-items: flex-start;
       gap: 10px;
-      padding: 10px 12px;
+      padding: 8px 12px;
       border-radius: 10px;
       background: rgba(245, 87, 108, 0.08);
       border: 1px solid rgba(245, 87, 108, 0.18);
+      margin-bottom: 6px;
+    }
+    .htp-item.good {
+      background: rgba(74, 222, 128, 0.07);
+      border-color: rgba(74, 222, 128, 0.2);
+    }
+    .htp-item.bonus {
+      background: rgba(251, 191, 36, 0.07);
+      border-color: rgba(251, 191, 36, 0.2);
     }
 
     .htp-icon-sm {
@@ -2258,25 +2267,25 @@
         <p style="font-size:0.8rem;color:rgba(255,255,255,0.6);margin-top:12px;line-height:1.4;">Scoring is based on their entire NBA career — not just their time with that team.</p>
       </div>
       <div class="htp-list">
-        <div style="margin-bottom:16px;">
-          <div style="font-weight:700;color:#4ade80;font-size:0.9rem;margin-bottom:8px;">🟢 SCORE HIGH</div>
-          <div class="htp-item"><span class="htp-icon-sm">📅</span><div><strong>Short careers</strong><span>Less time in the league = less recognizable</span></div></div>
-          <div class="htp-item"><span class="htp-icon-sm">🎲</span><div><strong>Undrafted or deep picks</strong><span>Top draft picks get big deductions</span></div></div>
-          <div class="htp-item"><span class="htp-icon-sm">🪑</span><div><strong>Bench players</strong><span>Role players and backups score higher than stars</span></div></div>
+        <div style="margin-bottom:20px;">
+          <div style="font-weight:700;color:#4ade80;font-size:0.8rem;letter-spacing:0.06em;margin-bottom:8px;">🟢 SCORE HIGH</div>
+          <div class="htp-item good"><span class="htp-icon-sm">📅</span><div><strong>Short careers</strong><span>Less time in the league = less recognizable</span></div></div>
+          <div class="htp-item good"><span class="htp-icon-sm">🎲</span><div><strong>Undrafted or deep picks</strong><span>Top draft picks get big deductions</span></div></div>
+          <div class="htp-item good"><span class="htp-icon-sm">🪑</span><div><strong>Bench players</strong><span>Role players and backups score higher than stars</span></div></div>
         </div>
-        <div style="margin-bottom:16px;">
-          <div style="font-weight:700;color:#FBBF24;font-size:0.9rem;margin-bottom:8px;">🎁 BONUS</div>
-          <div class="htp-item"><span class="htp-icon-sm">✨</span><div><strong>Deep team cut</strong><span>Played less than 5% of career with this team? +5 points</span></div></div>
+        <div style="margin-bottom:20px;">
+          <div style="font-weight:700;color:#FBBF24;font-size:0.8rem;letter-spacing:0.06em;margin-bottom:8px;">🎁 BONUS</div>
+          <div class="htp-item bonus"><span class="htp-icon-sm">✨</span><div><strong>Deep team cut</strong><span>Played less than 5% of career with this team? +5 points</span></div></div>
         </div>
-        <div style="margin-bottom:16px;">
-          <div style="font-weight:700;color:#ef4444;font-size:0.9rem;margin-bottom:8px;">🔴 COSTS POINTS</div>
+        <div style="margin-bottom:20px;">
+          <div style="font-weight:700;color:#ef4444;font-size:0.8rem;letter-spacing:0.06em;margin-bottom:8px;">🔴 COSTS POINTS</div>
           <div class="htp-item"><span class="htp-icon-sm">🏀</span><div><strong>Long careers</strong><span>More time in the league = more recognizable</span></div></div>
           <div class="htp-item"><span class="htp-icon-sm">⭐</span><div><strong>All-Star appearances</strong><span>Each selection docks your score</span></div></div>
           <div class="htp-item"><span class="htp-icon-sm">🏆</span><div><strong>Awards &amp; All-NBA teams</strong><span>MVP, DPOY, Finals MVP, All-NBA... all cost points</span></div></div>
           <div class="htp-item"><span class="htp-icon-sm">🔄</span><div><strong>High starter ratio</strong><span>Perennial starters are too recognizable</span></div></div>
+          <div class="htp-item" id="htpRecencyRow" style="display:none;"><span class="htp-icon-sm">🕒</span><div><strong>Played recently</strong><span>Classic Mode — recent players score lower, dig into the vault</span></div></div>
         </div>
-        <div style="font-size:0.8rem;color:rgba(255,255,255,0.6);line-height:1.5;margin-bottom:12px;">
-          <span id="htpRecencyRow" style="display:none;"><strong style="color:rgba(255,255,255,0.8)">Classic Mode:</strong> Recent players score lower — dig deep into the vault.<br></span>
+        <div style="font-size:0.8rem;color:rgba(255,255,255,0.6);line-height:1.5;margin-bottom:4px;">
           <strong style="color:rgba(255,255,255,0.8)">Lives:</strong> You get 3. Wrong names and full positions each cost one.
         </div>
       </div>
