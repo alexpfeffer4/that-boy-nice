@@ -1031,6 +1031,7 @@
     .ep-badge.badge-claim          { background: rgba(255,255,255,0.06);color: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.15); }
     .ep-badge.badge-era            { background: rgba(125,211,252,0.12); color: #7DD3FC; border: 1px solid rgba(125,211,252,0.3); }
     .ep-badge.badge-frequent       { background: rgba(168,77,255,0.14); color: #A84DFF; border: 1px solid rgba(168,77,255,0.4); }
+    .ep-badge.badge-deepcut        { background: rgba(251,191,36,0.12);  color: #FBBF24; border: 1px solid rgba(251,191,36,0.35); }
 
     .end-btn-primary {
       width: 100%;
@@ -3980,6 +3981,14 @@
 
       if (isFrequentPlayer(playerName || name)) {
         badges.push({ label: 'Frequent Pick', type: 'badge-frequent' });
+      }
+
+      if (teamName && players[teamName]) {
+        const teamEntry = players[teamName].find(function(p) { return p.name === (playerName || name); });
+        if (teamEntry && teamEntry.teamGames > 0 && teamEntry.careerGames > 0 &&
+            teamEntry.teamGames / teamEntry.careerGames < 0.05) {
+          badges.push({ label: 'Deep Team Cut', type: 'badge-deepcut' });
+        }
       }
 
       const badgesHTML = badges.length
