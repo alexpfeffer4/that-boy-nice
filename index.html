@@ -4065,7 +4065,9 @@
       const helpBtn = document.getElementById('helpBtn');
       if (helpBtn) helpBtn.style.display = 'none';
 
-      const label = getScoreLabel(gameState.totalScore);
+      const filled = Object.keys(gameState.lineup).length;
+      const gameOverLabel = filled === 0 ? 'Rough night, big dog' : filled === 1 ? 'Tough break' : filled === 2 ? 'Tough break' : filled === 3 ? 'So close' : 'One away';
+      const label = gameState.gameOver ? gameOverLabel : getScoreLabel(gameState.totalScore);
       const totalTier = getScoreTier(Math.round(gameState.totalScore / 5));
 
       if (gameState.teamChallenge) {
