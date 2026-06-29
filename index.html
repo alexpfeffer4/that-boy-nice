@@ -2639,7 +2639,25 @@
       }
 
       gameState.isDailyChallenge = true;
-      gameState.dailyTeams = getDailyTeams(gameState.teams, dateStr);
+
+      // Exclude teams from last 2 days
+      const yd = new Date(); yd.setDate(yd.getDate() - 1);
+      const yesterday = `${yd.getFullYear()}-${String(yd.getMonth()+1).padStart(2,'0')}-${String(yd.getDate()).padStart(2,'0')}`;
+      const d2 = new Date(); d2.setDate(d2.getDate() - 2);
+      const dayBefore = `${d2.getFullYear()}-${String(d2.getMonth()+1).padStart(2,'0')}-${String(d2.getDate()).padStart(2,'0')}`;
+
+      const yesterdayData = JSON.parse(localStorage.getItem(`tbn_daily_${yesterday}`) || 'null');
+      const dayBeforeData = JSON.parse(localStorage.getItem(`tbn_daily_${dayBefore}`) || 'null');
+      const excludedTeams = new Set();
+      if (yesterdayData && yesterdayData.teams) {
+        yesterdayData.teams.forEach(t => excludedTeams.add(t.team));
+      }
+      if (dayBeforeData && dayBeforeData.teams) {
+        dayBeforeData.teams.forEach(t => excludedTeams.add(t.team));
+      }
+
+      const availableTeams = gameState.teams.filter(t => !excludedTeams.has(t));
+      gameState.dailyTeams = getDailyTeams(availableTeams, dateStr);
       gameState.dailyTeamIndex = 0;
 
       // Check rival param
@@ -4297,7 +4315,8 @@
 
         if (gameState.targetMode) {
           // Target Mode: save separately
-          localStorage.setItem(`tbn_target_${todayStr}`, JSON.stringify({ score: gameState.totalScore, targetScore: gameState.targetScore, label, lineup: lineupArr }));
+          const teamsArr = gameState.dailyTeams.map(t => ({ team: t }));
+          localStorage.setItem(`tbn_target_${todayStr}`, JSON.stringify({ score: gameState.totalScore, targetScore: gameState.targetScore, label, lineup: lineupArr, teams: teamsArr }));
 
           // Update target mode streak and best
           const streakKey = 'tbn_target_streak';
@@ -4322,7 +4341,8 @@
           localStorage.setItem(bestKey, Math.max(personalBest, gameState.totalScore));
         } else {
           // High Score Mode: existing logic
-          localStorage.setItem(`tbn_daily_${todayStr}`, JSON.stringify({ score: gameState.totalScore, label, lineup: lineupArr }));
+          const teamsArr = gameState.dailyTeams.map(t => ({ team: t }));
+          localStorage.setItem(`tbn_daily_${todayStr}`, JSON.stringify({ score: gameState.totalScore, label, lineup: lineupArr, teams: teamsArr }));
 
           // Update streak and personal best
           const streakKey = 'tbn_streak';
