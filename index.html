@@ -3202,7 +3202,7 @@
 
       // Career games
       const gamesPenalty = getGamesPenalty(s.games);
-      if (gamesPenalty) score += gamesPenalty.penalty;
+      if (gamesPenalty) score += gamesPenalty;
 
       // Individual awards
       score -= s.mvp * 25;
