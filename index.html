@@ -4288,8 +4288,9 @@
 
       const filled = Object.keys(gameState.lineup).length;
       const gameOverLabel = filled === 0 ? 'Rough night, big dog' : filled === 1 ? 'Tough break' : filled === 2 ? 'Tough break' : filled === 3 ? 'So close' : 'One away';
-      const label = gameState.gameOver ? gameOverLabel : getScoreLabel(gameState.totalScore);
-      const totalTier = getScoreTier(Math.round(gameState.totalScore / 5));
+      const roundedScore = Math.round(gameState.totalScore);
+      const label = gameState.gameOver ? gameOverLabel : getScoreLabel(roundedScore);
+      const totalTier = getScoreTier(Math.round(roundedScore / 5));
 
       if (gameState.teamChallenge) {
         const teamBestKey = 'tbn_team_best_' + gameState.selectedTeam;
@@ -4404,7 +4405,7 @@
         <div class="end-screen">
           <div class="end-hero">
             <div class="end-meta-tag">${modeLabel}</div>
-            <div class="end-score-num ${totalTier}" data-target="${gameState.totalScore}">0</div>
+            <div class="end-score-num ${totalTier}" data-target="${roundedScore}">0</div>
             <div class="end-tier-pill ${totalTier}">${label}</div>
             ${bestScoreDisplay}
           </div>
