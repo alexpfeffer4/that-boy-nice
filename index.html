@@ -3254,8 +3254,8 @@
           // 60-74%: slide from -2 to -4
           starterPenalty = 2 + (gsRatio - 0.60) / (0.75 - 0.60) * 2;
         } else {
-          // 75-100%: slide from -4 to -6
-          starterPenalty = 4 + (gsRatio - 0.75) / (1.0 - 0.75) * 2;
+          // 75-100%: slide from -4 to -8
+          starterPenalty = 4 + (gsRatio - 0.75) / (1.0 - 0.75) * 4;
         }
         score -= Math.round(starterPenalty * 100) / 100;
       }
@@ -3299,7 +3299,7 @@
         } else if (gsRatio < 0.75) {
           starterPenalty = 2 + (gsRatio - 0.60) / (0.75 - 0.60) * 2;
         } else {
-          starterPenalty = 4 + (gsRatio - 0.75) / (1.0 - 0.75) * 2;
+          starterPenalty = 4 + (gsRatio - 0.75) / (1.0 - 0.75) * 4;
         }
         const pct = Math.round(gsRatio * 100);
         breakdown.push({ label: `Starter % (${pct}%)`, value: -Math.round(starterPenalty * 100) / 100, group: 'Longevity' });
