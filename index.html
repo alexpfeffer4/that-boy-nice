@@ -1057,7 +1057,7 @@
     .ep-badge.badge-sig-identity   { background: rgba(34,211,238,0.12);  color: #22D3EE; border: 1px solid rgba(34,211,238,0.3); }
     .ep-badge.badge-claim          { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.15); }
     .ep-badge.badge-frequent       { background: rgba(168,77,255,0.14); color: #A84DFF; border: 1px solid rgba(168,77,255,0.4); }
-    .ep-badge.badge-benchwarmer    { background: rgba(251,191,36,0.12);  color: #FBBF24; border: 1px solid rgba(251,191,36,0.35); }
+    .ep-badge.badge-deepcut        { background: rgba(251,191,36,0.12);  color: #FBBF24; border: 1px solid rgba(251,191,36,0.35); }
 
     .end-btn-primary {
       width: 100%;
@@ -4223,7 +4223,7 @@
         const teamEntry = players[teamName].find(function(p) { return p.name === (playerName || name); });
         if (teamEntry && teamEntry.teamGames > 0 && teamEntry.careerGames > 0 &&
             teamEntry.teamGames / teamEntry.careerGames < 0.05) {
-          badges.push({ label: 'Bench Warmer', type: 'badge-benchwarmer' });
+          badges.push({ label: 'Deep Team Cut', type: 'badge-deepcut' });
         }
       }
 
@@ -4570,7 +4570,7 @@
         'badge-sig-identity':   { bg: 'rgba(34,211,238,0.12)',  color: '#22D3EE',  border: 'rgba(34,211,238,0.3)' },
         'badge-claim':          { bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.65)', border: 'rgba(255,255,255,0.15)' },
         'badge-frequent':       { bg: 'rgba(168,77,255,0.14)',  color: '#A84DFF',  border: 'rgba(168,77,255,0.4)' },
-        'badge-benchwarmer':    { bg: 'rgba(251,191,36,0.12)',  color: '#FBBF24',  border: 'rgba(251,191,36,0.35)' },
+        'badge-deepcut':        { bg: 'rgba(251,191,36,0.12)',  color: '#FBBF24',  border: 'rgba(251,191,36,0.35)' },
       };
       const rows = positions.filter(pos => gameState.lineup[pos]).map(pos => {
         const p = gameState.lineup[pos];
