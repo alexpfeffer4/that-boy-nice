@@ -1043,16 +1043,21 @@
       border-radius: 20px;
       text-transform: uppercase;
     }
-    .ep-badge.badge-tier-legend    { background: rgba(239,68,68,0.14);  color: #EF4444; border: 1px solid rgba(239,68,68,0.3); }
-    .ep-badge.badge-tier-star      { background: rgba(255,107,53,0.14); color: #FF6B35; border: 1px solid rgba(255,107,53,0.3); }
-    .ep-badge.badge-tier-allstar   { background: rgba(67,197,158,0.14); color: #43C59E; border: 1px solid rgba(67,197,158,0.3); }
-    .ep-badge.badge-tier-solid     { background: rgba(91,127,181,0.14); color: #5B7FB5; border: 1px solid rgba(91,127,181,0.3); }
-    .ep-badge.badge-tier-role      { background: rgba(156,163,175,0.14);color: #9CA3AF; border: 1px solid rgba(156,163,175,0.3); }
-    .ep-badge.badge-tier-cup       { background: rgba(156,163,175,0.08);color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.12); }
-    .ep-badge.badge-claim          { background: rgba(255,255,255,0.06);color: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.15); }
-    .ep-badge.badge-era            { background: rgba(125,211,252,0.12); color: #7DD3FC; border: 1px solid rgba(125,211,252,0.3); }
+    .ep-badge.badge-shape-alltime  { background: rgba(245,158,11,0.15);  color: #F59E0B; border: 1px solid rgba(245,158,11,0.35); }
+    .ep-badge.badge-shape-star     { background: rgba(251,146,60,0.15);  color: #FB923C; border: 1px solid rgba(251,146,60,0.35); }
+    .ep-badge.badge-shape-oneseason { background: rgba(252,165,165,0.15); color: #FCA5A5; border: 1px solid rgba(252,165,165,0.35); }
+    .ep-badge.badge-shape-bust     { background: rgba(248,113,113,0.15); color: #F87171; border: 1px solid rgba(248,113,113,0.35); }
+    .ep-badge.badge-shape-broken   { background: rgba(233,121,249,0.15); color: #E879F9; border: 1px solid rgba(233,121,249,0.35); }
+    .ep-badge.badge-shape-gem      { background: rgba(52,211,153,0.15);  color: #34D399; border: 1px solid rgba(52,211,153,0.35); }
+    .ep-badge.badge-shape-longhual { background: rgba(96,165,250,0.15);  color: #60A5FA; border: 1px solid rgba(96,165,250,0.35); }
+    .ep-badge.badge-shape-rotation { background: rgba(167,139,250,0.15); color: #A78BFA; border: 1px solid rgba(167,139,250,0.35); }
+    .ep-badge.badge-shape-shortrun { background: rgba(148,163,184,0.15); color: #94A3B8; border: 1px solid rgba(148,163,184,0.35); }
+    .ep-badge.badge-shape-cup      { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.35); border: 1px solid rgba(255,255,255,0.12); }
+    .ep-badge.badge-sig-hardware   { background: rgba(245,158,11,0.15);  color: #F59E0B; border: 1px solid rgba(245,158,11,0.35); }
+    .ep-badge.badge-sig-identity   { background: rgba(34,211,238,0.12);  color: #22D3EE; border: 1px solid rgba(34,211,238,0.3); }
+    .ep-badge.badge-claim          { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.15); }
     .ep-badge.badge-frequent       { background: rgba(168,77,255,0.14); color: #A84DFF; border: 1px solid rgba(168,77,255,0.4); }
-    .ep-badge.badge-deepcut        { background: rgba(251,191,36,0.12);  color: #FBBF24; border: 1px solid rgba(251,191,36,0.35); }
+    .ep-badge.badge-benchwarmer    { background: rgba(251,191,36,0.12);  color: #FBBF24; border: 1px solid rgba(251,191,36,0.35); }
 
     .end-btn-primary {
       width: 100%;
@@ -4116,55 +4121,83 @@
       if (!playerObj) return [];
       const s = getPlayerStats(playerObj);
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
+      const seasons = s.lastSeason - s.firstSeason + 1;
 
-      // Badge 1: Career Tier — where they sit in NBA history
-      let tierLabel, tierType;
+      // Badge 1: Career Shape — describes how the career went
+      let shapeLabel, shapeType;
       if (s.mvp >= 1 || s.allNBA1 >= 2 || (s.allNBA1 >= 1 && s.allStarApps >= 6)) {
-        tierLabel = 'Legend'; tierType = 'badge-tier-legend';
+        shapeLabel = 'All-Time Great'; shapeType = 'badge-shape-alltime';
       } else if (s.allStarApps >= 3 || s.allNBA1 >= 1) {
-        tierLabel = 'Star'; tierType = 'badge-tier-star';
-      } else if (s.allStarApps >= 2 || s.allNBA2 >= 1 || s.allNBA3 >= 1) {
-        tierLabel = 'All-Star'; tierType = 'badge-tier-allstar';
-      } else if (s.allStarApps === 1 && s.games < 300) {
-        tierLabel = 'Rising Star'; tierType = 'badge-tier-great';
+        shapeLabel = 'Perennial Star'; shapeType = 'badge-shape-star';
+      } else if (s.allStarApps === 1 && s.games < 350) {
+        shapeLabel = 'One Shining Season'; shapeType = 'badge-shape-oneseason';
       } else if (!s.undrafted && s.draftPick <= 5 && s.allStarApps === 0 && s.games < 500 && (s.lastSeason - s.firstSeason >= 3)) {
-        tierLabel = 'Lottery Bust'; tierType = 'badge-tier-role';
+        shapeLabel = 'Lottery Bust'; shapeType = 'badge-shape-bust';
+      } else if (!s.undrafted && s.draftPick >= 6 && s.draftPick <= 20 && s.allStarApps === 0 && s.games < 400) {
+        shapeLabel = 'Broken Promise'; shapeType = 'badge-shape-broken';
       } else if ((s.undrafted || s.draftPick > 30) && s.games >= 400) {
-        tierLabel = 'Hidden Gem'; tierType = 'badge-tier-solid';
+        shapeLabel = 'Hidden Gem'; shapeType = 'badge-shape-gem';
       } else if (s.games >= 500 && s.hasReliableGS && gsRatio >= 0.55) {
-        tierLabel = 'Solid Starter'; tierType = 'badge-tier-solid';
-      } else if (s.games >= 330) {
-        tierLabel = 'Role Player'; tierType = 'badge-tier-role';
-      } else if (s.games >= 164) {
-        tierLabel = 'Journeyman'; tierType = 'badge-tier-role';
+        shapeLabel = 'Long Haul'; shapeType = 'badge-shape-longhual';
+      } else if (s.games >= 250 && s.games < 500) {
+        shapeLabel = 'Rotation Regular'; shapeType = 'badge-shape-rotation';
+      } else if (s.games >= 100 && s.games < 250) {
+        shapeLabel = 'Short Run'; shapeType = 'badge-shape-shortrun';
       } else {
-        tierLabel = 'Cup of Coffee'; tierType = 'badge-tier-cup';
+        shapeLabel = 'Cup of Coffee'; shapeType = 'badge-shape-cup';
       }
 
-      // Badge 2: Best Claim — their single most notable trait
-      let claimLabel;
-      if (s.mvp >= 2)                          claimLabel = `${s.mvp}× MVP`;
-      else if (s.mvp === 1)                    claimLabel = 'MVP';
-      else if (s.fmvp >= 1)                    claimLabel = s.fmvp > 1 ? `${s.fmvp}× Finals MVP` : 'Finals MVP';
-      else if (s.dpoy >= 2)                    claimLabel = `${s.dpoy}× DPOY`;
-      else if (s.dpoy === 1)                   claimLabel = 'DPOY';
-      else if (s.allNBA1 >= 1)                 claimLabel = `${s.allNBA1}× All-NBA 1st`;
-      else if (s.allNBA2 >= 1)                 claimLabel = `${s.allNBA2}× All-NBA 2nd`;
-      else if (s.allNBA3 >= 1)                 claimLabel = `${s.allNBA3}× All-NBA 3rd`;
-      else if (s.allStarApps >= 1)             claimLabel = `${s.allStarApps}× All-Star`;
-      else if (s.roy)                           claimLabel = 'ROY';
-      else if (s.smoy >= 1)                    claimLabel = 'SMOY';
-      else if (s.mip >= 1)                     claimLabel = 'MIP';
-      else if (s.undrafted && s.games >= 200)  claimLabel = 'Went Undrafted';
-      else if (s.draftPick > 30 && s.games >= 500) claimLabel = '2nd Round Steal';
-      else if (s.seasons20ppg >= 3)            claimLabel = 'Volume Scorer';
-      else if (s.seasons20ppg === 1)           claimLabel = 'One Big Year';
-      else if (s.allDef1 >= 1)                 claimLabel = 'All-Defensive';
-      else                                      claimLabel = 'No Hardware';
+      // Badge 2: Career Signature — priority-ordered with fallback ladder
+      let sigLabel, sigType;
+      const hasHardware = s.mvp >= 1 || s.fmvp >= 1 || s.dpoy >= 1 || s.allNBA1 >= 1 || s.allNBA2 >= 1 || s.allNBA3 >= 1 || s.allStarApps >= 1 || s.roy || s.smoy >= 1 || s.mip >= 1 || s.allDef1 >= 1;
+
+      if (s.mvp >= 2) {
+        sigLabel = `${s.mvp}× MVP`; sigType = 'badge-sig-hardware';
+      } else if (s.mvp === 1) {
+        sigLabel = 'MVP'; sigType = 'badge-sig-hardware';
+      } else if (s.fmvp > 1) {
+        sigLabel = `${s.fmvp}× Finals MVP`; sigType = 'badge-sig-hardware';
+      } else if (s.fmvp === 1) {
+        sigLabel = 'Finals MVP'; sigType = 'badge-sig-hardware';
+      } else if (s.dpoy >= 2) {
+        sigLabel = `${s.dpoy}× DPOY`; sigType = 'badge-sig-hardware';
+      } else if (s.dpoy === 1) {
+        sigLabel = 'DPOY'; sigType = 'badge-sig-hardware';
+      } else if (s.allNBA1 >= 1) {
+        sigLabel = `${s.allNBA1}× All-NBA 1st`; sigType = 'badge-sig-hardware';
+      } else if (s.allNBA2 >= 1) {
+        sigLabel = `${s.allNBA2}× All-NBA 2nd`; sigType = 'badge-sig-hardware';
+      } else if (s.allNBA3 >= 1) {
+        sigLabel = `${s.allNBA3}× All-NBA 3rd`; sigType = 'badge-sig-hardware';
+      } else if (s.allStarApps >= 1) {
+        sigLabel = `${s.allStarApps}× All-Star`; sigType = 'badge-sig-hardware';
+      } else if (s.roy) {
+        sigLabel = 'ROY'; sigType = 'badge-sig-hardware';
+      } else if (s.smoy >= 1) {
+        sigLabel = 'SMOY'; sigType = 'badge-sig-hardware';
+      } else if (s.mip >= 1) {
+        sigLabel = 'MIP'; sigType = 'badge-sig-hardware';
+      } else if (s.allDef1 >= 1) {
+        sigLabel = 'All-Defensive'; sigType = 'badge-sig-hardware';
+      } else if (seasons >= 10) {
+        sigLabel = `${seasons} Seasons`; sigType = 'badge-sig-identity';
+      } else if (s.games >= 700) {
+        sigLabel = `${s.games} Games`; sigType = 'badge-sig-identity';
+      } else if (s.undrafted && s.games >= 200) {
+        sigLabel = 'Went Undrafted'; sigType = 'badge-sig-identity';
+      } else if (s.draftPick > 30 && s.games >= 500) {
+        sigLabel = '2nd Round Find'; sigType = 'badge-sig-identity';
+      } else if (s.seasons20ppg === 1 && s.games < 350) {
+        sigLabel = 'One Breakout Season'; sigType = 'badge-sig-identity';
+      } else if (s.games >= 300) {
+        sigLabel = `${s.games} Games`; sigType = 'badge-claim';
+      } else {
+        sigLabel = `${s.games} Games`; sigType = 'badge-claim';
+      }
 
       return [
-        { label: tierLabel, type: tierType },
-        { label: claimLabel, type: 'badge-claim' },
+        { label: shapeLabel, type: shapeType },
+        { label: sigLabel, type: sigType },
       ];
     }
 
@@ -4190,7 +4223,7 @@
         const teamEntry = players[teamName].find(function(p) { return p.name === (playerName || name); });
         if (teamEntry && teamEntry.teamGames > 0 && teamEntry.careerGames > 0 &&
             teamEntry.teamGames / teamEntry.careerGames < 0.05) {
-          badges.push({ label: 'Deep Team Cut', type: 'badge-deepcut' });
+          badges.push({ label: 'Bench Warmer', type: 'badge-benchwarmer' });
         }
       }
 
@@ -4523,15 +4556,21 @@
       const label = getScoreLabel(gameState.totalScore);
       const tierColors = { 'tier-god': '#EF4444', 'tier-great': '#FF6B35', 'tier-good': '#43C59E', 'tier-mid': '#4F6D9E', 'tier-casual': '#9CA3AF', 'tier-archival': '#8B5CF6' };
       const badgeColors = {
-        'badge-tier-legend':  { bg: 'rgba(239,68,68,0.18)',   color: '#EF4444',  border: 'rgba(239,68,68,0.4)' },
-        'badge-tier-star':    { bg: 'rgba(255,107,53,0.18)',  color: '#FF6B35',  border: 'rgba(255,107,53,0.4)' },
-        'badge-tier-allstar': { bg: 'rgba(67,197,158,0.18)',  color: '#43C59E',  border: 'rgba(67,197,158,0.4)' },
-        'badge-tier-great':   { bg: 'rgba(255,107,53,0.18)',  color: '#FF6B35',  border: 'rgba(255,107,53,0.4)' },
-        'badge-tier-solid':   { bg: 'rgba(79,109,158,0.18)',  color: '#4F6D9E',  border: 'rgba(79,109,158,0.4)' },
-        'badge-tier-role':    { bg: 'rgba(156,163,175,0.18)', color: '#9CA3AF',  border: 'rgba(156,163,175,0.4)' },
-        'badge-tier-cup':     { bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)', border: 'rgba(255,255,255,0.15)' },
-        'badge-claim':        { bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.65)', border: 'rgba(255,255,255,0.15)' },
-        'badge-era':          { bg: 'rgba(125,211,252,0.12)', color: '#7DD3FC', border: 'rgba(125,211,252,0.3)' },
+        'badge-shape-alltime':  { bg: 'rgba(245,158,11,0.15)',  color: '#F59E0B',  border: 'rgba(245,158,11,0.35)' },
+        'badge-shape-star':     { bg: 'rgba(251,146,60,0.15)',  color: '#FB923C',  border: 'rgba(251,146,60,0.35)' },
+        'badge-shape-oneseason': { bg: 'rgba(252,165,165,0.15)', color: '#FCA5A5', border: 'rgba(252,165,165,0.35)' },
+        'badge-shape-bust':     { bg: 'rgba(248,113,113,0.15)', color: '#F87171', border: 'rgba(248,113,113,0.35)' },
+        'badge-shape-broken':   { bg: 'rgba(233,121,249,0.15)', color: '#E879F9', border: 'rgba(233,121,249,0.35)' },
+        'badge-shape-gem':      { bg: 'rgba(52,211,153,0.15)',  color: '#34D399',  border: 'rgba(52,211,153,0.35)' },
+        'badge-shape-longhual': { bg: 'rgba(96,165,250,0.15)',  color: '#60A5FA',  border: 'rgba(96,165,250,0.35)' },
+        'badge-shape-rotation': { bg: 'rgba(167,139,250,0.15)', color: '#A78BFA', border: 'rgba(167,139,250,0.35)' },
+        'badge-shape-shortrun': { bg: 'rgba(148,163,184,0.15)', color: '#94A3B8', border: 'rgba(148,163,184,0.35)' },
+        'badge-shape-cup':      { bg: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)', border: 'rgba(255,255,255,0.12)' },
+        'badge-sig-hardware':   { bg: 'rgba(245,158,11,0.15)',  color: '#F59E0B',  border: 'rgba(245,158,11,0.35)' },
+        'badge-sig-identity':   { bg: 'rgba(34,211,238,0.12)',  color: '#22D3EE',  border: 'rgba(34,211,238,0.3)' },
+        'badge-claim':          { bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.65)', border: 'rgba(255,255,255,0.15)' },
+        'badge-frequent':       { bg: 'rgba(168,77,255,0.14)',  color: '#A84DFF',  border: 'rgba(168,77,255,0.4)' },
+        'badge-benchwarmer':    { bg: 'rgba(251,191,36,0.12)',  color: '#FBBF24',  border: 'rgba(251,191,36,0.35)' },
       };
       const rows = positions.filter(pos => gameState.lineup[pos]).map(pos => {
         const p = gameState.lineup[pos];
