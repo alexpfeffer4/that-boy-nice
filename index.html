@@ -3280,15 +3280,25 @@
       return Math.min(100, clamped + (deepCut ? 5 : 0));
     }
 
-    function getScoreBreakdown(player) {
+    function getScoreBreakdown(player, useActualValues) {
       const s = getPlayerStats(player);
       const breakdown = [];
       breakdown.push({ label: 'Base', value: 100 });
 
       const gamesPenalty = getGamesPenalty(s.games);
       if (gamesPenalty) {
-        const seasons = Math.round((s.games / 82) * 10) / 10;
-        breakdown.push({ label: `Career games (${s.games})`, value: gamesPenalty, group: 'Longevity' });
+        let label;
+        if (useActualValues) {
+          label = `Career games (${s.games})`;
+        } else {
+          if (s.games >= 1400) label = '1400+ games';
+          else if (s.games >= 1200) label = '1200-1399 games';
+          else if (s.games >= 800) label = '800-1199 games';
+          else if (s.games >= 500) label = '500-799 games';
+          else if (s.games >= 330) label = '330-499 games';
+          else label = '164-329 games';
+        }
+        breakdown.push({ label: label, value: gamesPenalty, group: 'Longevity' });
       }
 
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
@@ -3301,8 +3311,16 @@
         } else {
           starterPenalty = 4 + (gsRatio - 0.75) / (1.0 - 0.75) * 4;
         }
-        const pct = Math.round(gsRatio * 100);
-        breakdown.push({ label: `Starter % (${pct}%)`, value: -Math.round(starterPenalty * 100) / 100, group: 'Longevity' });
+        let label;
+        if (useActualValues) {
+          const pct = Math.round(gsRatio * 100);
+          label = `Starter % (${pct}%)`;
+        } else {
+          if (gsRatio >= 0.75) label = '75%+ starts';
+          else if (gsRatio >= 0.60) label = '60-74% starts';
+          else label = '40-59% starts';
+        }
+        breakdown.push({ label: label, value: -Math.round(starterPenalty * 100) / 100, group: 'Longevity' });
       }
 
       if (gameState.gameMode === 'oldhead') {
