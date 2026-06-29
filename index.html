@@ -4271,8 +4271,12 @@
           const currentStreak = Math.max(0, JSON.parse(localStorage.getItem(streakKey) || '0'));
           const personalBest = Math.max(0, JSON.parse(localStorage.getItem(bestKey) || '0'));
 
-          let newStreak = currentStreak;
-          if (!lastPlay || lastPlay === todayStr) {
+          const yd = new Date(); yd.setDate(yd.getDate() - 1);
+          const yesterday = `${yd.getFullYear()}-${String(yd.getMonth()+1).padStart(2,'0')}-${String(yd.getDate()).padStart(2,'0')}`;
+          let newStreak = 1;
+          if (!lastPlay) {
+            newStreak = 1;
+          } else if (lastPlay === yesterday) {
             newStreak = currentStreak + 1;
           }
 
@@ -4292,8 +4296,12 @@
           const currentStreak = Math.max(0, JSON.parse(localStorage.getItem(streakKey) || '0'));
           const personalBest = Math.max(0, JSON.parse(localStorage.getItem(bestKey) || '0'));
 
-          let newStreak = currentStreak;
-          if (!lastPlay || lastPlay === todayStr) {
+          const yd = new Date(); yd.setDate(yd.getDate() - 1);
+          const yesterday = `${yd.getFullYear()}-${String(yd.getMonth()+1).padStart(2,'0')}-${String(yd.getDate()).padStart(2,'0')}`;
+          let newStreak = 1;
+          if (!lastPlay) {
+            newStreak = 1;
+          } else if (lastPlay === yesterday) {
             newStreak = currentStreak + 1;
           }
 
