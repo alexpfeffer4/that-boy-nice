@@ -3291,12 +3291,14 @@
         if (useActualValues) {
           label = `Career games (${s.games})`;
         } else {
-          if (s.games >= 1400) label = '1400+ games';
-          else if (s.games >= 1200) label = '1200-1399 games';
-          else if (s.games >= 800) label = '800-1199 games';
-          else if (s.games >= 500) label = '500-799 games';
-          else if (s.games >= 330) label = '330-499 games';
-          else label = '164-329 games';
+          let range;
+          if (s.games >= 1400) range = '17+';
+          else if (s.games >= 1200) range = '14-17';
+          else if (s.games >= 800) range = '10-14';
+          else if (s.games >= 500) range = '6-10';
+          else if (s.games >= 330) range = '4-6';
+          else range = '2-4';
+          label = `Seasons (${range})`;
         }
         breakdown.push({ label: label, value: gamesPenalty, group: 'Longevity' });
       }
@@ -3316,9 +3318,11 @@
           const pct = Math.round(gsRatio * 100);
           label = `Starter % (${pct}%)`;
         } else {
-          if (gsRatio >= 0.75) label = '75%+ starts';
-          else if (gsRatio >= 0.60) label = '60-74% starts';
-          else label = '40-59% starts';
+          let range;
+          if (gsRatio >= 0.75) range = '75%+';
+          else if (gsRatio >= 0.60) range = '60-74%';
+          else range = '40-59%';
+          label = `Starter % (${range})`;
         }
         breakdown.push({ label: label, value: -Math.round(starterPenalty * 100) / 100, group: 'Longevity' });
       }
