@@ -3220,9 +3220,9 @@
       // Skip for pre-1982 players: BBRef didn't track GS before then
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
       if (s.hasReliableGS) {
-        if (gsRatio >= 0.75) score -= 10;
-        else if (gsRatio >= 0.60) score -= 6;
-        else if (gsRatio >= 0.40) score -= 3;
+        if (gsRatio >= 0.75) score -= 6;
+        else if (gsRatio >= 0.60) score -= 4;
+        else if (gsRatio >= 0.40) score -= 2;
       }
 
       // Draft position (0 = undrafted, no penalty)
@@ -3257,7 +3257,7 @@
 
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
       if (s.hasReliableGS && gsRatio >= 0.40) {
-        const p = gsRatio >= 0.75 ? -10 : gsRatio >= 0.60 ? -6 : -3;
+        const p = gsRatio >= 0.75 ? -6 : gsRatio >= 0.60 ? -4 : -2;
         const range = gsRatio >= 0.75 ? '75%+' : gsRatio >= 0.60 ? '60-74%' : '40-59%';
         breakdown.push({ label: `Starter % (${range})`, value: p, group: 'Longevity' });
       }
