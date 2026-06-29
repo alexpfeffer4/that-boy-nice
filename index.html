@@ -3246,8 +3246,18 @@
       // Skip for pre-1982 players: BBRef didn't track GS before then
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
       if (s.hasReliableGS && gsRatio >= 0.40) {
-        const starterPenalty = Math.round(gsRatio * 6 * 100) / 100;
-        score -= starterPenalty;
+        let starterPenalty = 0;
+        if (gsRatio < 0.60) {
+          // 40-59%: slide from 0 to -2
+          starterPenalty = (gsRatio - 0.40) / (0.60 - 0.40) * 2;
+        } else if (gsRatio < 0.75) {
+          // 60-74%: slide from -2 to -4
+          starterPenalty = 2 + (gsRatio - 0.60) / (0.75 - 0.60) * 2;
+        } else {
+          // 75-100%: slide from -4 to -6
+          starterPenalty = 4 + (gsRatio - 0.75) / (1.0 - 0.75) * 2;
+        }
+        score -= Math.round(starterPenalty * 100) / 100;
       }
 
       // Draft position (0 = undrafted, no penalty)
@@ -3283,9 +3293,16 @@
 
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
       if (s.hasReliableGS && gsRatio >= 0.40) {
-        const p = Math.round(gsRatio * 6 * 100) / 100;
+        let starterPenalty = 0;
+        if (gsRatio < 0.60) {
+          starterPenalty = (gsRatio - 0.40) / (0.60 - 0.40) * 2;
+        } else if (gsRatio < 0.75) {
+          starterPenalty = 2 + (gsRatio - 0.60) / (0.75 - 0.60) * 2;
+        } else {
+          starterPenalty = 4 + (gsRatio - 0.75) / (1.0 - 0.75) * 2;
+        }
         const pct = Math.round(gsRatio * 100);
-        breakdown.push({ label: `Starter % (${pct}%)`, value: -p, group: 'Longevity' });
+        breakdown.push({ label: `Starter % (${pct}%)`, value: -Math.round(starterPenalty * 100) / 100, group: 'Longevity' });
       }
 
       if (gameState.gameMode === 'oldhead') {
