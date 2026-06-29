@@ -4132,11 +4132,15 @@
       } else if (s.allStarApps === 1 && s.games < 350) {
         shapeLabel = 'One Shining Season'; shapeType = 'badge-shape-oneseason';
       } else if (!s.undrafted && s.draftPick <= 5 && s.allStarApps === 0 && s.games < 500 && (s.lastSeason - s.firstSeason >= 3)) {
-        shapeLabel = 'Lottery Bust'; shapeType = 'badge-shape-bust';
-      } else if (!s.undrafted && s.draftPick >= 6 && s.draftPick <= 20 && s.allStarApps === 0 && s.games < 400) {
-        shapeLabel = 'Broken Promise'; shapeType = 'badge-shape-broken';
-      } else if ((s.undrafted || s.draftPick > 30) && s.games >= 400) {
-        shapeLabel = 'Hidden Gem'; shapeType = 'badge-shape-gem';
+        shapeLabel = 'Top-5 Bust'; shapeType = 'badge-shape-bust';
+      } else if (!s.undrafted && s.draftPick >= 6 && s.draftPick <= 14 && s.allStarApps === 0 && s.games < 500) {
+        shapeLabel = 'Lottery Bust'; shapeType = 'badge-shape-broken';
+      } else if (!s.undrafted && s.draftPick >= 15 && s.draftPick <= 30 && s.allStarApps === 0 && s.games < 500) {
+        shapeLabel = 'First Round Fade'; shapeType = 'badge-shape-broken';
+      } else if (s.draftPick > 30 && s.games >= 400) {
+        shapeLabel = '2nd Round Story'; shapeType = 'badge-shape-gem';
+      } else if (s.undrafted && s.games >= 400) {
+        shapeLabel = 'Undrafted Story'; shapeType = 'badge-shape-gem';
       } else if (s.games >= 500 && s.hasReliableGS && gsRatio >= 0.55) {
         shapeLabel = 'Long Haul'; shapeType = 'badge-shape-longhual';
       } else if (s.games >= 250 && s.games < 500) {
