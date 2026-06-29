@@ -3177,20 +3177,23 @@
                allNBA1, allNBA2, allNBA3, allDef1, allDef2, gamesStarted, firstSeason, lastSeason, seasons20ppg, recencyPenalty, hasReliableGS };
     }
 
-    // Single source of truth for the career-games penalty.
-    // Both calculateObscurityScore and getScoreBreakdown read from this so
-    // the displayed line items always sum to the actual score.
-    const GAMES_PENALTY_TABLE = [
-      { min: 1400, penalty: -35, range: '17+' },
-      { min: 1200, penalty: -26, range: '14-17' },
-      { min: 800,  penalty: -20, range: '10-14' },
-      { min: 500,  penalty: -12, range: '6-10' },
-      { min: 330,  penalty: -8,  range: '4-6' },
-      { min: 164,  penalty: -3,  range: '2-4' },
+    // Games penalty: sliding scale within tier boundaries
+    const GAMES_TIERS = [
+      { min: 1400, max: Infinity, penaltyMin: -35, penaltyMax: -35 },
+      { min: 1200, max: 1399, penaltyMin: -20, penaltyMax: -26 },
+      { min: 800,  max: 1199, penaltyMin: -12, penaltyMax: -20 },
+      { min: 500,  max: 799,  penaltyMin: -8,  penaltyMax: -12 },
+      { min: 330,  max: 499,  penaltyMin: -3,  penaltyMax: -8 },
+      { min: 164,  max: 329,  penaltyMin: 0,   penaltyMax: -3 },
     ];
 
     function getGamesPenalty(games) {
-      return GAMES_PENALTY_TABLE.find(t => games >= t.min) || null;
+      if (games < 164) return 0;
+      const tier = GAMES_TIERS.find(t => games >= t.min && games <= t.max);
+      if (!tier) return -35;
+      if (tier.min === tier.max) return tier.penaltyMin;
+      const ratio = (games - tier.min) / (tier.max - tier.min);
+      return Math.round((tier.penaltyMin + (tier.penaltyMax - tier.penaltyMin) * ratio) * 100) / 100;
     }
 
     function calculateObscurityScore(player) {
@@ -3242,10 +3245,9 @@
       // Games started ratio — starters are more recognizable than bench players
       // Skip for pre-1982 players: BBRef didn't track GS before then
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
-      if (s.hasReliableGS) {
-        if (gsRatio >= 0.75) score -= 6;
-        else if (gsRatio >= 0.60) score -= 4;
-        else if (gsRatio >= 0.40) score -= 2;
+      if (s.hasReliableGS && gsRatio >= 0.40) {
+        const starterPenalty = Math.round(gsRatio * 6 * 100) / 100;
+        score -= starterPenalty;
       }
 
       // Draft position (0 = undrafted, no penalty)
@@ -3275,14 +3277,15 @@
 
       const gamesPenalty = getGamesPenalty(s.games);
       if (gamesPenalty) {
-        breakdown.push({ label: `Seasons (${gamesPenalty.range})`, value: gamesPenalty.penalty, group: 'Longevity' });
+        const seasons = Math.round((s.games / 82) * 10) / 10;
+        breakdown.push({ label: `Career games (${s.games})`, value: gamesPenalty, group: 'Longevity' });
       }
 
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
       if (s.hasReliableGS && gsRatio >= 0.40) {
-        const p = gsRatio >= 0.75 ? -6 : gsRatio >= 0.60 ? -4 : -2;
-        const range = gsRatio >= 0.75 ? '75%+' : gsRatio >= 0.60 ? '60-74%' : '40-59%';
-        breakdown.push({ label: `Starter % (${range})`, value: p, group: 'Longevity' });
+        const p = Math.round(gsRatio * 6 * 100) / 100;
+        const pct = Math.round(gsRatio * 100);
+        breakdown.push({ label: `Starter % (${pct}%)`, value: -p, group: 'Longevity' });
       }
 
       if (gameState.gameMode === 'oldhead') {
