@@ -2669,8 +2669,7 @@
         }
       }
 
-      // Show Oldhead explanation modal before starting
-      document.getElementById('oldheadModal').style.display = 'flex';
+      confirmDailyChallenge();
     }
 
     function showDailyResults(saved) {
@@ -2718,10 +2717,14 @@
 
       const verdicts = getGameVerdicts(lineupObj);
       if (verdicts) {
-        const verdictHTML = document.createElement('div');
-        verdictHTML.className = 'end-verdict';
-        verdictHTML.innerHTML = `Deepest cut: <span class="end-verdict-pick">${verdicts.best.name} (${verdicts.best.score})</span> · Most obvious: <span class="end-verdict-pick">${verdicts.worst.name} (${verdicts.worst.score})</span>`;
-        container.parentNode.insertBefore(verdictHTML, container.nextSibling);
+        const verdictBlock = document.createElement('div');
+        verdictBlock.innerHTML = `
+          <div class="end-verdict">
+            <div class="end-verdict-best">🔥 ${verdicts.best.name} ${verdicts.best.score}</div>
+            ${verdicts.worst ? `<div class="end-verdict-worst">😬 ${verdicts.worst.name} ${verdicts.worst.score}</div>` : ''}
+          </div>
+        `;
+        container.parentNode.insertBefore(verdictBlock, container);
       }
 
       requestAnimationFrame(() => {
