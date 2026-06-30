@@ -2719,9 +2719,17 @@
       if (verdicts) {
         const verdictBlock = document.createElement('div');
         verdictBlock.innerHTML = `
-          <div class="end-verdict">
-            <div class="end-verdict-best">🔥 ${verdicts.best.name} ${verdicts.best.score}</div>
-            ${verdicts.worst ? `<div class="end-verdict-worst">😬 ${verdicts.worst.name} ${verdicts.worst.score}</div>` : ''}
+          <div class="end-verdict-hero">
+            <div class="ev-col ev-best">
+              <span class="ev-cap">🔥 Deepest cut</span>
+              <span class="ev-name">${verdicts.best.name}</span>
+              <span class="ev-val">${verdicts.best.score}</span>
+            </div>
+            ${verdicts.worst ? `<div class="ev-col ev-worst">
+              <span class="ev-cap">😬 Most obvious</span>
+              <span class="ev-name">${verdicts.worst.name}</span>
+              <span class="ev-val">${verdicts.worst.score}</span>
+            </div>` : ''}
           </div>
         `;
         container.parentNode.insertBefore(verdictBlock, container);
@@ -2875,9 +2883,17 @@
       if (verdicts) {
         const verdictBlock = document.getElementById('verdictBlock') || document.createElement('div');
         verdictBlock.innerHTML = `
-          <div class="end-verdict">
-            <div class="end-verdict-best">🔥 ${verdicts.best.name} ${verdicts.best.score}</div>
-            ${verdicts.worst ? `<div class="end-verdict-worst">😬 ${verdicts.worst.name} ${verdicts.worst.score}</div>` : ''}
+          <div class="end-verdict-hero">
+            <div class="ev-col ev-best">
+              <span class="ev-cap">🔥 Deepest cut</span>
+              <span class="ev-name">${verdicts.best.name}</span>
+              <span class="ev-val">${verdicts.best.score}</span>
+            </div>
+            ${verdicts.worst ? `<div class="ev-col ev-worst">
+              <span class="ev-cap">😬 Most obvious</span>
+              <span class="ev-name">${verdicts.worst.name}</span>
+              <span class="ev-val">${verdicts.worst.score}</span>
+            </div>` : ''}
           </div>
         `;
         if (!document.getElementById('verdictBlock')) {
