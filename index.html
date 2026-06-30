@@ -2697,6 +2697,19 @@
       `;
 
       const container = document.getElementById('resultPlayers');
+
+      // Recalculate any NaN scores from before scoring algorithm changes
+      let recalcTotal = 0;
+      saved.lineup.forEach(entry => {
+        if (entry.score == null || isNaN(entry.score)) {
+          const playerObj = (players[entry.team] || []).find(pl => pl.name === entry.name)
+                         || Object.values(players).flat().find(pl => pl.name === entry.name);
+          if (playerObj) entry.score = calculateObscurityScore(playerObj);
+        }
+        recalcTotal += entry.score || 0;
+      });
+      if (isNaN(saved.score)) saved.score = recalcTotal;
+
       const lineupObj = {};
       saved.lineup.forEach(entry => {
         lineupObj[entry.team] = entry;
@@ -2999,7 +3012,17 @@
       gameState.dailyTeamIndex = saved.dailyTeamIndex || 0;
       gameState.lives = saved.lives;
       gameState.lineup = saved.lineup || {};
-      gameState.totalScore = saved.totalScore || 0;
+
+      // Recalculate any NaN scores left over from before scoring algorithm changes
+      Object.keys(gameState.lineup).forEach(pos => {
+        const p = gameState.lineup[pos];
+        if (p && (p.score == null || isNaN(p.score))) {
+          const playerObj = (players[p.team] || []).find(pl => pl.name === p.name)
+                         || Object.values(players).flat().find(pl => pl.name === p.name);
+          if (playerObj) p.score = calculateObscurityScore(playerObj);
+        }
+      });
+      gameState.totalScore = Object.values(gameState.lineup).reduce((sum, p) => sum + (p ? (p.score || 0) : 0), 0);
       gameState.currentTeam = saved.currentTeam;
       gameState.respinsLeft = saved.respinsLeft != null ? saved.respinsLeft : 1;
       gameState.hasSpun = saved.hasSpun || false;
@@ -3152,7 +3175,7 @@
       const games = player.careerGames || 0;
       const vorp = player.careerVORP || 0;
       const draftPick = player.draftPick || 0;
-      const undrafted = player.undrafted || false;
+      const undrafted = player.undrafted || player.draftPick === 0;
       const mvp = player.mvpAwards || 0;
       const fmvp = player.fmvpAwards || 0;
       const dpoy = player.dpoyAwards || 0;
@@ -3169,7 +3192,7 @@
       const firstSeason = player.firstSeason || 0;
       const lastSeason = player.lastSeason || 0;
       const seasons20ppg = player.seasons20ppg || 0;
-      const yearsAgo = 2026 - lastSeason;
+      const yearsAgo = new Date().getFullYear() - lastSeason;
       const recencyPenalty = yearsAgo <= 0 ? -15 : yearsAgo <= 2 ? -10 : yearsAgo <= 4 ? -5 : 0;
       // GS data not tracked by BBRef before 1982 — flag players who started before then
       const hasReliableGS = firstSeason >= 1982;
@@ -3328,7 +3351,7 @@
       }
 
       if (gameState.gameMode === 'oldhead') {
-        const yearsAgo = 2026 - s.lastSeason;
+        const yearsAgo = new Date().getFullYear() - s.lastSeason;
         const bucket = yearsAgo <= 0 ? 'Active player' : yearsAgo <= 2 ? '1-2 yrs retired' : yearsAgo <= 4 ? '3-4 yrs retired' : '5+ yrs retired';
         breakdown.push({ label: bucket, value: s.recencyPenalty, group: 'Longevity' });
       }
@@ -3563,8 +3586,7 @@
         let html = '<div class="leaderboard-list">';
         sorted.forEach(function(entry, idx) {
           const [name, count] = entry;
-          const isTop10 = idx < 10;
-          const isFrequent = count >= 10 && isTop10;
+          const isFrequent = count >= 10;
           const badge = isFrequent ? '<span class="leaderboard-badge">Frequent</span>' : '';
           html += '<div class="leaderboard-row ' + (isFrequent ? 'frequent' : '') + '">' +
             '<span class="leaderboard-rank">' + (idx + 1) + '.</span>' +
@@ -4176,8 +4198,9 @@
       return '1970s';
     }
 
-    function getPlayerTierBadges(playerName) {
-      const playerObj = allPlayers.find(p => p.name === playerName);
+    function getPlayerTierBadges(playerName, teamName) {
+      const playerObj = (teamName && players[teamName] ? players[teamName].find(p => p.name === playerName) : null)
+                     || allPlayers.find(p => p.name === playerName);
       if (!playerObj) return [];
       const s = getPlayerStats(playerObj);
       const gsRatio = s.games > 0 ? s.gamesStarted / s.games : 0;
@@ -4189,8 +4212,10 @@
         shapeLabel = 'All-Time Great'; shapeType = 'badge-shape-alltime';
       } else if (s.allStarApps >= 3 || s.allNBA1 >= 1) {
         shapeLabel = 'Perennial Star'; shapeType = 'badge-shape-star';
-      } else if (s.allStarApps === 1 && s.games < 350) {
-        shapeLabel = 'One Shining Season'; shapeType = 'badge-shape-oneseason';
+      } else if (s.allStarApps === 1 && s.games < 500) {
+        shapeLabel = 'Flash in the Pan'; shapeType = 'badge-shape-oneseason';
+      } else if (s.allStarApps === 1) {
+        shapeLabel = 'One Hit Wonder'; shapeType = 'badge-shape-oneseason';
       } else if (!s.undrafted && s.draftPick <= 5 && s.allStarApps === 0 && s.games < 500 && (s.lastSeason - s.firstSeason >= 3)) {
         shapeLabel = 'Top-5 Bust'; shapeType = 'badge-shape-bust';
       } else if (!s.undrafted && s.draftPick >= 6 && s.draftPick <= 14 && s.allStarApps === 0 && s.games < 500) {
@@ -4201,11 +4226,11 @@
         shapeLabel = '2nd Round Story'; shapeType = 'badge-shape-gem';
       } else if (s.undrafted && s.games >= 400) {
         shapeLabel = 'Undrafted Story'; shapeType = 'badge-shape-gem';
-      } else if (s.games >= 500 && s.hasReliableGS && gsRatio >= 0.55) {
+      } else if (s.games >= 500) {
         shapeLabel = 'Long Haul'; shapeType = 'badge-shape-longhual';
-      } else if (s.games >= 250 && s.games < 500) {
+      } else if (s.games >= 250) {
         shapeLabel = 'Rotation Regular'; shapeType = 'badge-shape-rotation';
-      } else if (s.games >= 100 && s.games < 250) {
+      } else if (s.games >= 100) {
         shapeLabel = 'Short Run'; shapeType = 'badge-shape-shortrun';
       } else {
         shapeLabel = 'Cup of Coffee'; shapeType = 'badge-shape-cup';
@@ -4249,7 +4274,7 @@
         sigLabel = `${s.games} Games`; sigType = 'badge-sig-identity';
       } else if (s.undrafted && s.games >= 200) {
         sigLabel = 'Went Undrafted'; sigType = 'badge-sig-identity';
-      } else if (s.draftPick > 30 && s.games >= 500) {
+      } else if (s.draftPick > 30 && s.games >= 400) {
         sigLabel = '2nd Round Find'; sigType = 'badge-sig-identity';
       } else if (s.seasons20ppg === 1 && s.games < 350) {
         sigLabel = 'One Breakout Season'; sigType = 'badge-sig-identity';
@@ -4268,8 +4293,9 @@
     function buildPlayerCard(name, posLabel, score, playerName, teamName) {
       const tier = getScoreTier(score);
       const avatarLabel = teamName ? getTeamAbbrev(teamName) : getInitials(name);
-      const badges = getPlayerTierBadges(playerName || name);
-      const playerObj = allPlayers.find(function(p) { return p.name === (playerName || name); });
+      const badges = getPlayerTierBadges(playerName || name, teamName);
+      const playerObj = (teamName && players[teamName] ? players[teamName].find(function(p) { return p.name === (playerName || name); }) : null)
+                     || allPlayers.find(function(p) { return p.name === (playerName || name); });
       let eraLine = '';
 
       if (playerObj && playerObj.firstSeason && playerObj.lastSeason) {
