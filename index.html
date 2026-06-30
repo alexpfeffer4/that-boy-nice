@@ -4210,8 +4210,10 @@
       let shapeLabel, shapeType;
       if (s.mvp >= 1 || s.allNBA1 >= 2 || (s.allNBA1 >= 1 && s.allStarApps >= 6)) {
         shapeLabel = 'All-Time Great'; shapeType = 'badge-shape-alltime';
-      } else if (s.allStarApps >= 3 || s.allNBA1 >= 1) {
+      } else if (s.allStarApps >= 3 || s.allNBA1 >= 1 || (s.allNBA1 + s.allNBA2 + s.allNBA3) >= 3) {
         shapeLabel = 'Perennial Star'; shapeType = 'badge-shape-star';
+      } else if (s.dpoy >= 1 || (s.allDef1 + s.allDef2) >= 3) {
+        shapeLabel = 'Defensive Anchor'; shapeType = 'badge-shape-star';
       } else if (s.allStarApps === 1 && s.games < 500) {
         shapeLabel = 'Flash in the Pan'; shapeType = 'badge-shape-oneseason';
       } else if (s.allStarApps === 1) {
@@ -4227,9 +4229,9 @@
       } else if (s.undrafted && s.games >= 400) {
         shapeLabel = 'Undrafted Story'; shapeType = 'badge-shape-gem';
       } else if (s.games >= 500) {
-        shapeLabel = 'Long Haul'; shapeType = 'badge-shape-longhual';
+        shapeLabel = 'Rotation Regular'; shapeType = 'badge-shape-longhual';
       } else if (s.games >= 250) {
-        shapeLabel = 'Rotation Regular'; shapeType = 'badge-shape-rotation';
+        shapeLabel = 'Role Player'; shapeType = 'badge-shape-rotation';
       } else if (s.games >= 100) {
         shapeLabel = 'Short Run'; shapeType = 'badge-shape-shortrun';
       } else {
