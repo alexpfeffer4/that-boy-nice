@@ -38,8 +38,8 @@ ABBR_TO_FRANCHISE = {
     'DAL': 'Dallas Mavericks',
     'DEN': 'Denver Nuggets',
     'DET': 'Detroit Pistons',
-    'GSW': 'Golden State Warriors',
-    'HOU': 'Houston Rockets',
+    'GSW': 'Golden State Warriors',  'SFW': 'Golden State Warriors',
+    'HOU': 'Houston Rockets',        'SDR': 'Houston Rockets',
     'IND': 'Indiana Pacers',
     'LAC': 'Los Angeles Clippers',   'SDC': 'Los Angeles Clippers',
                                      'BUF': 'Los Angeles Clippers',
@@ -58,15 +58,17 @@ ABBR_TO_FRANCHISE = {
     'POR': 'Portland Trail Blazers',
     'SAC': 'Sacramento Kings',       'KCK': 'Sacramento Kings',
                                      'KCO': 'Sacramento Kings',
+                                     'CIN': 'Sacramento Kings',
     'SAS': 'San Antonio Spurs',
     'TOR': 'Toronto Raptors',
     'UTA': 'Utah Jazz',
     'WAS': 'Washington Wizards',     'WSB': 'Washington Wizards',
                                      'CAP': 'Washington Wizards',
+                                     'BAL': 'Washington Wizards',
 }
 
-SEASONS = list(range(1976, 2027))  # 1976 through 2026
-DRAFT_SEASONS = list(range(1976, 2026))  # 1976 through 2025
+SEASONS = list(range(1970, 2027))  # 1970 through 2026
+DRAFT_SEASONS = list(range(1947, 2026))  # 1947 through 2025
 BASE = 'https://www.basketball-reference.com'
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
