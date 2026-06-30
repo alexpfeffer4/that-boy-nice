@@ -4232,8 +4232,10 @@
       let shapeLabel, shapeType;
       if (s.mvp >= 1 || s.allNBA1 >= 2 || (s.allNBA1 >= 1 && s.allStarApps >= 6)) {
         shapeLabel = 'All-Time Great'; shapeType = 'badge-shape-alltime';
-      } else if (s.allStarApps >= 3 || s.allNBA1 >= 1 || (s.allNBA1 + s.allNBA2 + s.allNBA3) >= 3) {
+      } else if (s.allStarApps >= 4 || s.allNBA1 >= 1 || (s.allNBA1 + s.allNBA2 + s.allNBA3) >= 3) {
         shapeLabel = 'Perennial Star'; shapeType = 'badge-shape-star';
+      } else if (s.allStarApps >= 2 && s.allStarApps <= 3) {
+        shapeLabel = 'Multi-Time All-Star'; shapeType = 'badge-shape-star';
       } else if (s.dpoy >= 1 || (s.allDef1 + s.allDef2) >= 3) {
         shapeLabel = 'Defensive Anchor'; shapeType = 'badge-shape-star';
       } else if (s.allStarApps === 1 && s.games < 500) {
