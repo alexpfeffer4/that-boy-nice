@@ -3254,10 +3254,12 @@
       else if (s.allNBA1 >= 2) score -= 18;
       else if (s.allNBA1 >= 1) score -= 12;
 
-      if (s.allNBA2 >= 2) score -= 12;
+      if (s.allNBA2 >= 3) score -= 15;
+      else if (s.allNBA2 >= 2) score -= 12;
       else if (s.allNBA2 >= 1) score -= 8;
 
-      if (s.allNBA3 >= 2) score -= 8;
+      if (s.allNBA3 >= 3) score -= 10;
+      else if (s.allNBA3 >= 2) score -= 8;
       else if (s.allNBA3 >= 1) score -= 5;
 
       // All-Defensive teams (tiered)
@@ -3265,7 +3267,8 @@
       else if (s.allDef1 >= 2) score -= 8;
       else if (s.allDef1 >= 1) score -= 5;
 
-      if (s.allDef2 >= 2) score -= 5;
+      if (s.allDef2 >= 3) score -= 7;
+      else if (s.allDef2 >= 2) score -= 5;
       else if (s.allDef2 >= 1) score -= 3;
 
       // Games started ratio — starters are more recognizable than bench players
