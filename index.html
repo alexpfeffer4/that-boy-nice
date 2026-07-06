@@ -2496,7 +2496,7 @@
             <span class="start-desc">Pure stats only — scoring based on career numbers with no time adjustment. All eras treated equally.</span>
           </button>
           <button class="start-btn mode-practice-btn" onclick="startPracticeTargetMode()">
-            🔁 Practice Target
+            🎯 Target Mode
             <span class="start-desc">5 teams, random target score — land as close as you can. Play as many rounds as you want.</span>
           </button>
         </div>
@@ -2606,6 +2606,9 @@
     // Load players data and initialize game
     let players = playersData || {};
     const allPlayers = Object.values(players).flat();
+    // Pristine copy of #gameSection's markup, captured before any game runs — used to restore
+    // the play area when re-entering a mode in place (e.g. "Practice Again") without a page reload.
+    const gameSectionTemplate = document.getElementById('gameSection').innerHTML;
     let gameState = {
       lineup: {},
       totalScore: 0,
@@ -2934,9 +2937,6 @@
       document.getElementById('respinBtn').style.display = 'none';
       updateDisplay();
       updateTargetProgress();
-      document.getElementById('playerInput').disabled = false;
-      document.getElementById('submitBtn').disabled = false;
-      document.getElementById('playerInput').focus();
 
       showHowToPlay('oldhead');
     }
@@ -2944,6 +2944,12 @@
     // Unlimited, unseeded version of Target Mode — same rules, new random target/teams every round,
     // and doesn't touch the daily save/streak keys. Can be re-entered without a page reload.
     function startPracticeTargetMode() {
+      // Restore the play area in case we're re-entering in place (e.g. via "Practice Again")
+      // after endGame() replaced #gameSection with an end-screen — and re-bind its listeners,
+      // since addEventListener doesn't survive that innerHTML swap.
+      document.getElementById('gameSection').innerHTML = gameSectionTemplate;
+      attachGameListeners();
+
       gameState.isDailyChallenge = true;
       gameState.targetMode = true;
       gameState.practiceMode = true;
@@ -2968,7 +2974,7 @@
       document.getElementById('gameSection').style.display = 'block';
       document.getElementById('helpBtn').style.display = 'flex';
       const indicator = document.getElementById('modeIndicator');
-      indicator.textContent = '🔁 Practice Target';
+      indicator.textContent = '🎯 Target Mode';
       indicator.className = 'mode-indicator mode-oldhead';
 
       document.getElementById('spinBtn').style.display = 'none';
@@ -2978,11 +2984,6 @@
       updateLivesDisplay();
       updateDisplay();
       updateTargetProgress();
-      document.getElementById('message').innerHTML = '';
-      document.getElementById('playerInput').value = '';
-      document.getElementById('playerInput').disabled = false;
-      document.getElementById('submitBtn').disabled = false;
-      document.getElementById('playerInput').focus();
 
       showHowToPlay('oldhead');
     }
@@ -4643,7 +4644,7 @@
         ? `💔 Game Over`
         : gameState.isDailyChallenge
           ? gameState.practiceMode
-            ? `🔁 Practice Target`
+            ? `🎯 Target Mode`
             : gameState.targetMode
               ? `🎯 Target Mode · ${getTodayString()}`
               : `📅 Daily Challenge · ${getTodayString()}`
@@ -4684,7 +4685,7 @@
           ${rivalHTML}
           <div class="end-btns">
             ${gameState.teamChallenge && !gameState.isTeamChallengeBest ? `<button class="end-btn-secondary" onclick="viewTeamBestLineup('${gameState.selectedTeam}')" style="width:100%;">🏆 View Best Lineup</button>` : ''}
-            ${gameState.practiceMode ? `<button class="end-btn-ghost" onclick="startPracticeTargetMode()">🔁 Practice Again</button>` : ''}
+            ${gameState.practiceMode ? `<button class="end-btn-ghost" onclick="startPracticeTargetMode()">🔁 New Round</button>` : ''}
             <button class="end-btn-ghost" onclick="location.href=location.pathname">Play Again</button>
           </div>
         </div>
@@ -4891,7 +4892,7 @@
           <span class="share-card-pts" style="color:${color}">${p.score}</span>
         </div>`;
       }).join('');
-      const modeTag = gameState.practiceMode ? '🔁 Practice Target' : gameState.targetMode ? `🎯 Target · ${getTodayString()}` : gameState.isDailyChallenge ? `📅 Daily · ${getTodayString()}` : gameState.teamChallenge ? '🏢 Team Challenge' : '🏀 Practice';
+      const modeTag = gameState.practiceMode ? '🎯 Target Mode' : gameState.targetMode ? `🎯 Target · ${getTodayString()}` : gameState.isDailyChallenge ? `📅 Daily · ${getTodayString()}` : gameState.teamChallenge ? '🏢 Team Challenge' : '🏀 Practice';
       document.getElementById('shareCardWrap').innerHTML = `
         <div class="share-card" id="shareCard">
           <div class="share-card-title">ball knower</div>
@@ -4986,16 +4987,22 @@
       }
     }
 
-    // Other event listeners
-    document.getElementById('spinBtn').addEventListener('click', spinWheel);
-    document.getElementById('respinBtn').addEventListener('click', respin);
-    document.getElementById('submitBtn').addEventListener('click', submitPlayer);
-    document.getElementById('playerInput').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') submitPlayer();
-    });
-    document.getElementById('playerInput').addEventListener('input', (e) => {
-      showAutocomplete(e.target.value);
-    });
+    // Game-area listeners — re-run after gameSectionTemplate is restored into a fresh DOM
+    // (e.g. re-entering Free Play's Target Mode in place), since addEventListener doesn't
+    // survive an innerHTML replacement the way inline onclick attributes do.
+    function attachGameListeners() {
+      document.getElementById('spinBtn').addEventListener('click', spinWheel);
+      document.getElementById('respinBtn').addEventListener('click', respin);
+      document.getElementById('submitBtn').addEventListener('click', submitPlayer);
+      document.getElementById('playerInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') submitPlayer();
+      });
+      document.getElementById('playerInput').addEventListener('input', (e) => {
+        showAutocomplete(e.target.value);
+      });
+    }
+    attachGameListeners();
+
     document.addEventListener('click', (e) => {
       if (e.target.id !== 'playerInput') {
         const dd = document.getElementById('autocompleteDropdown');
