@@ -2923,7 +2923,8 @@
       }
 
       const availableTeams = gameState.teams.filter(t => !excludedTeams.has(t));
-      gameState.dailyTeams = getDailyTeams(availableTeams, dateStr + '-target');
+      const teamSeedSalt = dateStr === '2026-07-06' ? '-v2' : ''; // bump to reshuffle a given date's teams without changing the date
+      gameState.dailyTeams = getDailyTeams(availableTeams, dateStr + '-target' + teamSeedSalt);
       gameState.dailyTeamIndex = 0;
       gameState.currentTeam = gameState.dailyTeams[0];
 
@@ -5021,6 +5022,16 @@
         if (dd) dd.classList.remove('show');
       }
     });
+
+    // One-time reset trigger: visit ?resetTargetDaily=1 to clear Target Mode's daily
+    // streak/best/result. Safe to remove once used.
+    if (new URLSearchParams(window.location.search).get('resetTargetDaily') === '1') {
+      localStorage.removeItem(`tbn_target_${getTodayString()}`);
+      localStorage.removeItem('tbn_target_streak');
+      localStorage.removeItem('tbn_target_best');
+      localStorage.removeItem('tbn_target_last_play');
+      window.location.href = window.location.pathname;
+    }
 
     // Initialize
     loadPlayers();
