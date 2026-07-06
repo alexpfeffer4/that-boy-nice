@@ -2991,7 +2991,7 @@
     function showTargetResults(saved) {
       const dateStr = getTodayString();
       const diff = saved.score - saved.targetScore;
-      const tierLabel = Math.abs(diff) <= 5 ? 'Perfect' : Math.abs(diff) <= 10 ? 'Close' : Math.abs(diff) <= 20 ? 'Near' : Math.abs(diff) <= 30 ? 'Off' : 'Way Off';
+      const tierLabel = getTargetTierLabel(diff);
       const totalTier = getScoreTier(Math.round(saved.score / 5));
 
       document.getElementById('gameSection').innerHTML = `
@@ -3000,7 +3000,7 @@
             <div class="end-meta-tag">🎯 Target Mode · ${dateStr}</div>
             <div class="end-score-num ${totalTier}" data-target="${saved.score}">0</div>
             <div class="end-tier-pill ${totalTier}">${tierLabel}</div>
-            <div class="end-best-score">Target: ${saved.targetScore} · Off by: ${Math.abs(diff)}</div>
+            <div class="end-best-score">Target: ${saved.targetScore}</div>
           </div>
           <div class="end-players" id="resultPlayers"></div>
           <div class="end-btns">
@@ -3345,6 +3345,15 @@
       if (total >= 140) return '👀 Casual Watcher';
       if (total >= 70)  return '🎞️ Highlights Only';
       return '😬 You named Steph Curry five times';
+    }
+
+    function getTargetTierLabel(diff) {
+      const abs = Math.abs(diff);
+      if (abs <= 5) return '🎯 Bullseye';
+      if (abs <= 15) return '🔥 Nailed It';
+      if (abs <= 30) return '👍 Solid';
+      if (abs <= 60) return '😬 Ballpark';
+      return '💀 Way Off';
     }
 
     function getPlayerStats(player) {
@@ -4549,7 +4558,7 @@
       const label = gameState.gameOver
         ? gameOverLabel
         : gameState.targetMode
-          ? (Math.abs(targetDiff) <= 5 ? 'Perfect' : Math.abs(targetDiff) <= 10 ? 'Close' : Math.abs(targetDiff) <= 20 ? 'Near' : Math.abs(targetDiff) <= 30 ? 'Off' : 'Way Off')
+          ? getTargetTierLabel(targetDiff)
           : getScoreLabel(roundedScore);
       const totalTier = getScoreTier(Math.round(roundedScore / 5));
 
@@ -4665,7 +4674,7 @@
       const bestScoreDisplay = gameState.teamChallenge
         ? `<div class="end-best-score">Best: ${Math.max(0, JSON.parse(localStorage.getItem('tbn_team_best_' + gameState.selectedTeam) || '0'))}</div>`
         : gameState.targetMode
-          ? `<div class="end-best-score">Target: ${gameState.targetScore} · Off by: ${Math.abs(targetDiff)}</div>`
+          ? `<div class="end-best-score">Target: ${gameState.targetScore}</div>`
           : '';
 
       document.getElementById('gameSection').innerHTML = `
@@ -4898,7 +4907,7 @@
           <div class="share-card-title">ball knower</div>
           <div class="share-card-date">${modeTag} · ${gameState.gameMode === 'oldhead' ? 'Classic Mode' : 'Timeless Mode'}</div>
           <div class="share-card-score">${gameState.totalScore}</div>
-          <div class="share-card-label">Rank: ${label}</div>
+          ${gameState.targetMode ? '' : `<div class="share-card-label">Rank: ${label}</div>`}
           ${rows}
           <div class="share-card-footer">ballknower.me</div>
         </div>
