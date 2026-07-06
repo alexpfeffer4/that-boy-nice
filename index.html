@@ -743,6 +743,48 @@
       color: #FFD700;
     }
 
+    .target-gauge {
+      margin-top: 10px;
+    }
+
+    .target-gauge-track {
+      position: relative;
+      height: 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 5px;
+    }
+
+    .target-gauge-fill {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      border-radius: 5px;
+      background: #FFD700;
+      transition: width 0.4s ease, background 0.4s ease;
+    }
+
+    .target-gauge-fill.close {
+      background: #4ECDC4;
+    }
+
+    .target-gauge-fill.over {
+      background: #FF6B6B;
+    }
+
+    .target-gauge-marker {
+      position: absolute;
+      top: -3px;
+      width: 2px;
+      height: 16px;
+      background: #fff;
+      transition: left 0.4s ease;
+    }
+
+    .target-gauge-label {
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.6);
+      margin-top: 6px;
+    }
+
     .error {
       color: #FF6B6B;
       font-size: 0.9rem;
@@ -2371,7 +2413,11 @@
         </button>
         <button class="start-btn" onclick="startDailyChallengeMode('target')" style="background:#2a3a2a;border:2px solid #4ade80;color:#4ade80;padding:14px;border-radius:8px;font-weight:700;">
           🎯 Target Mode
-          <span style="display:block;font-size:0.85rem;color:rgba(74,222,128,0.7);font-weight:400;margin-top:4px;">Hit the daily target score with any 5 players.</span>
+          <span style="display:block;font-size:0.85rem;color:rgba(74,222,128,0.7);font-weight:400;margin-top:4px;">5 teams, same as High Score — but land as close to today's target score as you can.</span>
+        </button>
+        <button class="start-btn" onclick="startDailyChallengeMode('practice')" style="background:#2a2a3a;border:2px solid #A78BFA;color:#A78BFA;padding:14px;border-radius:8px;font-weight:700;">
+          🔁 Practice Target
+          <span style="display:block;font-size:0.85rem;color:rgba(167,139,250,0.7);font-weight:400;margin-top:4px;">Same idea as Target Mode, but unlimited — play as many rounds as you want.</span>
         </button>
       </div>
       <button class="end-btn-ghost" onclick="closeDailyChallengesModal()" style="width:100%;margin-top:16px;">Cancel</button>
@@ -2509,8 +2555,15 @@
             </div>
           </div>
           <div class="formation-total">
-            <div class="score-label">Total Score</div>
+            <div class="score-label" id="scoreLabel">Total Score</div>
             <div class="total" id="totalScore">0</div>
+            <div class="target-gauge" id="targetGauge" style="display:none;">
+              <div class="target-gauge-track">
+                <div class="target-gauge-fill" id="targetGaugeFill"></div>
+                <div class="target-gauge-marker" id="targetGaugeMarker"></div>
+              </div>
+              <div class="target-gauge-label" id="targetGaugeLabel"></div>
+            </div>
           </div>
         </div>
 
@@ -2802,6 +2855,8 @@
         startDailyChallenge();
       } else if (mode === 'target') {
         startTargetMode();
+      } else if (mode === 'practice') {
+        startPracticeTargetMode();
       }
     }
 
@@ -2835,17 +2890,83 @@
       gameState.gameMode = 'oldhead';
       gameState.hasSpun = true;
 
+      // Exclude teams from Target Mode's own last 2 days (independent of Daily Challenge's rotation)
+      const yd = new Date(); yd.setDate(yd.getDate() - 1);
+      const yesterday = `${yd.getFullYear()}-${String(yd.getMonth()+1).padStart(2,'0')}-${String(yd.getDate()).padStart(2,'0')}`;
+      const d2 = new Date(); d2.setDate(d2.getDate() - 2);
+      const dayBefore = `${d2.getFullYear()}-${String(d2.getMonth()+1).padStart(2,'0')}-${String(d2.getDate()).padStart(2,'0')}`;
+
+      const yesterdayData = JSON.parse(localStorage.getItem(`tbn_target_${yesterday}`) || 'null');
+      const dayBeforeData = JSON.parse(localStorage.getItem(`tbn_target_${dayBefore}`) || 'null');
+      const excludedTeams = new Set();
+      if (yesterdayData && yesterdayData.teams) {
+        yesterdayData.teams.forEach(t => excludedTeams.add(t.team));
+      }
+      if (dayBeforeData && dayBeforeData.teams) {
+        dayBeforeData.teams.forEach(t => excludedTeams.add(t.team));
+      }
+
+      const availableTeams = gameState.teams.filter(t => !excludedTeams.has(t));
+      gameState.dailyTeams = getDailyTeams(availableTeams, dateStr + '-target');
+      gameState.dailyTeamIndex = 0;
+      gameState.currentTeam = gameState.dailyTeams[0];
+
       document.getElementById('startScreen').style.display = 'none';
       document.getElementById('gameSection').style.display = 'block';
       const indicator = document.getElementById('modeIndicator');
       indicator.textContent = '🎯 Target Mode';
       indicator.className = 'mode-indicator mode-oldhead';
 
-      // Target mode has no team restriction — hide the team reel, show target progress instead
       document.getElementById('spinBtn').style.display = 'none';
       document.getElementById('respinBtn').style.display = 'none';
-      document.querySelector('.wheel-container').style.display = 'none';
+      updateDisplay();
       updateTargetProgress();
+      document.getElementById('playerInput').disabled = false;
+      document.getElementById('submitBtn').disabled = false;
+      document.getElementById('playerInput').focus();
+
+      showHowToPlay('oldhead');
+    }
+
+    // Unlimited, unseeded version of Target Mode — same rules, new random target/teams every round,
+    // and doesn't touch the daily save/streak keys. Can be re-entered without a page reload.
+    function startPracticeTargetMode() {
+      gameState.isDailyChallenge = true;
+      gameState.targetMode = true;
+      gameState.practiceMode = true;
+      gameState.targetScore = Math.round(25 + Math.random() * (450 - 25));
+      gameState.gameMode = 'oldhead';
+      gameState.hasSpun = true;
+      gameState.lineup = {};
+      gameState.totalScore = 0;
+      gameState.lives = 3;
+      gameState.gameOver = false;
+      gameState.dailyTeamIndex = 0;
+
+      const shuffled = [...gameState.teams];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      gameState.dailyTeams = shuffled.slice(0, 5);
+      gameState.currentTeam = gameState.dailyTeams[0];
+
+      document.getElementById('startScreen').style.display = 'none';
+      document.getElementById('gameSection').style.display = 'block';
+      document.getElementById('helpBtn').style.display = 'flex';
+      const indicator = document.getElementById('modeIndicator');
+      indicator.textContent = '🔁 Practice Target';
+      indicator.className = 'mode-indicator mode-oldhead';
+
+      document.getElementById('spinBtn').style.display = 'none';
+      document.getElementById('respinBtn').style.display = 'none';
+      updateLineup();
+      updateScore();
+      updateLivesDisplay();
+      updateDisplay();
+      updateTargetProgress();
+      document.getElementById('message').innerHTML = '';
+      document.getElementById('playerInput').value = '';
       document.getElementById('playerInput').disabled = false;
       document.getElementById('submitBtn').disabled = false;
       document.getElementById('playerInput').focus();
@@ -2909,7 +3030,7 @@
       }
 
       // Render player cards
-      container.innerHTML = entries.map(e => e.player ? buildPlayerCard(e.player.name, e.label, e.player.score, null) : '').join('');
+      container.innerHTML = entries.map(e => e.player ? buildPlayerCard(e.player.name, e.label, e.player.score, null, e.player.team) : '').join('');
       animateCountUp(document.querySelector('.end-score-num'), parseInt(document.querySelector('.end-score-num').dataset.target || '0'), 600);
 
       buildShareCard();
@@ -3007,6 +3128,7 @@
     }
 
     function saveActiveGame() {
+      if (gameState.practiceMode) return;
       if (gameState.gameOver) return;
       if (gameState.isDailyChallenge && gameState.dailyTeamIndex >= 5) return;
       if (!gameState.isDailyChallenge && !gameState.teamChallenge && Object.keys(gameState.lineup).length === 5) return;
@@ -3060,9 +3182,10 @@
       gameState.hasSpun = saved.hasSpun || false;
       gameState.waitingForInput = saved.waitingForInput || false;
 
-      if (saved.isDailyChallenge && !saved.targetMode) {
+      if (saved.isDailyChallenge) {
         const teamNames = Object.keys(players);
-        gameState.dailyTeams = getDailyTeams(teamNames, saved.date);
+        const seedStr = saved.targetMode ? saved.date + '-target' : saved.date;
+        gameState.dailyTeams = getDailyTeams(teamNames, seedStr);
         gameState.currentTeam = gameState.dailyTeams[gameState.dailyTeamIndex];
       }
 
@@ -3071,7 +3194,7 @@
       document.getElementById('helpBtn').style.display = 'flex';
 
       const totalEl = document.querySelector('.formation-total');
-      if (totalEl) totalEl.classList.add('hidden');
+      if (totalEl) totalEl.classList.toggle('hidden', !gameState.targetMode);
 
       const indicator = document.getElementById('modeIndicator');
       indicator.textContent = saved.gameMode === 'oldhead' ? '🕒 Classic Mode' : '⏳ Timeless Mode';
@@ -3082,7 +3205,7 @@
       updateLivesDisplay();
 
       if (saved.isDailyChallenge && saved.targetMode) {
-        document.querySelector('.wheel-container').style.display = 'none';
+        updateDisplay();
         updateTargetProgress();
         document.getElementById('playerInput').disabled = false;
         document.getElementById('submitBtn').disabled = false;
@@ -3126,9 +3249,9 @@
     function initGame() {
       localStorage.removeItem('tbn_active_game');
       document.getElementById('helpBtn').style.display = 'flex';
-      // Hide total score during gameplay (suspense mode)
+      // Hide total score during gameplay (suspense mode) — except Target Mode, which needs it visible
       const totalEl = document.querySelector('.formation-total');
-      if (totalEl) totalEl.classList.add('hidden');
+      if (totalEl) totalEl.classList.toggle('hidden', !gameState.targetMode);
 
       if (gameState.teamChallenge) {
         // Team challenge: show selected team, no spin wheel
@@ -3147,6 +3270,7 @@
         document.getElementById('playerInput').disabled = false;
         document.getElementById('submitBtn').disabled = false;
         document.getElementById('playerInput').focus();
+        if (gameState.targetMode) updateTargetGauge();
       } else {
         // Free play: show reel and wait for spin
         buildReel();
@@ -3742,12 +3866,12 @@
           setTimeout(endGame, 2000);
         } else {
           setTimeout(() => {
+            gameState.currentTeam = gameState.dailyTeams[gameState.dailyTeamIndex];
+            updateDisplay();
             if (gameState.targetMode) {
               updateTargetProgress();
             } else {
-              gameState.currentTeam = gameState.dailyTeams[gameState.dailyTeamIndex];
               updateDailyProgress();
-              updateDisplay();
             }
             document.getElementById('playerInput').disabled = false;
             document.getElementById('submitBtn').disabled = false;
@@ -4042,7 +4166,7 @@
     }
 
     function submitPlayer() {
-      if (!gameState.hasSpun || (gameState.lives <= 0 && !gameState.targetMode)) return;
+      if (!gameState.hasSpun || gameState.lives <= 0) return;
 
       const input = document.getElementById('playerInput').value;
       const messageEl = document.getElementById('message');
@@ -4052,43 +4176,16 @@
         return;
       }
 
-      let matched = null;
+      const franchisePlayers = players[gameState.currentTeam];
 
-      // Target Mode: search all players
-      if (gameState.targetMode) {
-        matched = allPlayers.find(p => p.name.toLowerCase() === input.toLowerCase());
-        if (!matched) {
-          // Fuzzy search across all players
-          let bestDistance = Infinity;
-          allPlayers.forEach(p => {
-            const distance = fuzzyDistance(input.toLowerCase(), p.name.toLowerCase());
-            if (distance < bestDistance) {
-              bestDistance = distance;
-              matched = p;
-            }
-          });
-          if (bestDistance > 3) matched = null;
-        }
-
-        if (!matched) {
-          messageEl.innerHTML = `<div class="error">❌ Player not found (try another name)</div>`;
-          document.getElementById('submitBtn').disabled = false;
-          document.getElementById('playerInput').disabled = false;
-          return;
-        }
-      } else {
-        // Regular modes: search team players
-        const franchisePlayers = players[gameState.currentTeam];
-
-        if (!franchisePlayers) {
-          messageEl.innerHTML = `<div class="error">❌ Team not found: ${gameState.currentTeam}</div>`;
-          document.getElementById('submitBtn').disabled = false;
-          document.getElementById('playerInput').disabled = false;
-          return;
-        }
-
-        matched = fuzzyMatchPlayer(input, franchisePlayers);
+      if (!franchisePlayers) {
+        messageEl.innerHTML = `<div class="error">❌ Team not found: ${gameState.currentTeam}</div>`;
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('playerInput').disabled = false;
+        return;
       }
+
+      const matched = fuzzyMatchPlayer(input, franchisePlayers);
 
       if (!matched) {
         gameState.lives--;
@@ -4160,12 +4257,33 @@
     }
 
     function updateTargetProgress() {
-      const remaining = gameState.targetScore - gameState.totalScore;
       const pickNum = Math.min(gameState.dailyTeamIndex + 1, 5);
-      document.getElementById('currentTeam').textContent = `🎯 Target: ${gameState.targetScore}`;
-      document.getElementById('positionLabel').textContent = remaining >= 0
-        ? `Pick ${pickNum} of 5 · ${remaining} to go`
-        : `Pick ${pickNum} of 5 · ${Math.abs(remaining)} over`;
+      document.getElementById('positionLabel').textContent = `Pick ${pickNum} of 5`;
+      updateTargetGauge();
+    }
+
+    function updateTargetGauge() {
+      const gauge = document.getElementById('targetGauge');
+      if (!gauge) return;
+      gauge.style.display = 'block';
+      document.getElementById('scoreLabel').textContent = `Total Score · Target ${gameState.targetScore}`;
+
+      const gaugeMax = gameState.targetScore + 100;
+      const targetPct = Math.min(100, (gameState.targetScore / gaugeMax) * 100);
+      const fillPct = Math.min(100, (gameState.totalScore / gaugeMax) * 100);
+      const diff = gameState.totalScore - gameState.targetScore;
+
+      const fill = document.getElementById('targetGaugeFill');
+      fill.style.width = fillPct + '%';
+      fill.classList.toggle('close', Math.abs(diff) <= 10);
+      fill.classList.toggle('over', diff > 10);
+
+      document.getElementById('targetGaugeMarker').style.left = targetPct + '%';
+      document.getElementById('targetGaugeLabel').textContent = diff === 0
+        ? 'Right on target!'
+        : diff > 0
+          ? `${diff} over`
+          : `${Math.abs(diff)} to go`;
     }
 
     function shortTeamName(name) {
@@ -4224,6 +4342,7 @@
 
     function updateScore() {
       document.getElementById('totalScore').textContent = gameState.totalScore;
+      if (gameState.targetMode) updateTargetGauge();
     }
 
     function getScoreTier(score) {
@@ -4446,31 +4565,33 @@
         const todayStr = getTodayString();
 
         if (gameState.targetMode) {
-          // Target Mode: save separately
-          const teamsArr = gameState.dailyTeams.map(t => ({ team: t }));
-          localStorage.setItem(`tbn_target_${todayStr}`, JSON.stringify({ score: gameState.totalScore, targetScore: gameState.targetScore, label, lineup: lineupArr, teams: teamsArr }));
+          // Practice rounds don't touch the daily target save or its streak/best
+          if (!gameState.practiceMode) {
+            const teamsArr = gameState.dailyTeams.map(t => ({ team: t }));
+            localStorage.setItem(`tbn_target_${todayStr}`, JSON.stringify({ score: gameState.totalScore, targetScore: gameState.targetScore, label, lineup: lineupArr, teams: teamsArr }));
 
-          // Update target mode streak and best
-          const streakKey = 'tbn_target_streak';
-          const bestKey = 'tbn_target_best';
-          const lastPlayKey = 'tbn_target_last_play';
+            // Update target mode streak and best
+            const streakKey = 'tbn_target_streak';
+            const bestKey = 'tbn_target_best';
+            const lastPlayKey = 'tbn_target_last_play';
 
-          const lastPlay = localStorage.getItem(lastPlayKey);
-          const currentStreak = Math.max(0, JSON.parse(localStorage.getItem(streakKey) || '0'));
-          const personalBest = Math.max(0, JSON.parse(localStorage.getItem(bestKey) || '0'));
+            const lastPlay = localStorage.getItem(lastPlayKey);
+            const currentStreak = Math.max(0, JSON.parse(localStorage.getItem(streakKey) || '0'));
+            const personalBest = Math.max(0, JSON.parse(localStorage.getItem(bestKey) || '0'));
 
-          const yd = new Date(); yd.setDate(yd.getDate() - 1);
-          const yesterday = `${yd.getFullYear()}-${String(yd.getMonth()+1).padStart(2,'0')}-${String(yd.getDate()).padStart(2,'0')}`;
-          let newStreak = 1;
-          if (!lastPlay) {
-            newStreak = 1;
-          } else if (lastPlay === yesterday) {
-            newStreak = currentStreak + 1;
+            const yd = new Date(); yd.setDate(yd.getDate() - 1);
+            const yesterday = `${yd.getFullYear()}-${String(yd.getMonth()+1).padStart(2,'0')}-${String(yd.getDate()).padStart(2,'0')}`;
+            let newStreak = 1;
+            if (!lastPlay) {
+              newStreak = 1;
+            } else if (lastPlay === yesterday) {
+              newStreak = currentStreak + 1;
+            }
+
+            localStorage.setItem(lastPlayKey, todayStr);
+            localStorage.setItem(streakKey, newStreak);
+            localStorage.setItem(bestKey, Math.max(personalBest, gameState.totalScore));
           }
-
-          localStorage.setItem(lastPlayKey, todayStr);
-          localStorage.setItem(streakKey, newStreak);
-          localStorage.setItem(bestKey, Math.max(personalBest, gameState.totalScore));
         } else {
           // High Score Mode: existing logic
           const teamsArr = gameState.dailyTeams.map(t => ({ team: t }));
@@ -4508,12 +4629,14 @@
       let modeLabel = gameState.gameOver
         ? `💔 Game Over`
         : gameState.isDailyChallenge
-          ? gameState.targetMode
-            ? `🎯 Target Mode · ${getTodayString()}`
-            : `📅 Daily Challenge · ${getTodayString()}`
+          ? gameState.practiceMode
+            ? `🔁 Practice Target`
+            : gameState.targetMode
+              ? `🎯 Target Mode · ${getTodayString()}`
+              : `📅 Daily Challenge · ${getTodayString()}`
           : `🏀 Free Play · ${gameState.gameMode === 'oldhead' ? 'Classic Mode' : 'Timeless Mode'}`;
 
-      if (!gameState.gameOver && gameState.isDailyChallenge) {
+      if (!gameState.gameOver && gameState.isDailyChallenge && !gameState.practiceMode) {
         if (gameState.targetMode) {
           const streak = JSON.parse(localStorage.getItem('tbn_target_streak') || '0');
           const best = JSON.parse(localStorage.getItem('tbn_target_best') || '0');
@@ -4548,6 +4671,7 @@
           ${rivalHTML}
           <div class="end-btns">
             ${gameState.teamChallenge && !gameState.isTeamChallengeBest ? `<button class="end-btn-secondary" onclick="viewTeamBestLineup('${gameState.selectedTeam}')" style="width:100%;">🏆 View Best Lineup</button>` : ''}
+            ${gameState.practiceMode ? `<button class="end-btn-ghost" onclick="startPracticeTargetMode()">🔁 Practice Again</button>` : ''}
             <button class="end-btn-ghost" onclick="location.href=location.pathname">Play Again</button>
           </div>
         </div>
@@ -4754,7 +4878,7 @@
           <span class="share-card-pts" style="color:${color}">${p.score}</span>
         </div>`;
       }).join('');
-      const modeTag = gameState.targetMode ? `🎯 Target · ${getTodayString()}` : gameState.isDailyChallenge ? `📅 Daily · ${getTodayString()}` : gameState.teamChallenge ? '🏢 Team Challenge' : '🏀 Practice';
+      const modeTag = gameState.practiceMode ? '🔁 Practice Target' : gameState.targetMode ? `🎯 Target · ${getTodayString()}` : gameState.isDailyChallenge ? `📅 Daily · ${getTodayString()}` : gameState.teamChallenge ? '🏢 Team Challenge' : '🏀 Practice';
       document.getElementById('shareCardWrap').innerHTML = `
         <div class="share-card" id="shareCard">
           <div class="share-card-title">ball knower</div>
