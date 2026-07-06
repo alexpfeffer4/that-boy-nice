@@ -3044,7 +3044,10 @@
       }
 
       // Render player cards
-      container.innerHTML = entries.map(e => e.player ? buildPlayerCard(e.player.name, e.label, e.player.score, null, e.player.team) : '').join('');
+      container.innerHTML = '';
+      entries.forEach(e => {
+        if (e.player) container.appendChild(buildPlayerCard(e.player.name, e.label, e.player.score, null, e.player.team));
+      });
       animateCountUp(document.querySelector('.end-score-num'), parseInt(document.querySelector('.end-score-num').dataset.target || '0'), 600);
 
       buildShareCard();
