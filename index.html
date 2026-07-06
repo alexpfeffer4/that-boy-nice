@@ -770,12 +770,17 @@
       background: #FF6B6B;
     }
 
+    .target-gauge-fill.under {
+      background: #FFA94D;
+    }
+
     .target-gauge-marker {
       position: absolute;
       top: -3px;
-      width: 2px;
+      width: 3px;
       height: 16px;
       background: #fff;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.5);
       transition: left 0.4s ease;
     }
 
@@ -2902,13 +2907,22 @@
       }
     }
 
+    // Averaging two uniform samples biases the target toward the achievable middle
+    // of the range instead of a flat distribution, since a 5-pick sum of clamped
+    // 0-100 scores realistically clusters mid-range — a flat uniform target made
+    // the extremes (near 25 or near 350) disproportionately easy or brutally hard.
+    function sampleTargetScore(rng) {
+      const a = 25 + rng() * (350 - 25);
+      const b = 25 + rng() * (350 - 25);
+      return Math.round((a + b) / 2);
+    }
+
     function getDailyTargetScore() {
       const dateStr = getTodayString();
       if (dateStr === '2026-07-06') return 250; // one-day override
       const seed = getDailySeed(dateStr);
       const rng = mulberry32(seed);
-      const target = Math.round(25 + rng() * (350 - 25));
-      return target;
+      return sampleTargetScore(rng);
     }
 
     function startTargetMode() {
@@ -2981,7 +2995,7 @@
       gameState.isDailyChallenge = true;
       gameState.targetMode = true;
       gameState.practiceMode = true;
-      gameState.targetScore = Math.round(25 + Math.random() * (350 - 25));
+      gameState.targetScore = sampleTargetScore(Math.random);
       gameState.gameMode = 'oldhead';
       gameState.hasSpun = true;
       gameState.lineup = {};
@@ -3020,7 +3034,7 @@
       const dateStr = getTodayString();
       const diff = saved.score - saved.targetScore;
       const tierLabel = getTargetTierLabel(diff);
-      const totalTier = getScoreTier(Math.round(saved.score / 5));
+      const totalTier = getTargetTierClass(diff);
 
       document.getElementById('gameSection').innerHTML = `
         <div class="end-screen">
@@ -3385,6 +3399,18 @@
       if (abs <= 30) return '👍 Solid';
       if (abs <= 60) return '😬 Ballpark';
       return '💀 Way Off';
+    }
+
+    // Maps the same bands as getTargetTierLabel to the existing tier-* color classes,
+    // so a Bullseye actually renders as the most impressive tier instead of whatever
+    // color the raw obscurity average happens to land on.
+    function getTargetTierClass(diff) {
+      const abs = Math.abs(diff);
+      if (abs <= 5) return 'tier-god';
+      if (abs <= 15) return 'tier-great';
+      if (abs <= 30) return 'tier-good';
+      if (abs <= 60) return 'tier-mid';
+      return 'tier-casual';
     }
 
     function getPlayerStats(player) {
@@ -4331,13 +4357,23 @@
       fill.style.width = fillPct + '%';
       fill.classList.toggle('close', Math.abs(diff) <= 10);
       fill.classList.toggle('over', diff > 10);
+      fill.classList.toggle('under', diff < -10);
 
       document.getElementById('targetGaugeMarker').style.left = targetPct + '%';
-      document.getElementById('targetGaugeLabel').textContent = diff === 0
-        ? 'Right on target!'
-        : diff > 0
-          ? `${diff} over`
-          : `${Math.abs(diff)} to go`;
+
+      const picksLeft = 5 - Object.keys(gameState.lineup).length;
+      let labelText;
+      if (diff === 0) {
+        labelText = 'Right on target!';
+      } else if (diff > 0) {
+        labelText = `${diff} over`;
+      } else if (picksLeft > 0) {
+        const avg = Math.round(Math.abs(diff) / picksLeft);
+        labelText = `${Math.abs(diff)} to go · ${picksLeft} pick${picksLeft !== 1 ? 's' : ''} left (~${avg}/pick)`;
+      } else {
+        labelText = `${Math.abs(diff)} to go`;
+      }
+      document.getElementById('targetGaugeLabel').textContent = labelText;
     }
 
     function shortTeamName(name) {
@@ -4591,7 +4627,7 @@
         : gameState.targetMode
           ? getTargetTierLabel(targetDiff)
           : getScoreLabel(roundedScore);
-      const totalTier = getScoreTier(Math.round(roundedScore / 5));
+      const totalTier = gameState.targetMode ? getTargetTierClass(targetDiff) : getScoreTier(Math.round(roundedScore / 5));
 
       if (gameState.teamChallenge) {
         const teamBestKey = 'tbn_team_best_' + gameState.selectedTeam;
@@ -4938,7 +4974,9 @@
           <div class="share-card-title">ball knower</div>
           <div class="share-card-date">${modeTag} · ${gameState.gameMode === 'oldhead' ? 'Classic Mode' : 'Timeless Mode'}</div>
           <div class="share-card-score">${gameState.totalScore}</div>
-          ${gameState.targetMode ? '' : `<div class="share-card-label">Rank: ${label}</div>`}
+          ${gameState.targetMode
+            ? `<div class="share-card-label">Target ${gameState.targetScore} · ${getTargetTierLabel(gameState.totalScore - gameState.targetScore)}</div>`
+            : `<div class="share-card-label">Rank: ${label}</div>`}
           ${rows}
           <div class="share-card-footer">ballknower.me</div>
         </div>
