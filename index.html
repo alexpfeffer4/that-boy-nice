@@ -2869,25 +2869,21 @@
 
       const hsSaved = JSON.parse(localStorage.getItem(`tbn_daily_${dateStr}`) || 'null');
       const hsStreak = JSON.parse(localStorage.getItem('tbn_streak') || '0');
-      const hsBest = JSON.parse(localStorage.getItem('tbn_best_daily') || '0');
       const hsStats = document.getElementById('highscoreModeStats');
       if (hsStats) {
         const parts = [];
         if (hsSaved && hsSaved.score != null) parts.push(`✓ Played today · ${hsSaved.score} pts`);
         if (hsStreak > 0) parts.push(`🔥 ${hsStreak} day${hsStreak !== 1 ? 's' : ''}`);
-        if (hsBest > 0) parts.push(`🏆 Best: ${hsBest}`);
         hsStats.textContent = parts.join(' · ');
       }
 
       const tgtSaved = JSON.parse(localStorage.getItem(`tbn_target_${dateStr}`) || 'null');
       const tgtStreak = JSON.parse(localStorage.getItem('tbn_target_streak') || '0');
-      const tgtBest = JSON.parse(localStorage.getItem('tbn_target_best') || '0');
       const tgtStats = document.getElementById('targetModeStats');
       if (tgtStats) {
         const parts = [];
         if (tgtSaved && tgtSaved.score != null) parts.push(`✓ Played today · ${tgtSaved.score} pts`);
         if (tgtStreak > 0) parts.push(`🔥 ${tgtStreak} day${tgtStreak !== 1 ? 's' : ''}`);
-        if (tgtBest > 0) parts.push(`🏆 Best: ${tgtBest}`);
         tgtStats.textContent = parts.join(' · ');
       }
     }
