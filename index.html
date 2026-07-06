@@ -2558,7 +2558,7 @@
     };
 
     // Feature flag for Target Mode
-    const ENABLE_TARGET_MODE = false;
+    const ENABLE_TARGET_MODE = true;
 
     // --- Seeded PRNG (mulberry32) ---
     function mulberry32(seed) {
@@ -2840,11 +2840,12 @@
       const indicator = document.getElementById('modeIndicator');
       indicator.textContent = '🎯 Target Mode';
       indicator.className = 'mode-indicator mode-oldhead';
-      document.getElementById('tagline').textContent = `🎯 Hit the target: ${gameState.targetScore}`;
 
-      // Show formation panel for target mode
+      // Target mode has no team restriction — hide the team reel, show target progress instead
       document.getElementById('spinBtn').style.display = 'none';
       document.getElementById('respinBtn').style.display = 'none';
+      document.querySelector('.wheel-container').style.display = 'none';
+      updateTargetProgress();
       document.getElementById('playerInput').disabled = false;
       document.getElementById('submitBtn').disabled = false;
       document.getElementById('playerInput').focus();
@@ -2875,6 +2876,12 @@
         </div>
       `;
 
+      // Restore gameState so the cards, verdicts, and share card build from the saved round
+      gameState.lineup = {};
+      saved.lineup.forEach(entry => {
+        gameState.lineup[entry.pos] = { name: entry.name, team: entry.team, score: entry.score };
+      });
+
       const container = document.getElementById('resultPlayers');
       const entries = positions.map(pos => ({ label: pos, player: gameState.lineup[pos] }));
       const verdicts = getGameVerdicts(gameState.lineup);
@@ -2902,8 +2909,10 @@
       }
 
       // Render player cards
-      container.innerHTML = entries.map(e => e.player ? buildPlayerCard(e.player.name, e.player.team, e.player.score, e.label) : '').join('');
+      container.innerHTML = entries.map(e => e.player ? buildPlayerCard(e.player.name, e.label, e.player.score, null) : '').join('');
       animateCountUp(document.querySelector('.end-score-num'), parseInt(document.querySelector('.end-score-num').dataset.target || '0'), 600);
+
+      buildShareCard();
     }
 
     function startPractice() {
@@ -3005,6 +3014,8 @@
         date: getTodayString(),
         gameMode: gameState.gameMode,
         isDailyChallenge: gameState.isDailyChallenge,
+        targetMode: gameState.targetMode || false,
+        targetScore: gameState.targetScore || null,
         teamChallenge: gameState.teamChallenge || false,
         selectedTeam: gameState.selectedTeam || null,
         teams: gameState.teams || [],
@@ -3025,6 +3036,8 @@
 
       gameState.gameMode = saved.gameMode;
       gameState.isDailyChallenge = saved.isDailyChallenge;
+      gameState.targetMode = saved.targetMode || false;
+      gameState.targetScore = saved.targetScore;
       gameState.teamChallenge = saved.teamChallenge;
       gameState.selectedTeam = saved.selectedTeam;
       gameState.teams = saved.teams || [];
@@ -3047,7 +3060,7 @@
       gameState.hasSpun = saved.hasSpun || false;
       gameState.waitingForInput = saved.waitingForInput || false;
 
-      if (saved.isDailyChallenge) {
+      if (saved.isDailyChallenge && !saved.targetMode) {
         const teamNames = Object.keys(players);
         gameState.dailyTeams = getDailyTeams(teamNames, saved.date);
         gameState.currentTeam = gameState.dailyTeams[gameState.dailyTeamIndex];
@@ -3068,7 +3081,13 @@
       updateScore();
       updateLivesDisplay();
 
-      if (saved.isDailyChallenge) {
+      if (saved.isDailyChallenge && saved.targetMode) {
+        document.querySelector('.wheel-container').style.display = 'none';
+        updateTargetProgress();
+        document.getElementById('playerInput').disabled = false;
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('playerInput').focus();
+      } else if (saved.isDailyChallenge) {
         updateDailyProgress();
         updateDisplay();
         document.getElementById('positionLabel').textContent = 'Name a player';
@@ -3723,9 +3742,13 @@
           setTimeout(endGame, 2000);
         } else {
           setTimeout(() => {
-            gameState.currentTeam = gameState.dailyTeams[gameState.dailyTeamIndex];
-            updateDailyProgress();
-            updateDisplay();
+            if (gameState.targetMode) {
+              updateTargetProgress();
+            } else {
+              gameState.currentTeam = gameState.dailyTeams[gameState.dailyTeamIndex];
+              updateDailyProgress();
+              updateDisplay();
+            }
             document.getElementById('playerInput').disabled = false;
             document.getElementById('submitBtn').disabled = false;
             document.getElementById('playerInput').focus();
@@ -4136,6 +4159,15 @@
       document.getElementById('positionLabel').textContent = progress;
     }
 
+    function updateTargetProgress() {
+      const remaining = gameState.targetScore - gameState.totalScore;
+      const pickNum = Math.min(gameState.dailyTeamIndex + 1, 5);
+      document.getElementById('currentTeam').textContent = `🎯 Target: ${gameState.targetScore}`;
+      document.getElementById('positionLabel').textContent = remaining >= 0
+        ? `Pick ${pickNum} of 5 · ${remaining} to go`
+        : `Pick ${pickNum} of 5 · ${Math.abs(remaining)} over`;
+    }
+
     function shortTeamName(name) {
       const parts = name.split(' ');
       return parts[parts.length - 1];
@@ -4380,7 +4412,12 @@
       const filled = Object.keys(gameState.lineup).length;
       const gameOverLabel = filled === 0 ? 'Rough night, big dog' : filled === 1 ? 'Tough break' : filled === 2 ? 'Tough break' : filled === 3 ? 'So close' : 'One away';
       const roundedScore = Math.round(gameState.totalScore);
-      const label = gameState.gameOver ? gameOverLabel : getScoreLabel(roundedScore);
+      const targetDiff = gameState.targetMode ? roundedScore - gameState.targetScore : null;
+      const label = gameState.gameOver
+        ? gameOverLabel
+        : gameState.targetMode
+          ? (Math.abs(targetDiff) <= 5 ? 'Perfect' : Math.abs(targetDiff) <= 10 ? 'Close' : Math.abs(targetDiff) <= 20 ? 'Near' : Math.abs(targetDiff) <= 30 ? 'Off' : 'Way Off')
+          : getScoreLabel(roundedScore);
       const totalTier = getScoreTier(Math.round(roundedScore / 5));
 
       if (gameState.teamChallenge) {
@@ -4490,7 +4527,9 @@
 
       const bestScoreDisplay = gameState.teamChallenge
         ? `<div class="end-best-score">Best: ${Math.max(0, JSON.parse(localStorage.getItem('tbn_team_best_' + gameState.selectedTeam) || '0'))}</div>`
-        : '';
+        : gameState.targetMode
+          ? `<div class="end-best-score">Target: ${gameState.targetScore} · Off by: ${Math.abs(targetDiff)}</div>`
+          : '';
 
       document.getElementById('gameSection').innerHTML = `
         <div class="end-screen">
@@ -4715,7 +4754,7 @@
           <span class="share-card-pts" style="color:${color}">${p.score}</span>
         </div>`;
       }).join('');
-      const modeTag = gameState.isDailyChallenge ? `📅 Daily · ${getTodayString()}` : gameState.teamChallenge ? '🏢 Team Challenge' : '🏀 Practice';
+      const modeTag = gameState.targetMode ? `🎯 Target · ${getTodayString()}` : gameState.isDailyChallenge ? `📅 Daily · ${getTodayString()}` : gameState.teamChallenge ? '🏢 Team Challenge' : '🏀 Practice';
       document.getElementById('shareCardWrap').innerHTML = `
         <div class="share-card" id="shareCard">
           <div class="share-card-title">ball knower</div>
