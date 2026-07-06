@@ -2877,7 +2877,7 @@
       if (dateStr === '2026-07-06') return 250; // one-day override
       const seed = getDailySeed(dateStr);
       const rng = mulberry32(seed);
-      const target = Math.round(25 + rng() * (300 - 25));
+      const target = Math.round(25 + rng() * (350 - 25));
       return target;
     }
 
@@ -2947,7 +2947,7 @@
       gameState.isDailyChallenge = true;
       gameState.targetMode = true;
       gameState.practiceMode = true;
-      gameState.targetScore = Math.round(25 + Math.random() * (300 - 25));
+      gameState.targetScore = Math.round(25 + Math.random() * (350 - 25));
       gameState.gameMode = 'oldhead';
       gameState.hasSpun = true;
       gameState.lineup = {};
