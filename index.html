@@ -2601,7 +2601,7 @@
 
     <div class="modal" id="leaderboardModal">
       <div class="modal-content">
-        <h3>Your Pick History</h3>
+        <h3 id="leaderboardTitle">Your Pick History</h3>
         <div id="leaderboardContent"></div>
         <button class="submit-btn" onclick="closeLeaderboardModal()">Close</button>
       </div>
@@ -2944,7 +2944,7 @@
       gameState.isDailyChallenge = true;
       gameState.targetMode = true;
       gameState.targetScore = getDailyTargetScore();
-      gameState.gameMode = 'oldhead';
+      gameState.gameMode = 'classic'; // Timeless scoring — a stable, era-independent score is easier to estimate against than one with a recency penalty layered on
       gameState.hasSpun = true;
 
       // Exclude teams from Target Mode's own last 2 days (independent of Daily Challenge's rotation)
@@ -2973,14 +2973,14 @@
       document.getElementById('gameSection').style.display = 'block';
       const indicator = document.getElementById('modeIndicator');
       indicator.textContent = '🎯 Target Mode';
-      indicator.className = 'mode-indicator mode-oldhead';
+      indicator.className = 'mode-indicator mode-classic';
 
       document.getElementById('spinBtn').style.display = 'none';
       document.getElementById('respinBtn').style.display = 'none';
       updateDisplay();
       updateTargetProgress();
 
-      showHowToPlay('oldhead');
+      showHowToPlay('classic');
     }
 
     // Unlimited, unseeded version of Target Mode — same rules, new random target/teams every round,
@@ -2996,7 +2996,7 @@
       gameState.targetMode = true;
       gameState.practiceMode = true;
       gameState.targetScore = sampleTargetScore(Math.random);
-      gameState.gameMode = 'oldhead';
+      gameState.gameMode = 'classic'; // Timeless scoring — see startTargetMode()
       gameState.hasSpun = true;
       gameState.lineup = {};
       gameState.totalScore = 0;
@@ -3017,7 +3017,7 @@
       document.getElementById('helpBtn').style.display = 'flex';
       const indicator = document.getElementById('modeIndicator');
       indicator.textContent = '🎯 Target Mode';
-      indicator.className = 'mode-indicator mode-oldhead';
+      indicator.className = 'mode-indicator mode-classic';
 
       document.getElementById('spinBtn').style.display = 'none';
       document.getElementById('respinBtn').style.display = 'none';
@@ -3027,7 +3027,7 @@
       updateDisplay();
       updateTargetProgress();
 
-      showHowToPlay('oldhead');
+      showHowToPlay('classic');
     }
 
     function showTargetResults(saved) {
@@ -3820,6 +3820,8 @@
     function showLeaderboardModal() {
       const modal = document.getElementById('leaderboardModal');
       const content = document.getElementById('leaderboardContent');
+      const title = document.getElementById('leaderboardTitle');
+      if (title) title.textContent = gameState.targetMode ? 'Your Target Mode Picks' : 'Your Pick History';
       const picks = getPlayerPickCounts();
       const sorted = Object.entries(picks)
         .sort(function(a, b) { return b[1] - a[1]; })
@@ -3850,15 +3852,22 @@
       document.getElementById('leaderboardModal').classList.remove('show');
     }
 
+    // Target Mode's picks skew toward deliberately-famous names used to balance a
+    // sum, which would muddy the "Frequent" signal for High Score/Team/Free Play's
+    // history — so it gets its own bucket rather than sharing tbn_player_picks.
+    function getPickHistoryKey() {
+      return gameState.targetMode ? 'tbn_target_player_picks' : 'tbn_player_picks';
+    }
+
     function trackPlayerPick(playerName) {
-      const key = 'tbn_player_picks';
+      const key = getPickHistoryKey();
       let picks = JSON.parse(localStorage.getItem(key)) || {};
       picks[playerName] = (picks[playerName] || 0) + 1;
       localStorage.setItem(key, JSON.stringify(picks));
     }
 
     function getPlayerPickCounts() {
-      const key = 'tbn_player_picks';
+      const key = getPickHistoryKey();
       return JSON.parse(localStorage.getItem(key)) || {};
     }
 
