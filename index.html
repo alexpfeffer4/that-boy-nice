@@ -1658,6 +1658,19 @@
       transform: translateY(-2px);
     }
 
+    .mode-practice-btn {
+      background: #2a2a3a;
+      border: 2px solid #A78BFA;
+      color: #ffffff;
+    }
+
+    .mode-practice-btn:hover {
+      background: #35354a;
+      border-color: #c4b5fd;
+      box-shadow: 0 4px 24px rgba(167,139,250,0.3);
+      transform: translateY(-2px);
+    }
+
     .mode-back-btn {
       background: none;
       border: none;
@@ -2183,7 +2196,8 @@
       }
 
       .mode-oldhead-btn,
-      .mode-classic-btn {
+      .mode-classic-btn,
+      .mode-practice-btn {
         padding: 14px;
       }
 
@@ -2415,10 +2429,6 @@
           🎯 Target Mode
           <span style="display:block;font-size:0.85rem;color:rgba(74,222,128,0.7);font-weight:400;margin-top:4px;">5 teams, same as High Score — but land as close to today's target score as you can.</span>
         </button>
-        <button class="start-btn" onclick="startDailyChallengeMode('practice')" style="background:#2a2a3a;border:2px solid #A78BFA;color:#A78BFA;padding:14px;border-radius:8px;font-weight:700;">
-          🔁 Practice Target
-          <span style="display:block;font-size:0.85rem;color:rgba(167,139,250,0.7);font-weight:400;margin-top:4px;">Same idea as Target Mode, but unlimited — play as many rounds as you want.</span>
-        </button>
       </div>
       <button class="end-btn-ghost" onclick="closeDailyChallengesModal()" style="width:100%;margin-top:16px;">Cancel</button>
     </div>
@@ -2484,6 +2494,10 @@
           <button class="start-btn mode-classic-btn" onclick="startWithMode('classic')">
             ⏳ Timeless Mode
             <span class="start-desc">Pure stats only — scoring based on career numbers with no time adjustment. All eras treated equally.</span>
+          </button>
+          <button class="start-btn mode-practice-btn" onclick="startPracticeTargetMode()">
+            🔁 Practice Target
+            <span class="start-desc">5 teams, random target score — land as close as you can. Play as many rounds as you want.</span>
           </button>
         </div>
       </div>
@@ -2855,8 +2869,6 @@
         startDailyChallenge();
       } else if (mode === 'target') {
         startTargetMode();
-      } else if (mode === 'practice') {
-        startPracticeTargetMode();
       }
     }
 
@@ -2864,7 +2876,7 @@
       const dateStr = getTodayString();
       const seed = getDailySeed(dateStr);
       const rng = mulberry32(seed);
-      const target = Math.round(25 + rng() * (450 - 25));
+      const target = Math.round(25 + rng() * (400 - 25));
       return target;
     }
 
@@ -2934,7 +2946,7 @@
       gameState.isDailyChallenge = true;
       gameState.targetMode = true;
       gameState.practiceMode = true;
-      gameState.targetScore = Math.round(25 + Math.random() * (450 - 25));
+      gameState.targetScore = Math.round(25 + Math.random() * (400 - 25));
       gameState.gameMode = 'oldhead';
       gameState.hasSpun = true;
       gameState.lineup = {};
