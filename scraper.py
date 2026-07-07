@@ -545,6 +545,61 @@ def merge_draft(players: dict):
     logger.info(f'Draft: matched {matched}/{len(players)} players, {undrafted} flagged undrafted')
 
 
+def validate_players(players: dict) -> list:
+    """Sanity-check scraped data before export. Logs findings; never blocks the run,
+    since some flags (real players who share a name) are expected, not bugs — but every
+    finding is a place a human should look. Returns the list of findings for the caller
+    to persist to a report file.
+
+    This exists because of a real incident: a 7-game, no-award player ended up filed
+    under the display name "Patrick Ewing", colliding with the Hall-of-Fame center of
+    the same name and becoming the "obscure" answer for his team. Nothing caught it
+    until a player noticed in-game.
+    """
+    findings = []
+
+    # Name collisions: two different BBRef IDs resolving to the exact same display name.
+    # Real (unrelated) players sharing a name happens historically, but every case is
+    # worth a human glance since it's also exactly the shape of the Ewing incident.
+    by_name = {}
+    for pid, p in players.items():
+        by_name.setdefault(p['name'], []).append(pid)
+    for name, pids in by_name.items():
+        if len(pids) > 1:
+            details = ', '.join(f"{pid} ({players[pid]['games']}g, drafted {players[pid].get('draftPick', 0)})" for pid in pids)
+            findings.append(f'NAME COLLISION: "{name}" resolves to {len(pids)} distinct player IDs: {details}')
+
+    # Suspicious accolade combos: a very short career with major individual honors is
+    # rare enough in real NBA history that it's more often a bad merge than a real player.
+    for pid, p in players.items():
+        games = p.get('games', 0)
+        has_major_award = (p.get('mvpAwards', 0) > 0 or p.get('dpoyAwards', 0) > 0
+                            or p.get('fmvpAwards', 0) > 0 or p.get('allStarAppearances', 0) > 0
+                            or (p.get('allNBA1', 0) + p.get('allNBA2', 0) + p.get('allNBA3', 0)) > 0)
+        if games < 15 and has_major_award:
+            findings.append(
+                f'SUSPICIOUS: "{p["name"]}" ({pid}) has only {games} career games but carries '
+                f'MVP={p.get("mvpAwards", 0)} DPOY={p.get("dpoyAwards", 0)} FMVP={p.get("fmvpAwards", 0)} '
+                f'AllStar={p.get("allStarAppearances", 0)} AllNBA={p.get("allNBA1", 0)}/{p.get("allNBA2", 0)}/{p.get("allNBA3", 0)} '
+                f'— likely a merge with a different player under the same ID.'
+            )
+
+    # Missing or non-positive career games — should never happen for a scraped entry.
+    for pid, p in players.items():
+        if p.get('games', 0) <= 0:
+            findings.append(f'BAD DATA: "{p["name"]}" ({pid}) has careerGames={p.get("games", 0)}.')
+
+    if findings:
+        logger.warning(f'\n=== Validation found {len(findings)} issue(s) — review before trusting this export ===')
+        for f in findings:
+            logger.warning(f'  {f}')
+        logger.warning('=== End validation findings ===\n')
+    else:
+        logger.info('Validation: no issues found')
+
+    return findings
+
+
 def organize_by_team(players: dict) -> dict:
     """File each player under every current franchise they played for."""
     teams = {fr: [] for fr in set(ABBR_TO_FRANCHISE.values())}
@@ -644,6 +699,15 @@ def main():
     merge_tiered_teams(players)
 
     logger.info(f'Merged awards, draft, and All-NBA/Defensive data')
+
+    findings = validate_players(players)
+    with open('validation_report.txt', 'w', encoding='utf-8') as f:
+        if findings:
+            f.write(f'{len(findings)} issue(s) found — review before trusting this export:\n\n')
+            f.write('\n'.join(findings) + '\n')
+        else:
+            f.write('No issues found.\n')
+
     export_to_datajs(organize_by_team(players))
     logger.info('Done!')
     return 0

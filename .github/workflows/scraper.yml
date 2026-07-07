@@ -27,11 +27,15 @@ jobs:
         working-directory: That Boy Nice
         run: python scraper.py
 
+      - name: Surface validation findings in the run summary
+        working-directory: That Boy Nice
+        run: cat validation_report.txt >> "$GITHUB_STEP_SUMMARY"
+
       - name: Commit updated data.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add "That Boy Nice/data.js"
+          git add "That Boy Nice/data.js" "That Boy Nice/validation_report.txt"
           git diff --staged --quiet || (git commit -m "Update player data from Basketball Reference" && git pull --rebase && git push)
