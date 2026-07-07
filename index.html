@@ -2603,6 +2603,10 @@
       <div class="modal-content">
         <h3 id="leaderboardTitle">Your Pick History</h3>
         <div id="leaderboardContent"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="submit-btn" style="flex:1;font-size:0.8rem;" onclick="exportPlayerData()">💾 Backup</button>
+          <button class="submit-btn" style="flex:1;font-size:0.8rem;" onclick="importPlayerData()">📥 Restore</button>
+        </div>
         <button class="submit-btn" onclick="closeLeaderboardModal()">Close</button>
       </div>
     </div>
@@ -3864,6 +3868,55 @@
 
     function closeLeaderboardModal() {
       document.getElementById('leaderboardModal').classList.remove('show');
+    }
+
+    // Backup/restore for streaks, bests, and pick history — all state lives only in
+    // localStorage, so a cleared cache, private browsing, or a new phone otherwise
+    // wipes it with no recovery path.
+    function exportPlayerData() {
+      const data = {};
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('tbn_')) {
+            data[key] = safeGetItem(key);
+          }
+        }
+      } catch (e) {
+        alert('Could not read your data on this device — backup unavailable.');
+        return;
+      }
+      if (Object.keys(data).length === 0) {
+        alert('No saved data found to back up yet.');
+        return;
+      }
+      const blob = JSON.stringify(data);
+      navigator.clipboard.writeText(blob).then(() => {
+        alert('Backup copied! Paste it somewhere safe (Notes, email to yourself) — use Restore to bring it back later.');
+      }).catch(() => {
+        prompt('Copy this backup and save it somewhere safe:', blob);
+      });
+    }
+
+    function importPlayerData() {
+      const blob = prompt('Paste your backup code:');
+      if (!blob) return;
+      let data;
+      try {
+        data = JSON.parse(blob);
+      } catch (e) {
+        alert("That doesn't look like a valid backup. Nothing was changed.");
+        return;
+      }
+      const keys = Object.keys(data).filter(k => k.startsWith('tbn_'));
+      if (keys.length === 0) {
+        alert("That doesn't look like a valid backup. Nothing was changed.");
+        return;
+      }
+      if (!confirm(`This will overwrite your current streaks, bests, and pick history with the backup (${keys.length} item${keys.length !== 1 ? 's' : ''}). Continue?`)) return;
+      keys.forEach(k => safeSetItem(k, data[k]));
+      alert('Restored! Reloading...');
+      location.reload();
     }
 
     // Target Mode's picks skew toward deliberately-famous names used to balance a
