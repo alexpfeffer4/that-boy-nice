@@ -2926,11 +2926,12 @@
 
     // Averaging two uniform samples biases the target toward the achievable middle
     // of the range instead of a flat distribution, since a 5-pick sum of clamped
-    // 0-100 scores realistically clusters mid-range — a flat uniform target made
-    // the extremes (near 25 or near 350) disproportionately easy or brutally hard.
+    // 0-100 scores realistically clusters mid-range. Range is [100, 350], centering
+    // the distribution at 225 — raising the floor from the old 25 also removes the
+    // near-zero targets that were trivially easy to hit with 5 famous players.
     function sampleTargetScore(rng) {
-      const a = 25 + rng() * (350 - 25);
-      const b = 25 + rng() * (350 - 25);
+      const a = 100 + rng() * (350 - 100);
+      const b = 100 + rng() * (350 - 100);
       return Math.round((a + b) / 2);
     }
 
