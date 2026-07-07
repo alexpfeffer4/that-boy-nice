@@ -1,0 +1,42 @@
+name: Smoke Test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'That Boy Nice/index.html'
+      - 'That Boy Nice/data.js'
+      - 'That Boy Nice/smoke-test.js'
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright
+        working-directory: That Boy Nice
+        run: |
+          npm install playwright --no-save
+          npx playwright install --with-deps chromium
+
+      - name: Serve the game
+        working-directory: That Boy Nice
+        run: |
+          python3 -m http.server 8080 &
+          sleep 2
+
+      - name: Run smoke test
+        working-directory: That Boy Nice
+        env:
+          SMOKE_TEST_URL: http://localhost:8080
+        run: node smoke-test.js
